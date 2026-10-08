@@ -2,12 +2,10 @@ public class Currency implements Comparable<Currency>{
 
    private String name;
    private String symbol;
-   public int[] denominations;
 
-   Currency(String name, String symbol, int... denominations){
+   Currency(String name, String symbol){
       this.name = name;
       this.symbol = symbol;
-      this.denominations = denominations;
    }
 
    public Money getZeroMoney(){
