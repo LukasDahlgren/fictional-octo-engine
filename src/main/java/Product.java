@@ -1,9 +1,9 @@
-public class Vara {
+public class Product{
 
     private final String name;
     private final Money price;
 
-    public Vara(String name, Money price) {
+    public Product(String name, Money price) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Name must not be blank");
         }
