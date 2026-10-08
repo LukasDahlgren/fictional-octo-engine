@@ -13,7 +13,113 @@ Till skillnad från rougelike-förslaget kan det här eventuellt vara intressant
 ett användarinterface, eller åtminstone något som kopplar ihop de olika delarna, dock absolut inte
 hela kassasystemet.
 
-## Förslag på uppdelning
+## Arbetsfördelning för fyra personer
+
+Fördelningen nedan täcker alla funktioner i förslagslistan. Den anger vem som
+ansvarar för respektive område, inte att gruppen måste implementera allt.
+Arbetsmängden beror på hur långt varje funktion utvecklas, så börja med den
+föreslagna första delen och välj sedan utökningar tillsammans.
+
+Utveckla först en enkel version av **Pengar** och **Varor** tillsammans, som
+uppgiften föreslår. Bestäm hur belopp, avrundning, antal och varuidentitet ska
+representeras. Därefter ansvarar person 3 för Pengar och person 1 för Varor.
+
+### Person 1 – Varor och lager
+
+**Ansvar:** Varor, Varugrupper, Leverantörer, Momskategorier, Pant,
+EAN/GTIN, Våg och Lagersaldo.
+
+**Varför kombinationen passar:** Alla dessa funktioner beskriver en vara,
+hur den identifieras, hur dess prisunderlag bestäms och hur mycket som finns
+i lager. Varugrupper och leverantörer delar behovet av att hantera samlingar
+av varor. Viktvaror, moms och pant kräver tydliga regler som resten av systemet
+kan använda utan att själva känna till alla varutyper.
+
+**Börja med:** Varor, Varugrupper, Momskategorier och Pant. Lägg därefter till
+Lagersaldo och välj mellan EAN/GTIN, Våg och Leverantörer som utökningar.
+
+**Samarbete och tester:** Person 2 använder varugrupper för rabatter och
+person 4 använder varorna i kvitton och scanning. Person 3 behöver uppdatera
+lagret vid återköp. Testa exempelvis viktbaserade priser, gruppmedlemskap,
+lagergränser och att pant hålls separat från moms och rabatter enligt uppgiften.
+
+### Person 2 – Rabatter, kunder och medlemsförmåner
+
+**Ansvar:** Enkla rabatter, Mer komplicerade rabatter, Bara en rabatt,
+Kunder, Medlemskap, Återbäring, Poäng och Riktad reklam.
+
+**Varför kombinationen passar:** Kundens medlemskap och köphistorik påverkar
+vilka erbjudanden och förmåner kunden får. Rabattregler och valet av bästa
+rabatt hör ihop eftersom de måste bedömas tillsammans. Återbäring, poäng och
+riktad reklam använder samma köphistorik, men bör ha egna klasser med egna
+ansvar. Rabattberäkningen ska ligga här, inte i kvittoklassen.
+
+**Börja med:** Kunder, Medlemskap, Enkla rabatter och Bara en rabatt med
+ett begränsat antal rabattregler. Välj sedan en mer komplicerad rabatt och
+antingen Poäng eller Återbäring innan fler förmåner läggs till.
+
+**Samarbete och tester:** Person 1 tillhandahåller varor och varugrupper,
+person 4 behöver rabattresultatet för kvittot och person 3 behöver regler
+för att korrigera förmåner vid återköp. Testa giltighetstider, beloppsgränser,
+konkurrerande rabatter och att samma köp inte ger återbäring flera gånger.
+
+### Person 3 – Betalningar och återköp
+
+**Ansvar:** Pengar, Valutor, Växel, Bonuscheckar, Presentkort, Uppdelat köp
+och Återköp.
+
+**Varför kombinationen passar:** Funktionerna hanterar hur ett köp betalas
+och hur pengar eller betalningsvärde återförs. Bonuscheckar och presentkort
+är betalningsmedel och behöver därför fungera ihop med uppdelade betalningar
+och växelregler. Återköp hör hit eftersom återbetalningen måste ta hänsyn
+till det ursprungliga köpet och dess betalningar.
+
+**Börja med:** Pengar, Växel och Uppdelat köp med två betalningsmedel.
+Lägg därefter till Presentkort eller Bonuscheckar. Avgränsa först Återköp
+till ett enkelt köp innan rabatter och medlemsförmåner kopplas in.
+
+**Samarbete och tester:** Person 4 skickar det slutliga köpbeloppet till
+betalningen. Person 2 ansvarar för rabatt- och förmånsregler vid återköp,
+och person 1 för lagerjusteringen. Testa otillräcklig betalning, saknade
+växelvalörer, delbetalning, förbrukade presentkort och att en bonuscheck
+inte ger kontant växel. Bestäm gemensamt vilka återbetalningsregler som gäller.
+
+### Person 4 – Kassaflöde, kvitton och uppföljning
+
+**Ansvar:** Kvitton, Kassan, Scanning, Åldersgränser, Personal,
+Parkera köp, Loggning och Rapporter.
+
+**Varför kombinationen passar:** Kassan samordnar köpet från registrering
+av varor till färdigt kvitto. Scanning, ålderskontroll och parkerade köp
+är delar av detta flöde. Personal kopplas till köp och kassahändelser,
+medan loggning och rapporter gör samma händelser möjliga att följa upp.
+Kassan ska anropa de andra personernas funktioner, och kvittot ska redovisa
+resultatet utan att ta över deras beräkningsregler.
+
+**Börja med:** Ett litet kassaflöde och Kvitton som använder de andra
+områdena. Lägg sedan till Scanning med ett interface och en test double,
+samt Åldersgränser. Välj därefter exempelvis Parkera köp eller en enkel
+försäljningsrapport; ett komplett användargränssnitt behövs inte.
+
+**Samarbete och tester:** Detta område kopplar ihop alla fyra personers kod.
+Alla hjälper därför till med integrationen. Testa misslyckad scanning,
+åldersgränsens gränsvärden, upprepade tillägg och borttagningar av samma
+vara samt kvittoformat och datum med en kontrollerbar klocka. Om Personal
+väljs bör det ingå beteende, till exempel försäljningsstatistik per person.
+
+### Gemensamma överenskommelser
+
+- Bestäm tidigt vilka uppgifter som skickas mellan områdena: varor och
+  kvantiteter, rabattresultat, slutbelopp, betalningsresultat och slutförda köp.
+- Bestäm beräkningsordningen för rabatter, moms, pant och medlemsförmåner.
+  Spara tillräcklig information om köpet för att kunna hantera återköp korrekt.
+- Varje person skriver tester för sitt område. Gör också ett gemensamt test
+  som går från registrerade varor via rabatt och betalning till färdigt kvitto.
+- Balansera arbetet efter komplexitet, inte antal funktioner. Person 2 kan få
+  mycket arbete med konkurrerande rabatter, person 3 med återköp och person 4
+  med integration. Begränsa dessa delar innan fler utökningar väljs.
+
+## Ursprungliga funktionsförslag
 
 Nedanstående lista innehåller förslag på funktioner som kan implementeras. Några av dessa, som
 pengar och varor är absolut nödvändiga, och är lämpliga att utveckla tillsammans för att komma
