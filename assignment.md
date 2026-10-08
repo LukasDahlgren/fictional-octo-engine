@@ -24,7 +24,7 @@ Utveckla först en enkel version av **Pengar** och **Varor** tillsammans, som
 uppgiften föreslår. Bestäm hur belopp, avrundning, antal och varuidentitet ska
 representeras. Därefter ansvarar person 3 för Pengar och person 1 för Varor.
 
-### Person 1 – Varor och lager
+### Simon – Varor och lager
 
 **Ansvar:** Varor, Varugrupper, Leverantörer, Momskategorier, Pant,
 EAN/GTIN, Våg och Lagersaldo.
@@ -43,7 +43,7 @@ person 4 använder varorna i kvitton och scanning. Person 3 behöver uppdatera
 lagret vid återköp. Testa exempelvis viktbaserade priser, gruppmedlemskap,
 lagergränser och att pant hålls separat från moms och rabatter enligt uppgiften.
 
-### Person 2 – Rabatter, kunder och medlemsförmåner
+### Mohamad – Rabatter, kunder och medlemsförmåner
 
 **Ansvar:** Enkla rabatter, Mer komplicerade rabatter, Bara en rabatt,
 Kunder, Medlemskap, Återbäring, Poäng och Riktad reklam.
@@ -63,7 +63,7 @@ person 4 behöver rabattresultatet för kvittot och person 3 behöver regler
 för att korrigera förmåner vid återköp. Testa giltighetstider, beloppsgränser,
 konkurrerande rabatter och att samma köp inte ger återbäring flera gånger.
 
-### Person 3 – Betalningar och återköp
+### Rasmus – Betalningar och återköp
 
 **Ansvar:** Pengar, Valutor, Växel, Bonuscheckar, Presentkort, Uppdelat köp
 och Återköp.
@@ -84,7 +84,7 @@ och person 1 för lagerjusteringen. Testa otillräcklig betalning, saknade
 växelvalörer, delbetalning, förbrukade presentkort och att en bonuscheck
 inte ger kontant växel. Bestäm gemensamt vilka återbetalningsregler som gäller.
 
-### Person 4 – Kassaflöde, kvitton och uppföljning
+### Lukas – Kassaflöde, kvitton och uppföljning
 
 **Ansvar:** Kvitton, Kassan, Scanning, Åldersgränser, Personal,
 Parkera köp, Loggning och Rapporter.
