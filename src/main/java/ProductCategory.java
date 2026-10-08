@@ -7,12 +7,14 @@ public class ProductCategory implements Iterable<Product> {
 
     private final String name;
     private final Set<Product> products = new LinkedHashSet<>();
+    private final VATCategory vat;
 
-    public ProductCategory(String name, Product... products) {
+    public ProductCategory(String name, VATCategory vat, Product... products) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Name must not be blank");
         }
         this.name = name;
+        this.vat = vat;
 
         for (Product product : products) {
             this.products.add(product);
@@ -40,6 +42,10 @@ public class ProductCategory implements Iterable<Product> {
 
     public int size() {
         return products.size();
+    }
+
+    public double getVat() {
+        return vat.getRate();
     }
 
     @Override

@@ -2,8 +2,9 @@ public class Product{
 
     private final String name;
     private final Money price;
+    private ProductCategory category;
 
-    public Product(String name, Money price) {
+    public Product(String name, Money price, ProductCategory category) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Name must not be blank");
         }
@@ -14,6 +15,7 @@ public class Product{
 
         this.name = name;
         this.price = price;
+        this.category = category;
     }
 
     public String getName() {
@@ -22,6 +24,10 @@ public class Product{
 
     public Money getPrice() {
         return price;
+    }
+
+    public ProductCategory getCategory() {
+        return category;
     }
 
     @Override
