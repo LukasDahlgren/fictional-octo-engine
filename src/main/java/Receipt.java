@@ -6,11 +6,17 @@ public class Receipt {
    Clock clock;
    Money totalPrice;
    LocalDateTime timestamp;
+   Basket basket;
 
    public Receipt(Basket basket, Clock clock) {
+      if (basket == null) {
+         throw new IllegalArgumentException("Basket cannot be null");
+      }
+
       this.clock = clock;
       this.totalPrice = basket.getTotalPrice();
       this.timestamp = LocalDateTime.now(clock);
+      this.basket = basket;
    }
 
    public List<BasketItem> getItems() {

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RecieptTest {
 
@@ -22,5 +23,15 @@ class RecieptTest {
         Receipt receipt = new Receipt(basket, clock);
 
         assertEquals(expectedTimestamp, receipt.getTimestamp());
+    }
+
+    @Test
+    @DisplayName("Konstruktorn avvisar en saknad korg")
+    void constructorRejectsNullBasket() {
+        Basket basket = null;
+        Clock clock = Clock.systemUTC();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Receipt(basket, clock));
     }
 }
