@@ -12,6 +12,13 @@ public class Product{
         if (price == null) {
             throw new IllegalArgumentException("Price must not be null");
         }
+        double amount = price.getAmount();
+        if (!Double.isFinite(amount)) {
+            throw new IllegalArgumentException("Price must be finite");
+        }
+        if (amount < 0) {
+            throw new IllegalArgumentException("Price must not be negative");
+        }
 
         this.name = name;
         this.price = price;

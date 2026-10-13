@@ -461,4 +461,55 @@ class BasketTest {
         assertTrue(basket.isEmpty());
         assertEquals(0, basket.getTotalQuantity());
     }
+
+    @Test
+    @DisplayName("Summan av flera raders antal kan vara precis största heltalet")
+    void getTotalQuantityAcceptsMaximumTotal() {
+        basket.addItem(new BasketItem(milk, Integer.MAX_VALUE - 1));
+        basket.addProduct(bread);
+
+        int total = basket.getTotalQuantity();
+
+        assertEquals(Integer.MAX_VALUE, total);
+    }
+
+    @Test
+    @DisplayName("Overflow i korgens totalantal rapporteras utan att ändra raderna")
+    void getTotalQuantityRejectsOverflow() {
+        BasketItem milkItem = new BasketItem(milk, Integer.MAX_VALUE);
+        BasketItem breadItem = new BasketItem(bread, 1);
+        basket.addItem(milkItem);
+        basket.addItem(breadItem);
+
+        assertThrows(ArithmeticException.class, () -> basket.getTotalQuantity());
+        assertEquals(List.of(milkItem, breadItem), basket.getItems());
+        assertEquals(Integer.MAX_VALUE, milkItem.getQuantity());
+        assertEquals(1, breadItem.getQuantity());
+
+        basket.removeItem(breadItem);
+
+        assertEquals(Integer.MAX_VALUE, basket.getTotalQuantity());
+    }
+
+    @ParameterizedTest(name = "Fylld korg: {0}")
+    @ValueSource(booleans = {false, true})
+    @DisplayName("En saknad lista med rader avvisas utan att ändra korgen")
+    void removeAllRejectsNullList(boolean populated) {
+        if (populated) {
+            basket.addItem(new BasketItem(milk, 2));
+        }
+
+        assertThrows(IllegalArgumentException.class, () -> basket.removeAll(null));
+
+        if (populated) {
+            assertEquals(1, basket.getItems().size());
+            assertSame(milk, basket.getItems().get(0).getProduct());
+            assertEquals(2, basket.getTotalQuantity());
+            assertEquals(25, basket.getTotalPrice().getAmount(), 0.001);
+        } else {
+            assertTrue(basket.isEmpty());
+            assertEquals(0, basket.getTotalQuantity());
+            assertEquals(0, basket.getTotalPrice().getAmount(), 0.001);
+        }
+    }
 }

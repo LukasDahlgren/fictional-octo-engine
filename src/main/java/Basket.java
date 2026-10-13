@@ -54,7 +54,7 @@ public class Basket{
    public int getTotalQuantity(){
       int total = 0;
       for(BasketItem item : items){
-         total += item.getQuantity();
+         total = Math.addExact(total, item.getQuantity());
       }
       return total;
    }
@@ -79,6 +79,9 @@ public class Basket{
    }
 
    public boolean removeAll(List<BasketItem> items){
+      if (items == null) {
+         throw new IllegalArgumentException("Items must not be null");
+      }
       return this.items.removeAll(items);
    }
 
