@@ -34,4 +34,14 @@ class RecieptTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(basket, clock));
     }
+
+    @Test
+    @DisplayName("Konstruktorn avvisar en saknad klocka")
+    void constructorRejectsNullClock() {
+        Basket basket = new Basket();
+        Clock clock = null;
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Receipt(basket, clock));
+    }
 }

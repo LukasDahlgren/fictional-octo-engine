@@ -12,6 +12,9 @@ public class Receipt {
       if (basket == null) {
          throw new IllegalArgumentException("Basket cannot be null");
       }
+      if (clock == null) {
+         throw new IllegalArgumentException("Clock cannot be null");
+      }
 
       this.clock = clock;
       this.totalPrice = basket.getTotalPrice();
