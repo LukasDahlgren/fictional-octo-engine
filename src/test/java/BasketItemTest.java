@@ -3,6 +3,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,7 +25,7 @@ class BasketItemTest {
     }
 
     @ParameterizedTest(name = "{0} stycken")
-    @ValueSource(ints = {1, 2, 5})
+    @ValueSource(ints = {1, 2, 5, Integer.MAX_VALUE})
     @DisplayName("Konstruktorn sparar antalet")
     void constructorSetsQuantity(int quantity) {
         BasketItem item = new BasketItem(product, quantity);
@@ -39,7 +40,7 @@ class BasketItemTest {
     }
 
     @ParameterizedTest(name = "{0} stycken")
-    @ValueSource(ints = {0, -1, -5})
+    @ValueSource(ints = {0, -1, -5, Integer.MIN_VALUE})
     @DisplayName("Konstruktorn avvisar antal under ett")
     void constructorRejectsInvalidQuantity(int quantity) {
         assertThrows(IllegalArgumentException.class, () -> new BasketItem(product, quantity));
@@ -67,7 +68,7 @@ class BasketItemTest {
     }
 
     @ParameterizedTest(name = "Öka med {0}")
-    @ValueSource(ints = {0, -1})
+    @ValueSource(ints = {0, -1, Integer.MIN_VALUE})
     @DisplayName("Ökning under ett avvisas utan att ändra antalet")
     void increaseQuantityRejectsInvalidAmount(int amount) {
         BasketItem item = new BasketItem(product, 2);
@@ -85,14 +86,15 @@ class BasketItemTest {
         assertEquals(Integer.MAX_VALUE, item.getQuantity());
     }
 
-    @Test
+    @ParameterizedTest(name = "{0} stycken före minskningen")
+    @ValueSource(ints = {2, 3, Integer.MAX_VALUE})
     @DisplayName("Antalet minskas med ett")
-    void decreaseQuantityRemovesOne() {
-        BasketItem item = new BasketItem(product, 3);
+    void decreaseQuantityRemovesOne(int quantity) {
+        BasketItem item = new BasketItem(product, quantity);
 
         item.decreaseQuantity();
 
-        assertEquals(2, item.getQuantity());
+        assertEquals(quantity - 1, item.getQuantity());
     }
 
     @Test
@@ -114,5 +116,53 @@ class BasketItemTest {
 
         assertEquals(37.50, total.getAmount(), 0.001);
         assertSame(Sek.SEK, total.getCurrency());
+    }
+
+    @Test
+    @DisplayName("Antalet kan ökas precis till största tillåtna heltalet")
+    void increaseQuantityAcceptsMaximumResult() {
+        BasketItem item = new BasketItem(product, Integer.MAX_VALUE - 2);
+
+        item.increaseQuantity(2);
+
+        assertEquals(Integer.MAX_VALUE, item.getQuantity());
+    }
+
+    @Test
+    @DisplayName("En angiven ökning som ger overflow avvisas utan att ändra raden")
+    void increaseQuantityWithAmountRejectsOverflow() {
+        BasketItem item = new BasketItem(product, 2);
+
+        assertThrows(ArithmeticException.class, () -> item.increaseQuantity(Integer.MAX_VALUE));
+        assertEquals(2, item.getQuantity());
+        assertSame(product, item.getProduct());
+        assertEquals(25, item.getTotalPrice().getAmount(), 0.001);
+    }
+
+    @ParameterizedTest(name = "Styckpris {0}, antal {1}, total {2}")
+    @CsvSource({"0, 3, 0", "0.10, 3, 0.30", "12.50, 1, 12.50"})
+    @DisplayName("Nollpris, decimalpris och en enda enhet ger rätt radpris")
+    void getTotalPriceHandlesPriceAndQuantityClasses(double price, int quantity, double expected) {
+        Product pricedProduct = new Product("Product", new Money(Sek.SEK, price), null);
+        BasketItem item = new BasketItem(pricedProduct, quantity);
+
+        Money total = item.getTotalPrice();
+
+        assertEquals(expected, total.getAmount(), 0.000001);
+        assertSame(Sek.SEK, total.getCurrency());
+    }
+
+    @Test
+    @DisplayName("Radpriset uppdateras när antalet ökas och minskas")
+    void getTotalPriceFollowsQuantityChanges() {
+        BasketItem item = new BasketItem(product, 1);
+
+        item.increaseQuantity(2);
+        Money increasedTotal = item.getTotalPrice();
+        item.decreaseQuantity();
+        Money decreasedTotal = item.getTotalPrice();
+
+        assertEquals(37.50, increasedTotal.getAmount(), 0.001);
+        assertEquals(25, decreasedTotal.getAmount(), 0.001);
     }
 }
