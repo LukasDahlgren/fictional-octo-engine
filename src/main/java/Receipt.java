@@ -1,12 +1,14 @@
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Receipt {
    Clock clock;
    Money totalPrice;
    LocalDateTime timestamp;
-   Basket basket;
+   private final List<ReceiptLine> items;
 
    public Receipt(Basket basket, Clock clock) {
       if (basket == null) {
@@ -19,12 +21,16 @@ public class Receipt {
       this.clock = clock;
       this.totalPrice = basket.getTotalPrice();
       this.timestamp = LocalDateTime.now(clock);
-      this.basket = basket;
+      this.items = new ArrayList<>();
+      for (BasketItem item : basket.getItems()) {
+         Product product = item.getProduct();
+         ReceiptLine line = new ReceiptLine(product.getName(), item.getQuantity(), product.getPrice());
+         items.add(line);
+      }
    }
 
-   public List<BasketItem> getItems() {
-      // TODO: Return the receipt's item snapshot.
-      throw new UnsupportedOperationException("Not implemented yet");
+   public List<ReceiptLine> getItems() {
+      return Collections.unmodifiableList(items);
    }
 
    public Money getTotalPrice() {

@@ -1,7 +1,7 @@
 public class Money{
 
-   private Currency currency;
-   private double amount;
+   private final Currency currency;
+   private final double amount;
 
    public Money(Currency currency, double amount){
       this.currency = currency;
