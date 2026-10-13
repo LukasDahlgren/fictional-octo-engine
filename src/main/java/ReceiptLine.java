@@ -13,9 +13,20 @@ public final class ReceiptLine {
       if (unitPrice == null) {
          throw new IllegalArgumentException("Unit price must not be null");
       }
+      Currency currency = unitPrice.getCurrency();
+      if (currency == null || currency.compareTo(Sek.SEK) != 0) {
+         throw new IllegalArgumentException("Unit price must use SEK");
+      }
+      double amount = unitPrice.getAmount();
+      if (!Double.isFinite(amount)) {
+         throw new IllegalArgumentException("Unit price must be finite");
+      }
+      if (amount < 0) {
+         throw new IllegalArgumentException("Unit price must not be negative");
+      }
       this.productName = productName;
       this.quantity = quantity;
-      this.unitPrice = new Money(unitPrice.getCurrency(), unitPrice.getAmount());
+      this.unitPrice = new Money(currency, amount);
    }
 
    public String getProductName() {
@@ -32,6 +43,9 @@ public final class ReceiptLine {
 
    public Money getTotalPrice() {
       double total = unitPrice.getAmount() * quantity;
+      if (!Double.isFinite(total)) {
+         throw new ArithmeticException("Total price overflow");
+      }
       return new Money(unitPrice.getCurrency(), total);
    }
 }
