@@ -3,6 +3,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,113 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RecieptTest {
+
+    private Clock fixedClock() {
+        return Clock.fixed(Instant.parse("2026-01-15T10:30:00Z"),
+                ZoneId.of("Europe/Stockholm"));
+    }
+
+    @Test
+    @DisplayName("Totalpriset behåller köpets summa och valuta när korgen ändras")
+    void getTotalPriceReturnsPurchaseTotal() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 2.50), null);
+        Product bread = new Product("Bread", new Money(Sek.SEK, 3), null);
+        basket.addItem(new BasketItem(milk, 2));
+        basket.addProduct(bread);
+        Receipt receipt = new Receipt(basket, fixedClock());
+
+        basket.addProduct(milk);
+        basket.removeProduct(bread);
+        Money total = receipt.getTotalPrice();
+
+        assertEquals(8, total.getAmount(), 0.001);
+        assertSame(Sek.SEK, total.getCurrency());
+    }
+
+    @Test
+    @DisplayName("En tom korg ger ett kvitto med noll i totalpris")
+    void getTotalPriceReturnsZeroForEmptyBasket() {
+        Receipt receipt = new Receipt(new Basket(), fixedClock());
+
+        Money total = receipt.getTotalPrice();
+
+        assertEquals(0, total.getAmount(), 0.001);
+        assertSame(Sek.SEK, total.getCurrency());
+    }
+
+    @Test
+    @DisplayName("Kvittot visar köptid, varor i kolumner och totalpris oberoende av datorns språk")
+    void toTextFormatsPurchaseSnapshot() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        Product bread = new Product("Bread", new Money(Sek.SEK, 20), null);
+        basket.addItem(new BasketItem(milk, 2));
+        basket.addProduct(bread);
+        Receipt receipt = new Receipt(basket, fixedClock());
+        basket.addProduct(milk);
+        basket.removeProduct(bread);
+        String expected = "Kvitto\n"
+                + "Datum: 2026-01-15 11:30\n"
+                + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
+                + "Milk" + " ".repeat(21) + "2" + " ".repeat(6) + "12.50"
+                + " ".repeat(6) + "25.00\n"
+                + "Bread" + " ".repeat(20) + "1" + " ".repeat(6) + "20.00"
+                + " ".repeat(6) + "20.00\n"
+                + "Totalt: 45.00 SEK\n";
+        Locale originalLocale = Locale.getDefault();
+        String text;
+
+        try {
+            Locale.setDefault(Locale.forLanguageTag("sv-SE"));
+            text = receipt.toText();
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
+
+        assertEquals(expected, text);
+    }
+
+    @Test
+    @DisplayName("Ett tomt kvitto visar datum och nollsumma i SEK")
+    void toTextFormatsEmptyReceipt() {
+        Receipt receipt = new Receipt(new Basket(), fixedClock());
+        String expected = "Kvitto\n"
+                + "Datum: 2026-01-15 11:30\n"
+                + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
+                + "Totalt: 0.00 SEK\n";
+
+        String text = receipt.toText();
+
+        assertEquals(expected, text);
+    }
+
+    @Test
+    @DisplayName("Kvittot avvisar en korg med annan valuta än SEK")
+    void constructorRejectsNonSekBasket() {
+        Basket basket = new Basket(new Currency("EUR", "€"));
+        Clock clock = fixedClock();
+
+        assertThrows(IllegalArgumentException.class, () -> new Receipt(basket, clock));
+    }
+
+    @Test
+    @DisplayName("Långa varunamn behålls och beloppen ligger i samma kolumn")
+    void toTextWidensNameColumnForLongProductNames() {
+        String longName = "Extra long product name that fits on the receipt";
+        Basket basket = new Basket();
+        basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), null));
+        basket.addProduct(new Product("Milk", new Money(Sek.SEK, 12.50), null));
+        Receipt receipt = new Receipt(basket, fixedClock());
+
+        String[] lines = receipt.toText().split("\n");
+
+        assertTrue(lines[3].startsWith(longName + " "));
+        assertTrue(lines[4].startsWith("Milk "));
+        assertEquals(lines[3].indexOf("12.50"), lines[4].indexOf("12.50"));
+        assertEquals(lines[3].lastIndexOf("12.50"), lines[4].lastIndexOf("12.50"));
+        assertEquals("Totalt: 25.00 SEK", lines[5]);
+    }
 
     @Test
     @DisplayName("Kvittot returnerar varorna och antalen från köpet även om korgen ändras")
