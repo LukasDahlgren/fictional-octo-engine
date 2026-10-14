@@ -52,4 +52,33 @@ class PurchaseTest {
     void constructorRejectsMissingBasket() {
         assertThrows(IllegalArgumentException.class, () -> new Purchase(null));
     }
+
+    @Test
+    @DisplayName("Ett aktivt köp kan pausas utan att ändra korgen")
+    void pauseChangesStatusAndKeepsBasketItems() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        basket.addProduct(milk);
+        Purchase purchase = new Purchase(basket);
+
+        purchase.pause();
+
+        assertEquals(Purchase.Status.PAUSED, purchase.getStatus());
+        assertSame(basket, purchase.getBasket());
+        assertEquals(1, basket.getTotalQuantity());
+        assertSame(milk, basket.getItems().get(0).getProduct());
+    }
+
+    @Test
+    @DisplayName("Ett redan pausat köp kan inte pausas igen")
+    void pauseRejectsAlreadyPausedPurchase() {
+        Purchase purchase = new Purchase();
+        purchase.pause();
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> purchase.pause());
+
+        assertEquals("Only an active purchase can be paused", exception.getMessage());
+        assertEquals(Purchase.Status.PAUSED, purchase.getStatus());
+    }
 }

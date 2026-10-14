@@ -36,8 +36,11 @@ public class Purchase {
     }
 
     public void pause() {
-        // TODO: Allow an active purchase to become paused.
-        throw new UnsupportedOperationException("Pausing a purchase is not implemented yet");
+        if (status != Status.ACTIVE) {
+            throw new IllegalStateException("Only an active purchase can be paused");
+        }
+
+        status = Status.PAUSED;
     }
 
     public void resume() {
