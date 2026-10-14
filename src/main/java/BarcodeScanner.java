@@ -32,6 +32,10 @@ public class BarcodeScanner {
             return new ScanResult(ScanResult.Status.FAILED_READ, null);
         }
 
+        if(ean.isBlank()){
+            return new ScanResult(ScanResult.Status.INVALID_CODE, null);
+        }
+
         throw new UnsupportedOperationException("Scanning is not implemented yet");
     }
 }
