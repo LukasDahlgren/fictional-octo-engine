@@ -6,7 +6,6 @@ public class Purchase {
 
     public enum Status {
         ACTIVE,
-        PAUSED,
         COMPLETED,
         CANCELLED
     }
@@ -35,26 +34,18 @@ public class Purchase {
         return status;
     }
 
-    public void pause() {
-        if (status != Status.ACTIVE) {
-            throw new IllegalStateException("Only an active purchase can be paused");
-        }
-
-        status = Status.PAUSED;
-    }
-
-    public void resume() {
-        // TODO: Allow a paused purchase to become active again.
-        throw new UnsupportedOperationException("Resuming a purchase is not implemented yet");
-    }
-
     public void complete() {
-        // TODO: Validate that the purchase can be completed before changing its status.
-        throw new UnsupportedOperationException("Completing a purchase is not implemented yet");
+        if (status != Status.ACTIVE) {
+            throw new IllegalStateException("Only active purchases can be completed");
+        }
+        status = Status.COMPLETED;
     }
 
     public void cancel() {
-        // TODO: Allow an active or paused purchase to become cancelled.
-        throw new UnsupportedOperationException("Cancelling a purchase is not implemented yet");
+        if (status != Status.ACTIVE) {
+            throw new IllegalStateException("Only active purchases can be cancelled");
+        }
+
+        status = Status.CANCELLED;
     }
 }

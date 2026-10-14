@@ -26,7 +26,6 @@ class CashRegisterTest {
         assertSame(purchase, register.getCurrentPurchase());
         assertEquals(Purchase.Status.ACTIVE, purchase.getStatus());
         assertTrue(purchase.getBasket().isEmpty());
-        assertTrue(register.getPausedPurchases().isEmpty());
     }
 
     @Test
@@ -48,57 +47,98 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett pausat köp sparas med sina varor och frigör kassan")
-    void pausePurchaseStoresPurchaseAndFreesRegister() {
+    @DisplayName("Ett slutfört köp frigör kassan")
+    void completePurchaseCompletesCurrentPurchaseAndFreesRegister() {
         CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
         purchase.getBasket().addProduct(milk);
 
-        register.pausePurchase();
+        register.completePurchase();
 
+        assertEquals(Purchase.Status.COMPLETED, purchase.getStatus());
         assertNull(register.getCurrentPurchase());
-        assertEquals(Purchase.Status.PAUSED, purchase.getStatus());
-        assertEquals(1, register.getPausedPurchases().size());
-        assertSame(purchase, register.getPausedPurchases().get(0));
         assertEquals(1, purchase.getBasket().getTotalQuantity());
         assertSame(milk, purchase.getBasket().getItems().get(0).getProduct());
+
+        Purchase nextPurchase = register.startPurchase();
+
+        assertNotSame(purchase, nextPurchase);
+        assertSame(nextPurchase, register.getCurrentPurchase());
+        assertEquals(Purchase.Status.ACTIVE, nextPurchase.getStatus());
+        assertTrue(nextPurchase.getBasket().isEmpty());
     }
 
     @Test
-    @DisplayName("Kassan kan inte pausa när det saknas ett pågående köp")
-    void pausePurchaseRejectsMissingCurrentPurchase() {
+    @DisplayName("Kassan kan inte slutföra när det saknas ett pågående köp")
+    void completePurchaseRejectsMissingCurrentPurchase() {
         CashRegister register = new CashRegister();
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> register.pausePurchase());
+                () -> register.completePurchase());
 
-        assertEquals("Cannot pause a purchase when there is no current purchase", exception.getMessage());
+        assertEquals("Cannot complete a purchase when there is no current purchase", exception.getMessage());
         assertNull(register.getCurrentPurchase());
-        assertTrue(register.getPausedPurchases().isEmpty());
     }
 
     @Test
-    @DisplayName("Kassan kan starta och pausa fler köp utan att förlora tidigare köp")
-    void startAndPauseAnotherPurchaseKeepsEarlierPausedPurchase() {
+    @DisplayName("Ett misslyckat slutförande behåller kassans pågående köp")
+    void completePurchaseKeepsCurrentPurchaseWhenCompletionFails() {
         CashRegister register = new CashRegister();
-        Purchase firstPurchase = register.startPurchase();
+        Purchase purchase = register.startPurchase();
+        purchase.cancel();
+
+        assertThrows(IllegalStateException.class, () -> register.completePurchase());
+
+        assertSame(purchase, register.getCurrentPurchase());
+        assertEquals(Purchase.Status.CANCELLED, purchase.getStatus());
+    }
+
+    @Test
+    @DisplayName("Ett avbrutet köp frigör kassan")
+    void cancelPurchaseCancelsCurrentPurchaseAndFreesRegister() {
+        CashRegister register = new CashRegister();
+        Purchase purchase = register.startPurchase();
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
-        firstPurchase.getBasket().addProduct(milk);
-        register.pausePurchase();
+        purchase.getBasket().addProduct(milk);
 
-        Purchase secondPurchase = register.startPurchase();
-        register.pausePurchase();
+        register.cancelPurchase();
 
-        assertNotSame(firstPurchase, secondPurchase);
-        assertNotSame(firstPurchase.getBasket(), secondPurchase.getBasket());
+        assertEquals(Purchase.Status.CANCELLED, purchase.getStatus());
         assertNull(register.getCurrentPurchase());
-        assertEquals(2, register.getPausedPurchases().size());
-        assertSame(firstPurchase, register.getPausedPurchases().get(0));
-        assertSame(secondPurchase, register.getPausedPurchases().get(1));
-        assertEquals(Purchase.Status.PAUSED, firstPurchase.getStatus());
-        assertEquals(Purchase.Status.PAUSED, secondPurchase.getStatus());
-        assertEquals(1, firstPurchase.getBasket().getTotalQuantity());
-        assertTrue(secondPurchase.getBasket().isEmpty());
+        assertEquals(1, purchase.getBasket().getTotalQuantity());
+        assertSame(milk, purchase.getBasket().getItems().get(0).getProduct());
+
+        Purchase nextPurchase = register.startPurchase();
+
+        assertNotSame(purchase, nextPurchase);
+        assertSame(nextPurchase, register.getCurrentPurchase());
+        assertEquals(Purchase.Status.ACTIVE, nextPurchase.getStatus());
+        assertTrue(nextPurchase.getBasket().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Kassan kan inte avbryta när det saknas ett pågående köp")
+    void cancelPurchaseRejectsMissingCurrentPurchase() {
+        CashRegister register = new CashRegister();
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> register.cancelPurchase());
+
+        assertEquals("Cannot cancel a purchase when there is no current purchase", exception.getMessage());
+        assertNull(register.getCurrentPurchase());
+    }
+
+    @Test
+    @DisplayName("Ett misslyckat avbrytande behåller kassans pågående köp")
+    void cancelPurchaseKeepsCurrentPurchaseWhenCancellationFails() {
+        CashRegister register = new CashRegister();
+        Purchase purchase = register.startPurchase();
+        purchase.complete();
+
+        assertThrows(IllegalStateException.class, () -> register.cancelPurchase());
+
+        assertSame(purchase, register.getCurrentPurchase());
+        assertEquals(Purchase.Status.COMPLETED, purchase.getStatus());
     }
 }

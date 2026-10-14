@@ -7,6 +7,8 @@ import kassasystem.product.Product;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -54,31 +56,70 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett aktivt köp kan pausas utan att ändra korgen")
-    void pauseChangesStatusAndKeepsBasketItems() {
+    @DisplayName("Ett aktivt köp slutförs med samma korg och varor")
+    void completeChangesStatusAndKeepsBasketItems() {
         Basket basket = new Basket();
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
         basket.addProduct(milk);
         Purchase purchase = new Purchase(basket);
 
-        purchase.pause();
+        purchase.complete();
 
-        assertEquals(Purchase.Status.PAUSED, purchase.getStatus());
+        assertEquals(Purchase.Status.COMPLETED, purchase.getStatus());
         assertSame(basket, purchase.getBasket());
         assertEquals(1, basket.getTotalQuantity());
         assertSame(milk, basket.getItems().get(0).getProduct());
     }
 
-    @Test
-    @DisplayName("Ett redan pausat köp kan inte pausas igen")
-    void pauseRejectsAlreadyPausedPurchase() {
-        Purchase purchase = new Purchase();
-        purchase.pause();
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = Purchase.Status.class, names = {"COMPLETED", "CANCELLED"})
+    @DisplayName("Bara aktiva köp kan slutföras")
+    void completeRejectsInactivePurchase(Purchase.Status status) {
+        Purchase purchase = createPurchaseWithStatus(status);
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> purchase.pause());
+                () -> purchase.complete());
 
-        assertEquals("Only an active purchase can be paused", exception.getMessage());
-        assertEquals(Purchase.Status.PAUSED, purchase.getStatus());
+        assertEquals("Only active purchases can be completed", exception.getMessage());
+        assertEquals(status, purchase.getStatus());
+    }
+
+    @Test
+    @DisplayName("Ett aktivt köp avbryts med samma korg och varor")
+    void cancelChangesStatusAndKeepsBasketItems() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        basket.addProduct(milk);
+        Purchase purchase = new Purchase(basket);
+
+        purchase.cancel();
+
+        assertEquals(Purchase.Status.CANCELLED, purchase.getStatus());
+        assertSame(basket, purchase.getBasket());
+        assertEquals(1, basket.getTotalQuantity());
+        assertSame(milk, basket.getItems().get(0).getProduct());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = Purchase.Status.class, names = {"COMPLETED", "CANCELLED"})
+    @DisplayName("Slutförda och avbrutna köp kan inte avbrytas")
+    void cancelRejectsFinishedPurchase(Purchase.Status status) {
+        Purchase purchase = createPurchaseWithStatus(status);
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> purchase.cancel());
+
+        assertEquals("Only active purchases can be cancelled", exception.getMessage());
+        assertEquals(status, purchase.getStatus());
+    }
+
+    private Purchase createPurchaseWithStatus(Purchase.Status status) {
+        Purchase purchase = new Purchase();
+        if (status == Purchase.Status.COMPLETED) {
+            purchase.complete();
+        } else if (status == Purchase.Status.CANCELLED) {
+            purchase.cancel();
+        }
+        return purchase;
     }
 }

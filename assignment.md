@@ -86,26 +86,23 @@ inte ger kontant växel. Bestäm gemensamt vilka återbetalningsregler som gäll
 
 ### Lukas – Kassaflöde, kvitton och uppföljning
 
-**Ansvar:** Kvitton, Kassan, Scanning, Åldersgränser, Personal,
-Parkera köp, Loggning och Rapporter.
+**Ansvar:** Kvitton, Kassan, Scanning.
+
+skipped: Åldersgränser, Loggning och Rapporter, personal, Parkera köp
 
 **Varför kombinationen passar:** Kassan samordnar köpet från registrering
-av varor till färdigt kvitto. Scanning, ålderskontroll och parkerade köp
-är delar av detta flöde. Personal kopplas till köp och kassahändelser,
-medan loggning och rapporter gör samma händelser möjliga att följa upp.
+av varor till färdigt kvitto. Scanning är en del av detta flöde.
 Kassan ska anropa de andra personernas funktioner, och kvittot ska redovisa
 resultatet utan att ta över deras beräkningsregler.
 
 **Börja med:** Ett litet kassaflöde och Kvitton som använder de andra
-områdena. Lägg sedan till Scanning med ett interface och en test double,
-samt Åldersgränser. Välj därefter exempelvis Parkera köp eller en enkel
-försäljningsrapport; ett komplett användargränssnitt behövs inte.
+områdena. Lägg sedan till Scanning med ett interface och en test double.
+Ett komplett användargränssnitt behövs inte.
 
 **Samarbete och tester:** Detta område kopplar ihop alla fyra personers kod.
 Alla hjälper därför till med integrationen. Testa misslyckad scanning,
-åldersgränsens gränsvärden, upprepade tillägg och borttagningar av samma
-vara samt kvittoformat och datum med en kontrollerbar klocka. Om Personal
-väljs bör det ingå beteende, till exempel försäljningsstatistik per person.
+upprepade tillägg och borttagningar av samma vara samt kvittoformat och
+datum med en kontrollerbar klocka.
 
 ### Gemensamma överenskommelser
 
