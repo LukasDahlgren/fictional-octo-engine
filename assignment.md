@@ -21,7 +21,7 @@ Arbetsmängden beror på hur långt varje funktion utvecklas, så börja med den
 föreslagna första delen och välj sedan utökningar tillsammans.
 
 Utveckla först en enkel version av **Pengar** och **Varor** tillsammans, som
-uppgiften föreslår. Bestäm hur belopp, avrundning, antal och varuidentitet ska
+uppgiften föreslår. Bestäm hur belop    p, avrundning, antal och varuidentitet ska
 representeras. Därefter ansvarar person 3 för Pengar och person 1 för Varor.
 
 ### Simon – Varor och lager
