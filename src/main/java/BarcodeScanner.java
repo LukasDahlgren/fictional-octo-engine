@@ -26,9 +26,12 @@ public class BarcodeScanner {
     }
 
     public ScanResult scan() {
-        // TODO: Read a code and handle failed reads or blank codes.
-        // TODO: Look up the product and handle unknown products.
-        // TODO: Return a ScanResult with the status and matching product.
+        String ean = codeReader.readCode();
+
+        if(ean == null){
+            return new ScanResult(ScanResult.Status.FAILED_READ, null);
+        }
+
         throw new UnsupportedOperationException("Scanning is not implemented yet");
     }
 }
