@@ -9,13 +9,13 @@ class BarcodeScannerTest {
     @DisplayName("En oläsbar kod ger FAILED_READ utan att söka efter en vara")
     void scanReturnsFailedReadWhenNoCodeIsRead() {
         UnreadableCodeReader codeReader = new UnreadableCodeReader();
-        BarcodeScanner.ProductLookup productLookup = new BarcodeScanner.ProductLookup() {
+        ProductCatalog productCatalog = new ProductCatalog() {
             @Override
-            public Product findByCode(String code) {
+            public Product findByEAn(EAN ean) {
                 throw new AssertionError("Product lookup must not be called when no code is read");
             }
         };
-        BarcodeScanner scanner = new BarcodeScanner(codeReader, productLookup);
+        BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
 
         ScanResult result = scanner.scan();
 
@@ -28,13 +28,13 @@ class BarcodeScannerTest {
     @DisplayName("SC-04: En tom kod ger INVALID_CODE utan att söka efter en vara")
     void scanReturnsInvalidCodeWhenCodeIsEmpty() {
         EmptyCodeReader codeReader = new EmptyCodeReader();
-        BarcodeScanner.ProductLookup productLookup = new BarcodeScanner.ProductLookup() {
+        ProductCatalog productCatalog = new ProductCatalog() {
             @Override
-            public Product findByCode(String code) {
+            public Product findByEAn(EAN ean) {
                 throw new AssertionError("Product lookup must not be called when the code is empty");
             }
         };
-        BarcodeScanner scanner = new BarcodeScanner(codeReader, productLookup);
+        BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
 
         ScanResult result = scanner.scan();
 
@@ -46,34 +46,36 @@ class BarcodeScannerTest {
     @Test
     @DisplayName("SC-02: En okänd kod ger UNKNOWN_PRODUCT utan vara")
     void scanReturnsUnknownProductWhenLookupFindsNoProduct() {
-        FixedCodeReader codeReader = new FixedCodeReader("unknown");
-        FixedProductLookup productLookup = new FixedProductLookup(null);
-        BarcodeScanner scanner = new BarcodeScanner(codeReader, productLookup);
+        FixedCodeReader codeReader = new FixedCodeReader("4006381333931");
+        FixedProductCatalog productCatalog = new FixedProductCatalog(null);
+        BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
 
         ScanResult result = scanner.scan();
 
         assertEquals(ScanResult.Status.UNKNOWN_PRODUCT, result.getStatus());
         assertNull(result.getProduct());
         assertEquals(1, codeReader.readCalls);
-        assertEquals(1, productLookup.lookupCalls);
-        assertEquals("unknown", productLookup.receivedCode);
+        assertEquals(1, productCatalog.lookupCalls);
+        assertNotNull(productCatalog.receivedEan);
+        assertEquals("4006381333931", productCatalog.receivedEan.getCode());
     }
 
     @Test
     @DisplayName("SC-01: En matchande kod ger FOUND och exakt samma vara")
     void scanReturnsFoundWithMatchingProduct() {
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
-        FixedCodeReader codeReader = new FixedCodeReader("000123");
-        FixedProductLookup productLookup = new FixedProductLookup(milk);
-        BarcodeScanner scanner = new BarcodeScanner(codeReader, productLookup);
+        FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
+        FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
+        BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
 
         ScanResult result = scanner.scan();
 
         assertEquals(ScanResult.Status.FOUND, result.getStatus());
         assertSame(milk, result.getProduct());
         assertEquals(1, codeReader.readCalls);
-        assertEquals(1, productLookup.lookupCalls);
-        assertEquals("000123", productLookup.receivedCode);
+        assertEquals(1, productCatalog.lookupCalls);
+        assertNotNull(productCatalog.receivedEan);
+        assertEquals("0123456789012", productCatalog.receivedEan.getCode());
     }
 
     private static class FixedCodeReader implements BarcodeScanner.CodeReader {
@@ -91,19 +93,19 @@ class BarcodeScannerTest {
         }
     }
 
-    private static class FixedProductLookup implements BarcodeScanner.ProductLookup {
+    private static class FixedProductCatalog extends ProductCatalog {
         private final Product product;
         private int lookupCalls;
-        private String receivedCode;
+        private EAN receivedEan;
 
-        private FixedProductLookup(Product product) {
+        private FixedProductCatalog(Product product) {
             this.product = product;
         }
 
         @Override
-        public Product findByCode(String code) {
+        public Product findByEAn(EAN ean) {
             lookupCalls++;
-            receivedCode = code;
+            receivedEan = ean;
             return product;
         }
     }
