@@ -1,3 +1,7 @@
+package kassasystem.product;
+
+import kassasystem.money.Money;
+
 public class Product{
 
     private final String name;

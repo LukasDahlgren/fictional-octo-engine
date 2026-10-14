@@ -1,3 +1,8 @@
+package kassasystem.basket;
+
+import kassasystem.money.Money;
+import kassasystem.product.Product;
+
 public class BasketItem{
    private final Product product;
    private int quantity;

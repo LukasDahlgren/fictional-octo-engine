@@ -1,3 +1,11 @@
+package kassasystem.receipt;
+
+import kassasystem.basket.Basket;
+import kassasystem.basket.BasketItem;
+import kassasystem.money.Money;
+import kassasystem.money.Sek;
+import kassasystem.product.Product;
+
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

@@ -1,9 +1,11 @@
+package kassasystem.money;
+
 public class Currency implements Comparable<Currency>{
 
    private String name;
    private String symbol;
 
-   Currency(String name, String symbol){
+   public Currency(String name, String symbol){
       this.name = name;
       this.symbol = symbol;
    }

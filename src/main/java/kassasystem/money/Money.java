@@ -1,3 +1,5 @@
+package kassasystem.money;
+
 public class Money{
 
    private final Currency currency;

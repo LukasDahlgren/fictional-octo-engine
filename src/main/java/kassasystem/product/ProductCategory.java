@@ -1,3 +1,5 @@
+package kassasystem.product;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;

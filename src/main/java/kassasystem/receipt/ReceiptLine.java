@@ -1,3 +1,10 @@
+package kassasystem.receipt;
+
+import kassasystem.money.Currency;
+import kassasystem.money.Money;
+import kassasystem.money.Sek;
+import kassasystem.product.Product;
+
 public final class ReceiptLine {
    private final String productName;
    private final int quantity;

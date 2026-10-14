@@ -1,3 +1,10 @@
+package kassasystem.basket;
+
+import kassasystem.money.Currency;
+import kassasystem.money.Money;
+import kassasystem.money.Sek;
+import kassasystem.product.Product;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

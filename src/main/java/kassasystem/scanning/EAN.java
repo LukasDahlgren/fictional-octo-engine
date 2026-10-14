@@ -1,3 +1,5 @@
+package kassasystem.scanning;
+
 public class EAN {
 
     private final String code;

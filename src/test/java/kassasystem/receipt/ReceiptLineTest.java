@@ -1,3 +1,10 @@
+package kassasystem.receipt;
+
+import kassasystem.money.Currency;
+import kassasystem.money.Money;
+import kassasystem.money.Sek;
+import kassasystem.product.Product;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

@@ -1,3 +1,10 @@
+package kassasystem.scanning;
+
+import kassasystem.money.Money;
+import kassasystem.money.Sek;
+import kassasystem.product.Product;
+import kassasystem.product.ProductCatalog;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

@@ -1,3 +1,7 @@
+package kassasystem.scanning;
+
+import kassasystem.product.Product;
+
 public class ScanResult {
 
     public enum Status {

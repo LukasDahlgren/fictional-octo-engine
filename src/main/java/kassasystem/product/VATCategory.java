@@ -1,3 +1,5 @@
+package kassasystem.product;
+
 public enum VATCategory {
     SIX_PERCENT(0.06),
     TWELVE_PERCENT(0.12),

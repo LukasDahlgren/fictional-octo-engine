@@ -1,3 +1,5 @@
+package kassasystem.customer;
+
 import java.time.LocalDate;
 
 public class Membership {
