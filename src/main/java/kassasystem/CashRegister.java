@@ -24,6 +24,11 @@ public class CashRegister {
 
     public ScanResult scanProduct(BarcodeScanner scanner) {
         ScanResult result = scanner.scan();
+
+        if(result.getStatus() == ScanResult.Status.FAILED_READ){
+            return result;
+        }
+
         currentPurchase.getBasket().addProduct(result.getProduct());
         return result;
     }
