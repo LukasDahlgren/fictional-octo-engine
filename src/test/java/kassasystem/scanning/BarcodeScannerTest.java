@@ -4,6 +4,8 @@ import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
 import kassasystem.product.ProductCatalog;
+import kassasystem.testdoubles.FixedCodeReader;
+import kassasystem.testdoubles.FixedProductCatalog;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +19,7 @@ class BarcodeScannerTest {
     @Test
     @DisplayName("En oläsbar kod ger FAILED_READ utan att söka efter en vara")
     void scanReturnsFailedReadWhenNoCodeIsRead() {
-        UnreadableCodeReader codeReader = new UnreadableCodeReader();
+        FixedCodeReader codeReader = new FixedCodeReader(null);
         ProductCatalog productCatalog = new ProductCatalog() {
             @Override
             public Product findByEAn(EAN ean) {
@@ -30,7 +32,7 @@ class BarcodeScannerTest {
 
         assertEquals(ScanResult.Status.FAILED_READ, result.getStatus());
         assertNull(result.getProduct());
-        assertEquals(1, codeReader.readCalls);
+        assertEquals(1, codeReader.getReadCalls());
     }
 
     @ParameterizedTest(name = "Ogiltig kod: [{0}]")
@@ -48,8 +50,8 @@ class BarcodeScannerTest {
 
         assertEquals(ScanResult.Status.INVALID_CODE, result.getStatus());
         assertNull(result.getProduct());
-        assertEquals(1, codeReader.readCalls);
-        assertEquals(0, productCatalog.lookupCalls);
+        assertEquals(1, codeReader.getReadCalls());
+        assertEquals(0, productCatalog.getLookupCalls());
     }
 
     @Test
@@ -63,10 +65,10 @@ class BarcodeScannerTest {
 
         assertEquals(ScanResult.Status.UNKNOWN_PRODUCT, result.getStatus());
         assertNull(result.getProduct());
-        assertEquals(1, codeReader.readCalls);
-        assertEquals(1, productCatalog.lookupCalls);
-        assertNotNull(productCatalog.receivedEan);
-        assertEquals("4006381333931", productCatalog.receivedEan.getCode());
+        assertEquals(1, codeReader.getReadCalls());
+        assertEquals(1, productCatalog.getLookupCalls());
+        assertNotNull(productCatalog.getReceivedEan());
+        assertEquals("4006381333931", productCatalog.getReceivedEan().getCode());
     }
 
     @Test
@@ -82,10 +84,10 @@ class BarcodeScannerTest {
 
         assertEquals(ScanResult.Status.FOUND, result.getStatus());
         assertSame(milk, result.getProduct());
-        assertEquals(1, codeReader.readCalls);
-        assertEquals(1, productCatalog.lookupCalls);
-        assertNotNull(productCatalog.receivedEan);
-        assertEquals("0123456789012", productCatalog.receivedEan.getCode());
+        assertEquals(1, codeReader.getReadCalls());
+        assertEquals(1, productCatalog.getLookupCalls());
+        assertNotNull(productCatalog.getReceivedEan());
+        assertEquals("0123456789012", productCatalog.getReceivedEan().getCode());
     }
 
     @Test
@@ -105,7 +107,7 @@ class BarcodeScannerTest {
                 () -> scanner.scan());
 
         assertSame(failure, exception);
-        assertEquals(0, productCatalog.lookupCalls);
+        assertEquals(0, productCatalog.getLookupCalls());
     }
 
     @Test
@@ -125,48 +127,6 @@ class BarcodeScannerTest {
                 () -> scanner.scan());
 
         assertSame(failure, exception);
-        assertEquals(1, codeReader.readCalls);
-    }
-
-    private static class FixedCodeReader implements BarcodeScanner.CodeReader {
-        private final String code;
-        private int readCalls;
-
-        private FixedCodeReader(String code) {
-            this.code = code;
-        }
-
-        @Override
-        public String readCode() {
-            readCalls++;
-            return code;
-        }
-    }
-
-    private static class FixedProductCatalog extends ProductCatalog {
-        private final Product product;
-        private int lookupCalls;
-        private EAN receivedEan;
-
-        private FixedProductCatalog(Product product) {
-            this.product = product;
-        }
-
-        @Override
-        public Product findByEAn(EAN ean) {
-            lookupCalls++;
-            receivedEan = ean;
-            return product;
-        }
-    }
-
-    private static class UnreadableCodeReader implements BarcodeScanner.CodeReader {
-        private int readCalls;
-
-        @Override
-        public String readCode() {
-            readCalls++;
-            return null;
-        }
+        assertEquals(1, codeReader.getReadCalls());
     }
 }
