@@ -1,6 +1,8 @@
 package kassasystem;
 
 import kassasystem.basket.Basket;
+import kassasystem.scanning.BarcodeScanner;
+import kassasystem.scanning.ScanResult;
 
 public class CashRegister {
 
@@ -18,6 +20,12 @@ public class CashRegister {
 
         currentPurchase = new Purchase(new Basket());
         return currentPurchase;
+    }
+
+    public ScanResult scanProduct(BarcodeScanner scanner) {
+        ScanResult result = scanner.scan();
+        currentPurchase.getBasket().addProduct(result.getProduct());
+        return result;
     }
 
     public void completePurchase() {
