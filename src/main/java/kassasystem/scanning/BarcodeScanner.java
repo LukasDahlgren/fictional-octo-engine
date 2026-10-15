@@ -28,23 +28,21 @@ public class BarcodeScanner {
     public ScanResult scan() {
         String eanString = codeReader.readCode();
 
-        if(eanString == null){
+        if (eanString == null) {
             return new ScanResult(ScanResult.Status.FAILED_READ, null);
         }
 
         EAN ean;
 
-        try{
+        try {
             ean = new EAN(eanString);
-        }
-        catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException exception) {
             return new ScanResult(ScanResult.Status.INVALID_CODE, null);
-
         }
 
         Product product = productCatalog.findByEAn(ean);
 
-        if(product==null){
+        if (product == null) {
             return new ScanResult(ScanResult.Status.UNKNOWN_PRODUCT, null);
         }
 
