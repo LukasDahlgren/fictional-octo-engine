@@ -25,15 +25,7 @@ public class CashRegister {
     public ScanResult scanProduct(BarcodeScanner scanner) {
         ScanResult result = scanner.scan();
 
-        if(result.getStatus() == ScanResult.Status.FAILED_READ){
-            return result;
-        }
-
-        if(result.getStatus() == ScanResult.Status.UNKNOWN_PRODUCT){
-            return result;
-        }
-
-        if(result.getStatus() == ScanResult.Status.INVALID_CODE){
+        if(result.getStatus() != ScanResult.Status.FOUND){
             return result;
         }
 
