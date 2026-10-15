@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class CashRegisterScanningTest {
@@ -42,5 +43,33 @@ class CashRegisterScanningTest {
         assertEquals(1, basket.getItems().get(0).getQuantity());
         assertEquals(12.50, basket.getTotalPrice().getAmount(), 0.001);
         assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency());
+    }
+
+    @Test
+    @DisplayName("En oläsbar kod lämnar det pågående köpet och dess varukorg oförändrade")
+    void scanProductKeepsBasketUnchangedWhenCodeCannotBeRead() {
+        EAN ean = new EAN("0123456789012");
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        FixedCodeReader codeReader = new FixedCodeReader(null);
+        FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
+        BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
+        CashRegister register = new CashRegister();
+        Purchase purchase = register.startPurchase();
+        Basket basket = purchase.getBasket();
+        basket.addProduct(milk);
+
+        ScanResult result = register.scanProduct(scanner);
+
+        assertEquals(ScanResult.Status.FAILED_READ, result.getStatus());
+        assertNull(result.getProduct());
+        assertSame(purchase, register.getCurrentPurchase());
+        assertEquals(Purchase.Status.ACTIVE, purchase.getStatus());
+        assertEquals(1, basket.getItems().size());
+        assertSame(milk, basket.getItems().get(0).getProduct());
+        assertEquals(1, basket.getItems().get(0).getQuantity());
+        assertEquals(12.50, basket.getTotalPrice().getAmount(), 0.001);
+        assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency());
+        assertEquals(1, codeReader.getReadCalls());
+        assertEquals(0, productCatalog.getLookupCalls());
     }
 }
