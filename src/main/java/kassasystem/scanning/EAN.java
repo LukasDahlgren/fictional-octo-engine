@@ -36,7 +36,7 @@ public class EAN {
         return code;
     }
 
-    private int calculateCheckDigit(String firstTwelveDigits) {
+    static int calculateCheckDigit(String firstTwelveDigits) {
         int sum = 0;
 
         for (int i = 0; i <firstTwelveDigits.length(); i++) {
