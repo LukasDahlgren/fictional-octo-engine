@@ -23,6 +23,14 @@ public class CashRegister {
     }
 
     public ScanResult scanProduct(BarcodeScanner scanner) {
+        if(currentPurchase == null){
+            throw new IllegalStateException("Utan ett pågående köp kan en vara inte scannas");
+        }
+
+        if(currentPurchase.getStatus() != Purchase.Status.ACTIVE){
+            throw new IllegalStateException("Varor kan endast scannas till ett aktivt köp");
+        }
+
         ScanResult result = scanner.scan();
 
         if(result.getStatus() != ScanResult.Status.FOUND){

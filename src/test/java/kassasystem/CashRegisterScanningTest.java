@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CashRegisterScanningTest {
 
@@ -129,5 +130,49 @@ class CashRegisterScanningTest {
         assertEquals(1, productCatalog.getLookupCalls());
         assertNotNull(productCatalog.getReceivedEan());
         assertEquals("4006381333931", productCatalog.getReceivedEan().getCode());
+    }
+
+    @Test
+    @DisplayName("Utan ett pågående köp avvisas scanning innan kodläsaren används")
+    void scanProductRejectsMissingCurrentPurchaseWithoutReadingCode() {
+        EAN ean = new EAN("0123456789012");
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
+        FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
+        BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
+        CashRegister register = new CashRegister();
+
+        assertThrows(IllegalStateException.class, () -> register.scanProduct(scanner));
+
+        assertEquals(0, codeReader.getReadCalls());
+        assertEquals(0, productCatalog.getLookupCalls());
+        assertNull(register.getCurrentPurchase());
+    }
+
+    @Test
+    @DisplayName("Ett slutfört köp avvisar scanning innan kodläsaren används och behåller varukorgen")
+    void scanProductRejectsCompletedPurchaseWithoutReadingCode() {
+        EAN ean = new EAN("0123456789012");
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
+        FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
+        BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
+        CashRegister register = new CashRegister();
+        Purchase purchase = register.startPurchase();
+        Basket basket = purchase.getBasket();
+        basket.addProduct(milk);
+        purchase.complete();
+
+        assertThrows(IllegalStateException.class, () -> register.scanProduct(scanner));
+
+        assertEquals(0, codeReader.getReadCalls());
+        assertEquals(0, productCatalog.getLookupCalls());
+        assertSame(purchase, register.getCurrentPurchase());
+        assertEquals(Purchase.Status.COMPLETED, purchase.getStatus());
+        assertEquals(1, basket.getItems().size());
+        assertSame(milk, basket.getItems().get(0).getProduct());
+        assertEquals(1, basket.getItems().get(0).getQuantity());
+        assertEquals(12.50, basket.getTotalPrice().getAmount(), 0.001);
+        assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency());
     }
 }
