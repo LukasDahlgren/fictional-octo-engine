@@ -25,6 +25,8 @@ public class CashRegister {
             throw new IllegalStateException("Cannot complete a purchase when there is no current purchase");
         }
 
+        //Här borde någon form av "betalning" ske.
+        //
         currentPurchase.complete();
         currentPurchase = null;
     }
