@@ -29,6 +29,14 @@ public class CashRegister {
             return result;
         }
 
+        if(result.getStatus() == ScanResult.Status.UNKNOWN_PRODUCT){
+            return result;
+        }
+
+        if(result.getStatus() == ScanResult.Status.INVALID_CODE){
+            return result;
+        }
+
         currentPurchase.getBasket().addProduct(result.getProduct());
         return result;
     }
