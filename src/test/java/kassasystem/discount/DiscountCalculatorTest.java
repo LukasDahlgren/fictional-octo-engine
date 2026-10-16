@@ -100,4 +100,30 @@ class DiscountCalculatorTest {
 
         assertEquals(90.0, finalPrice.getAmount(), 0.001);
     }
+    @Test
+    @DisplayName("Erbjudandet väljs när det är större än medlemsrabatten")
+    void offerDiscountIsSelectedWhenItIsGreater() {
+        LocalDate purchaseDate = LocalDate.of(2026, 10, 15);
+        Membership membership = new Membership(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31)
+        );
+        Customer customer = new Customer("C002", "Medlem", membership);
+        Money originalPrice = new Money(Sek.SEK, 100.0);
+        DiscountOffer offer = new DiscountOffer(
+                20.0,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31)
+        );
+        DiscountCalculator calculator = new DiscountCalculator();
+
+        Money finalPrice = calculator.calculatePrice(
+                originalPrice,
+                customer,
+                purchaseDate,
+                offer
+        );
+
+        assertEquals(80.0, finalPrice.getAmount(), 0.001);
+    }
 }
