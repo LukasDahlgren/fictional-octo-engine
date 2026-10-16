@@ -51,4 +51,27 @@ class DiscountCalculatorTest {
         assertEquals(90.0, finalPrice.getAmount(), 0.001);
         assertSame(Sek.SEK, finalPrice.getCurrency());
     }
+    @Test
+    @DisplayName("Aktivt erbjudande ger rabatt till kund utan medlemskap")
+    void activeOfferDiscountIsAppliedToNonMember() {
+        Money originalPrice = new Money(Sek.SEK, 100.0);
+        Customer customer = new Customer("C001", "Testkund");
+        LocalDate purchaseDate = LocalDate.of(2026, 10, 15);
+        DiscountOffer offer = new DiscountOffer(
+                20.0,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31)
+        );
+        DiscountCalculator calculator = new DiscountCalculator();
+
+        Money finalPrice = calculator.calculatePrice(
+                originalPrice,
+                customer,
+                purchaseDate,
+                offer
+        );
+
+        assertEquals(80.0, finalPrice.getAmount(), 0.001);
+        assertSame(originalPrice.getCurrency(), finalPrice.getCurrency());
+    }
 }
