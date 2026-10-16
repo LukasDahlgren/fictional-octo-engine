@@ -12,6 +12,15 @@ public class DiscountCalculator {
             Customer customer,
             LocalDate purchaseDate
     ) {
+        if (customer.hasActiveMembershipOn(purchaseDate)) {
+            double discountedAmount = originalPrice.getAmount() * 0.90;
+
+            return new Money(
+                    originalPrice.getCurrency(),
+                    discountedAmount
+            );
+        }
+
         return originalPrice;
     }
 }
