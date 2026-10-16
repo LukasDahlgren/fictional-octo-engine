@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public class DiscountOffer {
 
+    private final double discountPercentage;
     private final LocalDate startDate;
     private final LocalDate endDate;
 
@@ -12,8 +13,13 @@ public class DiscountOffer {
             LocalDate startDate,
             LocalDate endDate
     ) {
+        this.discountPercentage = discountPercentage;
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    public double getDiscountPercentage() {
+        return discountPercentage;
     }
 
     public boolean isActiveOn(LocalDate date) {
