@@ -7,6 +7,8 @@ import java.time.LocalDate;
 
 public class DiscountCalculator {
 
+    private static final double MEMBERSHIP_DISCOUNT_PERCENTAGE = 10.0;
+
     public Money calculatePrice(
             Money originalPrice,
             Customer customer,
@@ -21,26 +23,32 @@ public class DiscountCalculator {
             LocalDate purchaseDate,
             DiscountOffer offer
     ) {
-        if (offer != null && offer.isActiveOn(purchaseDate)) {
-            double discountPercentage = offer.getDiscountPercentage();
-            double discountMultiplier = 1.0 - discountPercentage / 100.0;
-            double discountedAmount = originalPrice.getAmount() * discountMultiplier;
-
-            return new Money(
-                    originalPrice.getCurrency(),
-                    discountedAmount
-            );
-        }
+        double greatestDiscountPercentage = 0.0;
 
         if (customer.hasActiveMembershipOn(purchaseDate)) {
-            double discountedAmount = originalPrice.getAmount() * 0.90;
-
-            return new Money(
-                    originalPrice.getCurrency(),
-                    discountedAmount
-            );
+            greatestDiscountPercentage = MEMBERSHIP_DISCOUNT_PERCENTAGE;
         }
 
-        return originalPrice;
+        if (offer != null && offer.isActiveOn(purchaseDate)) {
+            double offerDiscountPercentage = offer.getDiscountPercentage();
+
+            if (offerDiscountPercentage > greatestDiscountPercentage) {
+                greatestDiscountPercentage = offerDiscountPercentage;
+            }
+        }
+
+        if (greatestDiscountPercentage == 0.0) {
+            return originalPrice;
+        }
+
+        double discountMultiplier =
+                1.0 - greatestDiscountPercentage / 100.0;
+        double discountedAmount =
+                originalPrice.getAmount() * discountMultiplier;
+
+        return new Money(
+                originalPrice.getCurrency(),
+                discountedAmount
+        );
     }
 }
