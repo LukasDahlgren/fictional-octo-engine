@@ -73,4 +73,15 @@ class DiscountOfferTest {
 
         assertEquals(20.0, discountPercentage, 0.001);
     }
+    @Test
+    @DisplayName("Erbjudandet är aktivt på slutdatumet")
+    void offerIsActiveOnEndDate() {
+        LocalDate startDate = LocalDate.of(2026, 10, 1);
+        LocalDate endDate = LocalDate.of(2026, 10, 31);
+        DiscountOffer offer = new DiscountOffer(20.0, startDate, endDate);
+
+        boolean active = offer.isActiveOn(endDate);
+
+        assertTrue(active);
+    }
 }
