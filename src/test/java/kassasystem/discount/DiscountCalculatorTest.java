@@ -1,6 +1,7 @@
 package kassasystem.discount;
 
 import kassasystem.customer.Customer;
+import kassasystem.customer.Membership;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +29,26 @@ class DiscountCalculatorTest {
         );
 
         assertEquals(100.0, finalPrice.getAmount(), 0.001);
+        assertSame(Sek.SEK, finalPrice.getCurrency());
+    }
+    @Test
+    @DisplayName("Kund med aktivt medlemskap får tio procent rabatt")
+    void customerWithActiveMembershipReceivesTenPercentDiscount() {
+        LocalDate startDate = LocalDate.of(2026, 1, 1);
+        LocalDate endDate = LocalDate.of(2026, 12, 31);
+        Membership membership = new Membership(startDate, endDate);
+        Customer customer = new Customer("C002", "Medlem", membership);
+        Money originalPrice = new Money(Sek.SEK, 100.0);
+        DiscountCalculator calculator = new DiscountCalculator();
+        LocalDate purchaseDate = LocalDate.of(2026, 10, 16);
+
+        Money finalPrice = calculator.calculatePrice(
+                originalPrice,
+                customer,
+                purchaseDate
+        );
+
+        assertEquals(90.0, finalPrice.getAmount(), 0.001);
         assertSame(Sek.SEK, finalPrice.getCurrency());
     }
 }
