@@ -13,6 +13,12 @@ public class DiscountOffer {
             LocalDate startDate,
             LocalDate endDate
     ) {
+        if (discountPercentage < 0.0 || discountPercentage > 100.0) {
+            throw new IllegalArgumentException(
+                    "Rabattprocenten måste vara mellan 0 och 100"
+            );
+        }
+
         this.discountPercentage = discountPercentage;
         this.startDate = startDate;
         this.endDate = endDate;
