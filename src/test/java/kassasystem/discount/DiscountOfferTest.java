@@ -7,6 +7,7 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DiscountOfferTest {
 
@@ -56,5 +57,20 @@ class DiscountOfferTest {
         boolean active = offer.isActiveOn(dayAfterEnd);
 
         assertFalse(active);
+    }
+    @Test
+    @DisplayName("Erbjudandet innehåller sin rabattprocent")
+    void offerHasDiscountPercentage() {
+        LocalDate startDate = LocalDate.of(2026, 10, 1);
+        LocalDate endDate = LocalDate.of(2026, 10, 31);
+        DiscountOffer offer = new DiscountOffer(
+                20.0,
+                startDate,
+                endDate
+        );
+
+        double discountPercentage = offer.getDiscountPercentage();
+
+        assertEquals(20.0, discountPercentage, 0.001);
     }
 }
