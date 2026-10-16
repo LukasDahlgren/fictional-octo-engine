@@ -3,11 +3,14 @@ package kassasystem.discount;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DiscountOfferTest {
@@ -63,5 +66,21 @@ class DiscountOfferTest {
     @DisplayName("Erbjudandet har en rabattprocent")
     void offerHasDiscountPercentage() {
         assertEquals(20.0, offer.getDiscountPercentage());
+    }
+
+    @ParameterizedTest(name = "{0} procent")
+    @ValueSource(doubles = {-1.0, 101.0})
+    @DisplayName("Rabattprocent utanför 0 till 100 är ogiltig")
+    void discountPercentageOutsideValidRangeIsRejected(
+            double discountPercentage
+    ) {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DiscountOffer(
+                        discountPercentage,
+                        startDate,
+                        endDate
+                )
+        );
     }
 }
