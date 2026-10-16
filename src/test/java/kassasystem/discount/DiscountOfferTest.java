@@ -41,4 +41,20 @@ class DiscountOfferTest {
 
         assertFalse(active);
     }
+    @Test
+    @DisplayName("Erbjudandet är inaktivt efter slutdatumet")
+    void offerIsInactiveAfterEndDate() {
+        LocalDate startDate = LocalDate.of(2026, 10, 1);
+        LocalDate endDate = LocalDate.of(2026, 10, 31);
+        DiscountOffer offer = new DiscountOffer(
+                20.0,
+                startDate,
+                endDate
+        );
+        LocalDate dayAfterEnd = LocalDate.of(2026, 11, 1);
+
+        boolean active = offer.isActiveOn(dayAfterEnd);
+
+        assertFalse(active);
+    }
 }
