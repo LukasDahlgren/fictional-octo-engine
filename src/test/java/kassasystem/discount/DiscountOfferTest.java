@@ -83,4 +83,21 @@ class DiscountOfferTest {
                 )
         );
     }
+    @ParameterizedTest(name = "{0} procent")
+    @ValueSource(doubles = {0.0, 100.0})
+    @DisplayName("Rabattprocent 0 och 100 är giltiga")
+    void discountPercentageOnBoundariesIsAccepted(
+            double discountPercentage
+    ) {
+        DiscountOffer boundaryOffer = new DiscountOffer(
+                discountPercentage,
+                startDate,
+                endDate
+        );
+
+        assertEquals(
+                discountPercentage,
+                boundaryOffer.getDiscountPercentage()
+        );
+    }
 }
