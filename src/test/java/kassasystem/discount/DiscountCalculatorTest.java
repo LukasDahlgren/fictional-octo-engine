@@ -126,4 +126,27 @@ class DiscountCalculatorTest {
 
         assertEquals(80.0, finalPrice.getAmount(), 0.001);
     }
+    @Test
+    @DisplayName("Utgånget erbjudande ger ingen rabatt")
+    void expiredOfferDoesNotGiveDiscount() {
+        Customer customer = new Customer("C001", "Testkund");
+        Money originalPrice = new Money(Sek.SEK, 100.0);
+        LocalDate purchaseDate = LocalDate.of(2026, 11, 1);
+        DiscountOffer offer = new DiscountOffer(
+                20.0,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31)
+        );
+        DiscountCalculator calculator = new DiscountCalculator();
+
+        Money finalPrice = calculator.calculatePrice(
+                originalPrice,
+                customer,
+                purchaseDate,
+                offer
+        );
+
+        assertEquals(100.0, finalPrice.getAmount(), 0.001);
+        assertSame(originalPrice.getCurrency(), finalPrice.getCurrency());
+    }
 }
