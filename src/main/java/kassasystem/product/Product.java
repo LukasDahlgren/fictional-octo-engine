@@ -2,13 +2,20 @@ package kassasystem.product;
 
 import kassasystem.money.Money;
 import kassasystem.scanning.EAN;
+import kassasystem.scanning.EANGenerator;
 
 public class Product{
+
+    private static final EANGenerator EAN_GENERATOR = new EANGenerator();
 
     private final String name;
     private final Money price;
     private final EAN ean;
     private ProductCategory category;
+
+    public Product(String name, Money price, ProductCategory category) {
+        this(name, price, category, EAN_GENERATOR.generate());
+    }
 
     public Product(String name, Money price, ProductCategory category, EAN ean) {
         if (name == null || name.isBlank()) {

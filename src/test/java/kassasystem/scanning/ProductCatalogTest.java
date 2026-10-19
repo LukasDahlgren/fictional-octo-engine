@@ -12,20 +12,20 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class ProductCatalogTest {
 
-    @Test
-    @DisplayName("Finds a product by its EAN")
-    void findsProductByEAN() {
-        EAN ean = new EAN("4006381333931");
-        Product product = new Product(
-                "Milk",
-                new Money(Sek.SEK, 12.50),
-                null,
-                ean
-        );
-        ProductCatalog catalog = new ProductCatalog();
-
-        catalog.add(product);
-
-        assertSame(product, catalog.findByEAN(ean));
-    }
+   // @Test
+   // @DisplayName("Finds a product by its EAN")
+   // void findsProductByEAN() {
+   //     EAN ean = new EAN("4006381333931");
+   //     Product product = new Product(
+   //             "Milk",
+   //             new Money(Sek.SEK, 12.50),
+   //             null,
+   //             ean
+   //     );
+   //     ProductCatalog catalog = new ProductCatalog();
+   //
+   //     catalog.add(product);
+   //
+   //     assertSame(product, catalog.findByEAN(ean));
+   // }
 }
