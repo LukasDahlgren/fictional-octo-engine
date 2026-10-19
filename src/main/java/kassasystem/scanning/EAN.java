@@ -54,16 +54,24 @@ public class EAN {
 
     @Override
     public String toString() {
-        return null;
+        return code;
     }
 
     @Override
     public boolean equals(Object other) {
-        return false;
+        if(this == other) {
+            return true;
+        }
+
+        if(!(other instanceof EAN otherEAN)) {
+            return false;
+        }
+
+        return code.equals(otherEAN.code);
     }
 
     @Override
     public int hashCode() {
-        return 0;
+        return code.hashCode();
     }
 }

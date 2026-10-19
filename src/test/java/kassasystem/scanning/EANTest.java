@@ -72,5 +72,23 @@ public class EANTest {
         assertThrows(IllegalArgumentException.class, () -> new EAN("4006381333932"));
     }
 
+    @Test
+    @DisplayName("EANs with the same code are equal and have the same hash code")
+    public void eansWithSameCodeAreEqual() {
+        EAN firstEAN = new EAN("4006381333931");
+        EAN secondEAN = new EAN("4006381333931");
+
+        assertEquals(firstEAN, secondEAN);
+        assertEquals(firstEAN.hashCode(), secondEAN.hashCode());
+    }
+
+    @Test
+    @DisplayName("Returns the EAN code as a string")
+    public void toStringReturnsCode() {
+        EAN ean = new EAN("4006381333931");
+
+        assertEquals("4006381333931", ean.toString());
+    }
+
 
 }
