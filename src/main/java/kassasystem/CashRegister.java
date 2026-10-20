@@ -1,12 +1,27 @@
 package kassasystem;
 
+import java.time.Clock;
+
 import kassasystem.basket.Basket;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.ScanResult;
+import kassasystem.receipt.Receipt;
 
 public class CashRegister {
 
+    private final Clock clock;
     private Purchase currentPurchase;
+
+    public CashRegister() {
+        this(Clock.systemUTC());
+    }
+
+    public CashRegister(Clock clock) {
+        if (clock == null) {
+            throw new IllegalArgumentException("Clock must not be null");
+        }
+        this.clock = clock;
+    }
 
     // Returns null when the register has no current purchase.
     public Purchase getCurrentPurchase() {
@@ -41,15 +56,17 @@ public class CashRegister {
         return result;
     }
 
-    public void completePurchase() {
+    public Receipt completePurchase() {
         if (currentPurchase == null) {
             throw new IllegalStateException("Cannot complete a purchase when there is no current purchase");
         }
 
         //Här borde någon form av "betalning" ske.
         //
+        Receipt receipt = new Receipt(currentPurchase.getBasket(), clock);
         currentPurchase.complete();
         currentPurchase = null;
+        return receipt;
     }
 
     public void cancelPurchase() {
