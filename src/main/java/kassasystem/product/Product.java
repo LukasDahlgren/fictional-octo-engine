@@ -26,6 +26,10 @@ public class Product{
             throw new IllegalArgumentException("Price must not be null");
         }
 
+        if (category == null) {
+            throw new IllegalArgumentException("Category must not be null");
+        }
+
         if (ean == null) {
             throw new IllegalArgumentException("EAN must not be null");
         }

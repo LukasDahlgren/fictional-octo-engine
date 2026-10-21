@@ -15,6 +15,11 @@ public class ProductCategory implements Iterable<Product> {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Name must not be blank");
         }
+
+        if (vat == null) {
+            throw new IllegalArgumentException("VAT category must not be null");
+        }
+
         this.name = name;
         this.vat = vat;
 
@@ -31,6 +36,13 @@ public class ProductCategory implements Iterable<Product> {
         if (product == null) {
             throw new IllegalArgumentException("Product must not be null");
         }
+
+        if (product.getCategory() != this) {
+            throw new IllegalArgumentException(
+                    "Product belongs to a different category"
+            );
+        }
+
         return products.add(product);
     }
 
