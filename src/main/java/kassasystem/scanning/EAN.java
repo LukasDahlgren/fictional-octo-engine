@@ -10,7 +10,7 @@ public class EAN {
         }
 
         if(code.length() != 13) {
-            throw new IllegalArgumentException("EAN code is " + code.length() + ", must be 13 digits");
+            throw new IllegalArgumentException("EAN code is " + code.length() + " digits, must be 13 digits");
         }
 
         for (int i = 0; i < code.length(); i++) {
