@@ -4,6 +4,8 @@ import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
 import kassasystem.product.ProductCatalog;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 import kassasystem.scanning.EAN;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +22,7 @@ public class ProductCatalogTest {
         Product product = new Product(
                 "Milk",
                 new Money(Sek.SEK, 12.50),
-                null,
+                new ProductCategory("Food", VATCategory.SIX_PERCENT),
                 ean
         );
         ProductCatalog catalog = new ProductCatalog();
@@ -38,13 +40,13 @@ public class ProductCatalogTest {
         Product firstProduct = new Product(
                 "Milk",
                 new Money(Sek.SEK, 12.50),
-                null,
+                new ProductCategory("Food", VATCategory.SIX_PERCENT),
                 ean
         );
         Product secondProduct = new Product(
                 "Bread",
                 new Money(Sek.SEK, 20.00),
-                null,
+                new ProductCategory("Food", VATCategory.SIX_PERCENT),
                 ean
         );
 
