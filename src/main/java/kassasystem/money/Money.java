@@ -16,5 +16,10 @@ public class Money{
       return currency;
    }
 
+   // Adderar två pengabelopp och returnerar ett nytt Money-objekt.
+   public Money add(Money other) {
+      return new Money(currency, amount + other.amount);
+   }
+
 
 }
