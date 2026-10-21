@@ -24,6 +24,18 @@ class ProductTest {
     }
 
     @Test
+    @DisplayName("Rejects a null price")
+    void rejectsNullPrice() {
+        ProductCategory category = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+        EAN ean = new EAN("4006381333931");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Product("Milk", null, category, ean)
+        );
+    }
+
+    @Test
     @DisplayName("Rejects a product without a category")
     void rejectsNullCategory() {
         EAN ean = new EAN("4006381333931");
@@ -38,4 +50,17 @@ class ProductTest {
                 )
         );
     }
+
+    @Test
+    @DisplayName("Rejects a null EAN")
+    void rejectsNullEAN() {
+        Money price = new Money(Sek.SEK, 12.50);
+        ProductCategory category = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Product("Milk", price, category, null)
+        );
+    }
+
 }
