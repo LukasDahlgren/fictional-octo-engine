@@ -34,5 +34,15 @@ class MoneyTest {
 
         assertEquals(99.95, money.getAmount(), 0.001);
     }
+    @Test
+    void shouldAddTwoMoneyAmounts() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Sek.SEK, 50.0);
+
+        Money result = first.add(second);
+
+        assertEquals(150.0, result.getAmount(), 0.001);
+        assertEquals(Sek.SEK, result.getCurrency());
+    }
 }
 
