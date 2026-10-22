@@ -44,5 +44,77 @@ class MoneyTest {
         assertEquals(150.0, result.getAmount(), 0.001);
         assertEquals(Sek.SEK, result.getCurrency());
     }
+
+    @Test
+    void shouldSubtractTwoMoneyAmounts() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Sek.SEK, 30.0);
+
+        Money result = first.subtract(second);
+
+        assertEquals(70.0, result.getAmount(), 0.001);
+        assertEquals(Sek.SEK, result.getCurrency());
+    }
+
+    @Test
+    void shouldMultiplyMoneyByAnInteger() {
+        Money money = new Money(Sek.SEK, 25.0);
+
+        Money result = money.multiply(3);
+
+        assertEquals(75.0, result.getAmount(), 0.001);
+        assertEquals(Sek.SEK, result.getCurrency());
+    }
+
+    @Test
+    void shouldMultiplyMoneyByZero() {
+        Money money = new Money(Sek.SEK, 25.0);
+
+        Money result = money.multiply(0);
+
+        assertEquals(0.0, result.getAmount(), 0.001);
+    }
+
+    @Test
+    void shouldCompareEqualAmounts() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Sek.SEK, 100.0);
+
+        assertTrue(first.equals(second));
+    }
+
+    @Test
+    void shouldCompareDifferentAmountsAsNotEqual() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Sek.SEK, 50.0);
+
+        assertFalse(first.equals(second));
+    }
+
+    @Test
+    void shouldIdentifyGreaterAmount() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Sek.SEK, 50.0);
+
+        assertTrue(first.isGreaterThan(second));
+    }
+
+    @Test
+    void shouldIdentifySmallerAmount() {
+        Money first = new Money(Sek.SEK, 50.0);
+        Money second = new Money(Sek.SEK, 100.0);
+
+        assertTrue(first.isLessThan(second));
+    }
+
+    @Test
+    void shouldIdentifyEqualAmountsWhenComparing() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Sek.SEK, 100.0);
+
+        assertFalse(first.isGreaterThan(second));
+        assertFalse(first.isLessThan(second));
+    }
+
 }
 
