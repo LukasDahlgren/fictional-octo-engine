@@ -12,8 +12,6 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,9 +41,6 @@ class BasketTest {
     void constructorUsesCurrency() {
         Currency euro = new Currency("EUR", "€");
         Basket euroBasket = new Basket(euro);
-        Product product = new Product("Milk", new Money(euro, 2), food);
-
-        euroBasket.addProduct(product);
 
         assertSame(euro, euroBasket.getTotalPrice().getCurrency());
     }
@@ -166,8 +161,7 @@ class BasketTest {
         List<BasketItem> items = basket.getItems();
 
         assertThrows(UnsupportedOperationException.class, () -> items.remove(item));
-        assertEquals(1, basket.getItems().size());
-        assertSame(item, basket.getItems().get(0));
+        assertEquals(List.of(item), basket.getItems());
     }
 
     @Test
@@ -178,8 +172,7 @@ class BasketTest {
         List<BasketItem> items = basket.getItems();
 
         assertThrows(UnsupportedOperationException.class, () -> items.add(new BasketItem(bread, 1)));
-        assertEquals(1, basket.getItems().size());
-        assertSame(item, basket.getItems().get(0));
+        assertEquals(List.of(item), basket.getItems());
     }
 
     @Test
@@ -190,8 +183,7 @@ class BasketTest {
         List<BasketItem> items = basket.getItems();
 
         assertThrows(UnsupportedOperationException.class, () -> items.clear());
-        assertEquals(1, basket.getItems().size());
-        assertSame(item, basket.getItems().get(0));
+        assertEquals(List.of(item), basket.getItems());
     }
 
     @Test
@@ -318,20 +310,25 @@ class BasketTest {
         );
     }
 
-    @ParameterizedTest(name = "Saknad valuta: {0}")
-    @ValueSource(booleans = {true, false})
-    @DisplayName("Att lägga till en vara med saknad eller fel valuta lämnar korgen oförändrad")
-    void addProductRejectsInvalidCurrency(boolean missingCurrency) {
+    @Test
+    @DisplayName("En vara utan valuta avvisas utan att ändra korgen")
+    void addProductRejectsMissingCurrency() {
         Basket expectedBasket = new Basket();
         expectedBasket.addItem(new BasketItem(bread, 1));
+        Product invalidProduct = new Product("Invalid", new Money(null, 2), food);
+        basket.addProduct(bread);
 
-        Currency currency;
-        if (missingCurrency) {
-            currency = null;
-        } else {
-            currency = new Currency("EUR", "€");
-        }
-        Product invalidProduct = new Product("Invalid", new Money(currency, 2), food);
+        assertThrows(IllegalArgumentException.class, () -> basket.addProduct(invalidProduct));
+        assertBasketEquals(expectedBasket, basket);
+    }
+
+    @Test
+    @DisplayName("En vara med annan valuta avvisas utan att ändra korgen")
+    void addProductRejectsDifferentCurrency() {
+        Basket expectedBasket = new Basket();
+        expectedBasket.addItem(new BasketItem(bread, 1));
+        Currency euro = new Currency("EUR", "€");
+        Product invalidProduct = new Product("Invalid", new Money(euro, 2), food);
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addProduct(invalidProduct));
@@ -490,16 +487,34 @@ class BasketTest {
 
     @Test
     @DisplayName("En blandning av befintliga och saknade rader tar bara bort befintliga rader")
-    void removeAllHandlesMixedAndDuplicateRows() {
+    void removeAllHandlesExistingAndMissingRows() {
         BasketItem milkItem = new BasketItem(milk, 2);
         BasketItem breadItem = new BasketItem(bread, 1);
         BasketItem missingItem = new BasketItem(milk, 3);
         basket.addItem(milkItem);
         basket.addItem(breadItem);
 
-        boolean removed = basket.removeAll(List.of(milkItem, missingItem, milkItem));
+        boolean removed = basket.removeAll(List.of(milkItem, missingItem));
 
         assertAll("Only the existing selected row is removed",
+                () -> assertTrue(removed),
+                () -> assertEquals(List.of(breadItem), basket.getItems()),
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+        );
+    }
+
+    @Test
+    @DisplayName("En rad som anges flera gånger tas bara bort en gång")
+    void removeAllHandlesDuplicateRows() {
+        BasketItem milkItem = new BasketItem(milk, 2);
+        BasketItem breadItem = new BasketItem(bread, 1);
+        basket.addItem(milkItem);
+        basket.addItem(breadItem);
+
+        boolean removed = basket.removeAll(List.of(milkItem, milkItem));
+
+        assertAll("Duplicate selection removes only the selected row",
                 () -> assertTrue(removed),
                 () -> assertEquals(List.of(breadItem), basket.getItems()),
                 () -> assertEquals(1, basket.getTotalQuantity()),
@@ -637,21 +652,35 @@ class BasketTest {
                 () -> assertEquals(Integer.MAX_VALUE, milkItem.getQuantity()),
                 () -> assertEquals(1, breadItem.getQuantity())
         );
+    }
+
+    @Test
+    @DisplayName("Totalantalet kan läsas efter att en rad tagits bort från en korg med overflow")
+    void getTotalQuantityRecoversAfterRemovingOverflowingRow() {
+        basket.addItem(new BasketItem(milk, Integer.MAX_VALUE));
+        BasketItem breadItem = new BasketItem(bread, 1);
+        basket.addItem(breadItem);
+        assertThrows(ArithmeticException.class, () -> basket.getTotalQuantity());
 
         basket.removeItem(breadItem);
 
         assertEquals(Integer.MAX_VALUE, basket.getTotalQuantity());
     }
 
-    @ParameterizedTest(name = "Fylld korg: {0}")
-    @ValueSource(booleans = {false, true})
-    @DisplayName("En saknad lista med rader avvisas utan att ändra korgen")
-    void removeAllRejectsNullList(boolean populated) {
+    @Test
+    @DisplayName("En saknad lista med rader avvisas i en tom korg")
+    void removeAllRejectsNullListInEmptyBasket() {
+        assertThrows(IllegalArgumentException.class, () -> basket.removeAll(null));
+
+        assertEmptyBasket();
+    }
+
+    @Test
+    @DisplayName("En saknad lista med rader avvisas utan att ändra en fylld korg")
+    void removeAllRejectsNullListInPopulatedBasket() {
         Basket expectedBasket = new Basket();
-        if (populated) {
-            expectedBasket.addItem(new BasketItem(milk, 2));
-            basket.addItem(new BasketItem(milk, 2));
-        }
+        expectedBasket.addItem(new BasketItem(milk, 2));
+        basket.addItem(new BasketItem(milk, 2));
 
         assertThrows(IllegalArgumentException.class, () -> basket.removeAll(null));
 
