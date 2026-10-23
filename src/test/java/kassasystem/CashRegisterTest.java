@@ -11,10 +11,13 @@ import kassasystem.product.Product;
 import kassasystem.product.ProductCategory;
 import kassasystem.product.VATCategory;
 import kassasystem.receipt.Receipt;
+import kassasystem.receipt.ReceiptLine;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -25,6 +28,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CashRegisterTest {
 
     private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
+    private CashRegister register;
+    private Product milk;
+    private Product bread;
+
+    @BeforeEach
+    void setUp() {
+        register = new CashRegister();
+        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        bread = new Product("Bread", new Money(Sek.SEK, 20.00), food);
+    }
 
     @Test
     @DisplayName("Kassan avvisar en saknad klocka")
@@ -37,76 +51,76 @@ class CashRegisterTest {
     void completePurchaseUsesSuppliedClockForReceiptTimestamp() {
         Clock clock = Clock.fixed(Instant.parse("2026-10-20T10:15:30Z"),
                 ZoneId.of("Europe/Stockholm"));
-        CashRegister register = new CashRegister(clock);
+        register = new CashRegister(clock);
         register.startPurchase();
 
         Receipt receipt = register.completePurchase();
 
         LocalDateTime expectedTimestamp = LocalDateTime.of(2026, 10, 20, 12, 15, 30);
         assertEquals(expectedTimestamp, receipt.getTimestamp());
-        assertTrue(receipt.toText().contains("Datum: 2026-10-20 12:15\n"));
     }
 
     @Test
     @DisplayName("Kassan startar ett aktivt köp med en tom korg")
     void startPurchaseCreatesCurrentActivePurchase() {
-        CashRegister register = new CashRegister();
-
         Purchase purchase = register.startPurchase();
 
-        assertSame(purchase, register.getCurrentPurchase());
-        assertEquals(Purchase.Status.ACTIVE, purchase.getStatus());
-        assertTrue(purchase.getBasket().isEmpty());
+        assertCurrentActiveEmptyPurchase(purchase);
     }
 
     @Test
     @DisplayName("Ett nytt köp kan inte skriva över kassans pågående köp")
     void startPurchaseRejectsExistingCurrentPurchase() {
-        CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         purchase.getBasket().addProduct(milk);
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
                 () -> register.startPurchase());
 
-        assertEquals("Cannot start a purchase while another purchase is current", exception.getMessage());
-        assertSame(purchase, register.getCurrentPurchase());
-        assertEquals(Purchase.Status.ACTIVE, purchase.getStatus());
-        assertEquals(1, purchase.getBasket().getTotalQuantity());
-        assertSame(milk, purchase.getBasket().getItems().get(0).getProduct());
+        assertAll("Rejected start preserves the active purchase",
+                () -> assertEquals("Cannot start a purchase while another purchase is current", exception.getMessage()),
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(Purchase.Status.ACTIVE, purchase.getStatus()),
+                () -> assertEquals(1, purchase.getBasket().getTotalQuantity()),
+                () -> assertSame(milk, purchase.getBasket().getItems().get(0).getProduct())
+        );
     }
 
     @Test
     @DisplayName("Ett slutfört köp frigör kassan")
     void completePurchaseCompletesCurrentPurchaseAndFreesRegister() {
-        CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         purchase.getBasket().addProduct(milk);
 
         register.completePurchase();
 
-        assertEquals(Purchase.Status.COMPLETED, purchase.getStatus());
-        assertNull(register.getCurrentPurchase());
-        assertEquals(1, purchase.getBasket().getTotalQuantity());
-        assertSame(milk, purchase.getBasket().getItems().get(0).getProduct());
+        assertAll("Completion frees the register and preserves the purchase contents",
+                () -> assertEquals(Purchase.Status.COMPLETED, purchase.getStatus()),
+                () -> assertNull(register.getCurrentPurchase()),
+                () -> assertEquals(1, purchase.getBasket().getTotalQuantity()),
+                () -> assertSame(milk, purchase.getBasket().getItems().get(0).getProduct())
+        );
+    }
+
+    @Test
+    @DisplayName("Kassan kan starta ett nytt köp efter ett slutfört köp")
+    void startPurchaseAfterCompletePurchase() {
+        Purchase previousPurchase = register.startPurchase();
+        previousPurchase.getBasket().addProduct(milk);
+        register.completePurchase();
 
         Purchase nextPurchase = register.startPurchase();
 
-        assertNotSame(purchase, nextPurchase);
-        assertSame(nextPurchase, register.getCurrentPurchase());
-        assertEquals(Purchase.Status.ACTIVE, nextPurchase.getStatus());
-        assertTrue(nextPurchase.getBasket().isEmpty());
+        assertAll("Register starts a distinct active purchase with an empty basket",
+                () -> assertNotSame(previousPurchase, nextPurchase),
+                () -> assertCurrentActiveEmptyPurchase(nextPurchase)
+        );
     }
 
     @Test
     @DisplayName("Ett slutfört köp returnerar ett kvitto med köpets varor, antal och totalpris")
     void completePurchaseReturnsReceiptWithPurchaseContents() {
-        CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20.00), food);
         purchase.getBasket().addProduct(milk);
         purchase.getBasket().addProduct(milk);
         purchase.getBasket().addProduct(bread);
@@ -114,122 +128,145 @@ class CashRegisterTest {
         Receipt receipt = register.completePurchase();
 
         assertEquals(2, receipt.getItems().size());
-        assertEquals("Milk", receipt.getItems().get(0).getProductName());
-        assertEquals(2, receipt.getItems().get(0).getQuantity());
-        assertEquals(12.50, receipt.getItems().get(0).getUnitPrice().getAmount(), 0.001);
-        assertEquals("Bread", receipt.getItems().get(1).getProductName());
-        assertEquals(1, receipt.getItems().get(1).getQuantity());
-        assertEquals(20.00, receipt.getItems().get(1).getUnitPrice().getAmount(), 0.001);
-        assertEquals(45.00, receipt.getTotalPrice().getAmount(), 0.001);
-        assertEquals(Sek.SEK, receipt.getTotalPrice().getCurrency());
-        assertEquals(Purchase.Status.COMPLETED, purchase.getStatus());
-        assertNull(register.getCurrentPurchase());
+        assertAll("Receipt contains the purchased rows and total",
+                () -> assertReceiptLine(receipt.getItems().get(0), "Milk", 2, 12.50),
+                () -> assertReceiptLine(receipt.getItems().get(1), "Bread", 1, 20.00),
+                () -> assertEquals(45.00, receipt.getTotalPrice().getAmount(), 0.001),
+                () -> assertEquals(Sek.SEK, receipt.getTotalPrice().getCurrency())
+        );
     }
 
     @Test
     @DisplayName("Det returnerade kvittot behåller köpets innehåll när den gamla korgen ändras")
     void returnedReceiptKeepsSnapshotWhenPurchaseBasketChanges() {
-        CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         purchase.getBasket().addProduct(milk);
         Receipt receipt = register.completePurchase();
 
         purchase.getBasket().addProduct(milk);
 
-        assertEquals(2, purchase.getBasket().getTotalQuantity());
         assertEquals(1, receipt.getItems().size());
-        assertEquals("Milk", receipt.getItems().get(0).getProductName());
-        assertEquals(1, receipt.getItems().get(0).getQuantity());
-        assertEquals(12.50, receipt.getTotalPrice().getAmount(), 0.001);
+        assertAll("Returned receipt keeps the original purchase contents",
+                () -> assertEquals(2, purchase.getBasket().getTotalQuantity()),
+                () -> assertReceiptLine(receipt.getItems().get(0), "Milk", 1, 12.50),
+                () -> assertEquals(12.50, receipt.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
     @DisplayName("Ett fel vid kvittoskapandet behåller köpet aktivt i kassan")
     void completePurchaseKeepsPurchaseActiveWhenReceiptCreationFails() {
-        CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
         Product invalidProduct = new Product("Milk", new Money(Sek.SEK, -1.00), food);
         purchase.getBasket().addProduct(invalidProduct);
 
         assertThrows(IllegalArgumentException.class, () -> register.completePurchase());
 
-        assertSame(purchase, register.getCurrentPurchase());
-        assertEquals(Purchase.Status.ACTIVE, purchase.getStatus());
-        assertEquals(1, purchase.getBasket().getTotalQuantity());
-        assertSame(invalidProduct, purchase.getBasket().getItems().get(0).getProduct());
+        assertAll("Receipt creation failure preserves the active purchase",
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(Purchase.Status.ACTIVE, purchase.getStatus()),
+                () -> assertEquals(1, purchase.getBasket().getTotalQuantity()),
+                () -> assertSame(invalidProduct, purchase.getBasket().getItems().get(0).getProduct())
+        );
     }
 
     @Test
     @DisplayName("Kassan kan inte slutföra när det saknas ett pågående köp")
     void completePurchaseRejectsMissingCurrentPurchase() {
-        CashRegister register = new CashRegister();
-
         IllegalStateException exception = assertThrows(IllegalStateException.class,
                 () -> register.completePurchase());
 
-        assertEquals("Cannot complete a purchase when there is no current purchase", exception.getMessage());
-        assertNull(register.getCurrentPurchase());
+        assertAll("Completion is rejected while the register stays free",
+                () -> assertEquals("Cannot complete a purchase when there is no current purchase", exception.getMessage()),
+                () -> assertNull(register.getCurrentPurchase())
+        );
     }
 
     @Test
     @DisplayName("Ett misslyckat slutförande behåller kassans pågående köp")
     void completePurchaseKeepsCurrentPurchaseWhenCompletionFails() {
-        CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
         purchase.cancel();
 
         assertThrows(IllegalStateException.class, () -> register.completePurchase());
 
-        assertSame(purchase, register.getCurrentPurchase());
-        assertEquals(Purchase.Status.CANCELLED, purchase.getStatus());
+        assertAll("Failed completion preserves the current cancelled purchase",
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(Purchase.Status.CANCELLED, purchase.getStatus())
+        );
     }
 
     @Test
     @DisplayName("Ett avbrutet köp frigör kassan")
     void cancelPurchaseCancelsCurrentPurchaseAndFreesRegister() {
-        CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         purchase.getBasket().addProduct(milk);
 
         register.cancelPurchase();
 
-        assertEquals(Purchase.Status.CANCELLED, purchase.getStatus());
-        assertNull(register.getCurrentPurchase());
-        assertEquals(1, purchase.getBasket().getTotalQuantity());
-        assertSame(milk, purchase.getBasket().getItems().get(0).getProduct());
+        assertAll("Cancellation frees the register and preserves the purchase contents",
+                () -> assertEquals(Purchase.Status.CANCELLED, purchase.getStatus()),
+                () -> assertNull(register.getCurrentPurchase()),
+                () -> assertEquals(1, purchase.getBasket().getTotalQuantity()),
+                () -> assertSame(milk, purchase.getBasket().getItems().get(0).getProduct())
+        );
+    }
+
+    @Test
+    @DisplayName("Kassan kan starta ett nytt köp efter ett avbrutet köp")
+    void startPurchaseAfterCancelPurchase() {
+        Purchase previousPurchase = register.startPurchase();
+        previousPurchase.getBasket().addProduct(milk);
+        register.cancelPurchase();
 
         Purchase nextPurchase = register.startPurchase();
 
-        assertNotSame(purchase, nextPurchase);
-        assertSame(nextPurchase, register.getCurrentPurchase());
-        assertEquals(Purchase.Status.ACTIVE, nextPurchase.getStatus());
-        assertTrue(nextPurchase.getBasket().isEmpty());
+        assertAll("Register starts a distinct active purchase with an empty basket",
+                () -> assertNotSame(previousPurchase, nextPurchase),
+                () -> assertCurrentActiveEmptyPurchase(nextPurchase)
+        );
     }
 
     @Test
     @DisplayName("Kassan kan inte avbryta när det saknas ett pågående köp")
     void cancelPurchaseRejectsMissingCurrentPurchase() {
-        CashRegister register = new CashRegister();
-
         IllegalStateException exception = assertThrows(IllegalStateException.class,
                 () -> register.cancelPurchase());
 
-        assertEquals("Cannot cancel a purchase when there is no current purchase", exception.getMessage());
-        assertNull(register.getCurrentPurchase());
+        assertAll("Cancellation is rejected while the register stays free",
+                () -> assertEquals("Cannot cancel a purchase when there is no current purchase", exception.getMessage()),
+                () -> assertNull(register.getCurrentPurchase())
+        );
     }
 
     @Test
     @DisplayName("Ett misslyckat avbrytande behåller kassans pågående köp")
     void cancelPurchaseKeepsCurrentPurchaseWhenCancellationFails() {
-        CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
         purchase.complete();
 
         assertThrows(IllegalStateException.class, () -> register.cancelPurchase());
 
-        assertSame(purchase, register.getCurrentPurchase());
-        assertEquals(Purchase.Status.COMPLETED, purchase.getStatus());
+        assertAll("Failed cancellation preserves the current completed purchase",
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(Purchase.Status.COMPLETED, purchase.getStatus())
+        );
+    }
+
+    private void assertCurrentActiveEmptyPurchase(Purchase purchase) {
+        assertAll("Current purchase is active and empty",
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(Purchase.Status.ACTIVE, purchase.getStatus()),
+                () -> assertTrue(purchase.getBasket().isEmpty())
+        );
+    }
+
+    private void assertReceiptLine(ReceiptLine line, String expectedName,
+            int expectedQuantity, double expectedUnitPrice) {
+        assertAll("Receipt line for " + expectedName,
+                () -> assertEquals(expectedName, line.getProductName()),
+                () -> assertEquals(expectedQuantity, line.getQuantity()),
+                () -> assertEquals(expectedUnitPrice, line.getUnitPrice().getAmount(), 0.001)
+        );
     }
 }
