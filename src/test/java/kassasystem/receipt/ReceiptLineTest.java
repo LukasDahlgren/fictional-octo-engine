@@ -3,7 +3,6 @@ package kassasystem.receipt;
 import kassasystem.money.Currency;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
-import kassasystem.product.Product;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +11,7 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,12 +27,35 @@ class ReceiptLineTest {
 
         Money total = line.getTotalPrice();
 
-        assertEquals("Milk", line.getProductName());
+        assertAll("Total price multiplies unit price by quantity and keeps the currency",
+                () -> assertEquals(12.50 * quantity, total.getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
+    }
+
+    @ParameterizedTest(name = "{0} enheter")
+    @ValueSource(ints = {1, 2, 3, 4})
+    @DisplayName("Konstruktorn sparar antalet")
+    void constructorStoresQuantity(int quantity) {
+        Money unitPrice = new Money(Sek.SEK, 12.50);
+
+        ReceiptLine line = new ReceiptLine("Milk", quantity, unitPrice);
+
         assertEquals(quantity, line.getQuantity());
-        assertEquals(12.50, line.getUnitPrice().getAmount(), 0.001);
-        assertSame(Sek.SEK, line.getUnitPrice().getCurrency());
-        assertEquals(12.50 * quantity, total.getAmount(), 0.001);
-        assertSame(Sek.SEK, total.getCurrency());
+    }
+
+    @ParameterizedTest(name = "Styckpris {0}")
+    @ValueSource(doubles = {0, 0.10, 0.125, 2.50, 12.50, 20})
+    @DisplayName("Konstruktorn sparar styckeprisets belopp och valuta")
+    void constructorStoresUnitPrice(double amount) {
+        Money unitPrice = new Money(Sek.SEK, amount);
+
+        ReceiptLine line = new ReceiptLine("Milk", 1, unitPrice);
+
+        assertAll("Stored unit price",
+                () -> assertEquals(amount, line.getUnitPrice().getAmount()),
+                () -> assertSame(Sek.SEK, line.getUnitPrice().getCurrency())
+        );
     }
 
     @ParameterizedTest
@@ -84,10 +107,10 @@ class ReceiptLineTest {
 
         Money total = line.getTotalPrice();
 
-        assertEquals(expected, total.getAmount(), 0.000001);
-        assertSame(Sek.SEK, total.getCurrency());
-        assertEquals(amount, line.getUnitPrice().getAmount());
-        assertEquals(quantity, line.getQuantity());
+        assertAll("Total price has the expected amount and currency",
+                () -> assertEquals(expected, total.getAmount(), 0.000001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
     }
 
     @Test
@@ -98,7 +121,6 @@ class ReceiptLineTest {
         ReceiptLine line = new ReceiptLine("Product", Integer.MAX_VALUE, unitPrice);
 
         assertEquals(Integer.MAX_VALUE, line.getQuantity());
-        assertEquals((double) Integer.MAX_VALUE, line.getTotalPrice().getAmount());
     }
 
     @ParameterizedTest(name = "Styckpris {0}")
@@ -110,7 +132,29 @@ class ReceiptLineTest {
         ReceiptLine line = new ReceiptLine("Product", 1, unitPrice);
 
         assertEquals(amount, line.getUnitPrice().getAmount());
-        assertEquals(amount, line.getTotalPrice().getAmount());
+    }
+
+    @Test
+    @DisplayName("Totalpriset beräknas för största tillåtna antal")
+    void getTotalPriceHandlesMaximumQuantity() {
+        Money unitPrice = new Money(Sek.SEK, 1);
+        ReceiptLine line = new ReceiptLine("Product", Integer.MAX_VALUE, unitPrice);
+
+        Money total = line.getTotalPrice();
+
+        assertEquals((double) Integer.MAX_VALUE, total.getAmount());
+    }
+
+    @ParameterizedTest(name = "Styckpris {0}")
+    @ValueSource(doubles = {Double.MIN_VALUE, Double.MAX_VALUE})
+    @DisplayName("Totalpriset behåller ändliga prisgränser för en enhet")
+    void getTotalPriceHandlesFinitePriceBoundaries(double amount) {
+        Money unitPrice = new Money(Sek.SEK, amount);
+        ReceiptLine line = new ReceiptLine("Product", 1, unitPrice);
+
+        Money total = line.getTotalPrice();
+
+        assertEquals(amount, total.getAmount());
     }
 
     @ParameterizedTest(name = "Styckpris {0}")
@@ -154,9 +198,11 @@ class ReceiptLineTest {
         ReceiptLine line = new ReceiptLine("Product", 2, unitPrice);
 
         assertThrows(ArithmeticException.class, () -> line.getTotalPrice());
-        assertEquals("Product", line.getProductName());
-        assertEquals(2, line.getQuantity());
-        assertEquals(Double.MAX_VALUE, line.getUnitPrice().getAmount());
-        assertSame(Sek.SEK, line.getUnitPrice().getCurrency());
+        assertAll("Overflow leaves the receipt line unchanged",
+                () -> assertEquals("Product", line.getProductName()),
+                () -> assertEquals(2, line.getQuantity()),
+                () -> assertEquals(Double.MAX_VALUE, line.getUnitPrice().getAmount()),
+                () -> assertSame(Sek.SEK, line.getUnitPrice().getCurrency())
+        );
     }
 }
