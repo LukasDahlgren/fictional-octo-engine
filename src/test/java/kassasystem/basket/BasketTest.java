@@ -272,6 +272,9 @@ class BasketTest {
     @ValueSource(booleans = {true, false})
     @DisplayName("Att lägga till en vara med saknad eller fel valuta lämnar korgen oförändrad")
     void addProductRejectsInvalidCurrency(boolean missingCurrency) {
+        Basket expectedBasket = new Basket();
+        expectedBasket.addItem(new BasketItem(bread, 1));
+
         Currency currency;
         if (missingCurrency) {
             currency = null;
@@ -282,10 +285,7 @@ class BasketTest {
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addProduct(invalidProduct));
-        assertEquals(1, basket.getItems().size());
-        assertEquals(1, basket.getTotalQuantity());
-        assertSame(bread, basket.getItems().get(0).getProduct());
-        assertEquals(20, basket.getTotalPrice().getAmount(), 0.001);
+        assertBasketEquals(expectedBasket, basket);
     }
 
     @Test
@@ -506,21 +506,39 @@ class BasketTest {
     @ValueSource(booleans = {false, true})
     @DisplayName("En saknad lista med rader avvisas utan att ändra korgen")
     void removeAllRejectsNullList(boolean populated) {
+        Basket expectedBasket = new Basket();
         if (populated) {
+            expectedBasket.addItem(new BasketItem(milk, 2));
             basket.addItem(new BasketItem(milk, 2));
         }
 
         assertThrows(IllegalArgumentException.class, () -> basket.removeAll(null));
 
-        if (populated) {
-            assertEquals(1, basket.getItems().size());
-            assertSame(milk, basket.getItems().get(0).getProduct());
-            assertEquals(2, basket.getTotalQuantity());
-            assertEquals(25, basket.getTotalPrice().getAmount(), 0.001);
-        } else {
-            assertTrue(basket.isEmpty());
-            assertEquals(0, basket.getTotalQuantity());
-            assertEquals(0, basket.getTotalPrice().getAmount(), 0.001);
+        assertBasketEquals(expectedBasket, basket);
+    }
+
+    private void assertBasketEquals(Basket expected, Basket actual) {
+        List<BasketItem> expectedItems = expected.getItems();
+        List<BasketItem> actualItems = actual.getItems();
+        assertEquals(expectedItems.size(), actualItems.size(), "Number of basket rows");
+
+        assertAll("Basket totals",
+                () -> assertEquals(expected.isEmpty(), actual.isEmpty(), "Empty basket"),
+                () -> assertEquals(expected.getTotalQuantity(), actual.getTotalQuantity(), "Total quantity"),
+                () -> assertEquals(expected.getTotalPrice().getAmount(),
+                        actual.getTotalPrice().getAmount(), 0.001, "Total price"),
+                () -> assertSame(expected.getTotalPrice().getCurrency(),
+                        actual.getTotalPrice().getCurrency(), "Currency")
+        );
+
+        for (int i = 0; i < expectedItems.size(); i++) {
+            BasketItem expectedItem = expectedItems.get(i);
+            BasketItem actualItem = actualItems.get(i);
+
+            assertAll("Basket row " + i,
+                    () -> assertSame(expectedItem.getProduct(), actualItem.getProduct(), "Product"),
+                    () -> assertEquals(expectedItem.getQuantity(), actualItem.getQuantity(), "Quantity")
+            );
         }
     }
 }
