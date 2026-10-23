@@ -15,6 +15,7 @@ import kassasystem.testdoubles.FixedCodeReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -38,14 +39,18 @@ class CashRegisterScanningIntegrationTest {
         ScanResult secondResult = register.scanProduct(scanner);
 
         Basket basket = purchase.getBasket();
-        assertEquals(ScanResult.Status.FOUND, firstResult.getStatus());
-        assertEquals(ScanResult.Status.FOUND, secondResult.getStatus());
-        assertSame(milk, firstResult.getProduct());
-        assertSame(milk, secondResult.getProduct());
+        assertAll("Both scans find the catalog product",
+                () -> assertEquals(ScanResult.Status.FOUND, firstResult.getStatus()),
+                () -> assertEquals(ScanResult.Status.FOUND, secondResult.getStatus()),
+                () -> assertSame(milk, firstResult.getProduct()),
+                () -> assertSame(milk, secondResult.getProduct())
+        );
         assertEquals(1, basket.getItems().size());
-        assertSame(milk, basket.getItems().get(0).getProduct());
-        assertEquals(2, basket.getItems().get(0).getQuantity());
-        assertEquals(25.00, basket.getTotalPrice().getAmount(), 0.001);
-        assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency());
+        assertAll("Repeated scans produce one row with two units and the correct total",
+                () -> assertSame(milk, basket.getItems().get(0).getProduct()),
+                () -> assertEquals(2, basket.getItems().get(0).getQuantity()),
+                () -> assertEquals(25.00, basket.getTotalPrice().getAmount(), 0.001),
+                () -> assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency())
+        );
     }
 }
