@@ -6,6 +6,8 @@ import kassasystem.money.Currency;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -25,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RecieptTest {
 
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
     private Clock fixedClock() {
         return Clock.fixed(Instant.parse("2026-01-15T10:30:00Z"),
                 ZoneId.of("Europe/Stockholm"));
@@ -34,8 +38,8 @@ class RecieptTest {
     @DisplayName("Totalpriset behåller köpets summa och valuta när korgen ändras")
     void getTotalPriceReturnsPurchaseTotal() {
         Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 2.50), null, new EAN("4006381333931"));
-        Product bread = new Product("Bread", new Money(Sek.SEK, 3), null, new EAN("4006381333931"));
+        Product milk = new Product("Milk", new Money(Sek.SEK, 2.50), food, new EAN("4006381333931"));
+        Product bread = new Product("Bread", new Money(Sek.SEK, 3), food, new EAN("4006381333931"));
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -63,8 +67,8 @@ class RecieptTest {
     @DisplayName("Kvittot visar köptid, varor i kolumner och totalpris oberoende av datorns språk")
     void toTextFormatsPurchaseSnapshot() {
         Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, new EAN("4006381333931"));
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20), null, new EAN("4006381333931"));
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, new EAN("4006381333931"));
+        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food, new EAN("4006381333931"));
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -119,8 +123,8 @@ class RecieptTest {
     void toTextWidensNameColumnForLongProductNames() {
         String longName = "Extra long product name that fits on the receipt";
         Basket basket = new Basket();
-        basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), null, new EAN("4006381333931")));
-        basket.addProduct(new Product("Milk", new Money(Sek.SEK, 12.50), null, new EAN("4006381333931")));
+        basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food, new EAN("4006381333931")));
+        basket.addProduct(new Product("Milk", new Money(Sek.SEK, 12.50), food, new EAN("4006381333931")));
         Receipt receipt = new Receipt(basket, fixedClock());
 
         String[] lines = receipt.toText().split("\n");
@@ -136,8 +140,8 @@ class RecieptTest {
     @DisplayName("Kvittot returnerar varorna och antalen från köpet även om korgen ändras")
     void getItemsReturnsPurchaseSnapshot() {
         Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, new EAN("4006381333931"));
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20), null, new EAN("4006381333931"));
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, new EAN("4006381333931"));
+        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food, new EAN("4006381333931"));
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, Clock.systemUTC());
@@ -162,7 +166,7 @@ class RecieptTest {
     @DisplayName("Kvittots lista med rader kan inte ändras utifrån")
     void getItemsReturnsUnmodifiableList() {
         Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         basket.addItem(new BasketItem(milk, 2));
         Receipt receipt = new Receipt(basket, Clock.systemUTC());
 

@@ -4,6 +4,8 @@ import kassasystem.money.Currency;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 
 import java.util.List;
 
@@ -17,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BasketTest {
 
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
     private Basket basket;
     private Product milk;
     private Product bread;
@@ -24,8 +28,8 @@ class BasketTest {
     @BeforeEach
     void setUp() {
         basket = new Basket();
-        milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
-        bread = new Product("Bread", new Money(Sek.SEK, 20), null);
+        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        bread = new Product("Bread", new Money(Sek.SEK, 20), food);
     }
 
     @Test
@@ -43,7 +47,7 @@ class BasketTest {
     void constructorUsesCurrency() {
         Currency euro = new Currency("EUR", "€");
         Basket euroBasket = new Basket(euro);
-        Product product = new Product("Milk", new Money(euro, 2), null);
+        Product product = new Product("Milk", new Money(euro, 2), food);
 
         euroBasket.addProduct(product);
 
@@ -94,7 +98,7 @@ class BasketTest {
     @DisplayName("En annan valuta avvisas")
     void addItemRejectsDifferentCurrency() {
         Currency euro = new Currency("EUR", "€");
-        Product product = new Product("Milk", new Money(euro, 2), null);
+        Product product = new Product("Milk", new Money(euro, 2), food);
         BasketItem item = new BasketItem(product, 1);
         basket.addProduct(bread);
 
@@ -107,7 +111,7 @@ class BasketTest {
     @Test
     @DisplayName("En vara utan valuta avvisas")
     void addItemRejectsMissingCurrency() {
-        Product product = new Product("Milk", new Money(null, 2), null);
+        Product product = new Product("Milk", new Money(null, 2), food);
         BasketItem item = new BasketItem(product, 1);
         basket.addProduct(bread);
 
@@ -240,7 +244,7 @@ class BasketTest {
     void removeAllRemovesSelectedRows() {
         BasketItem milkItem = new BasketItem(milk, 2);
         BasketItem breadItem = new BasketItem(bread, 3);
-        Product cheese = new Product("Cheese", new Money(Sek.SEK, 30), null);
+        Product cheese = new Product("Cheese", new Money(Sek.SEK, 30), food);
         BasketItem cheeseItem = new BasketItem(cheese, 1);
         basket.addItem(milkItem);
         basket.addItem(breadItem);
@@ -274,7 +278,7 @@ class BasketTest {
         } else {
             currency = new Currency("EUR", "€");
         }
-        Product invalidProduct = new Product("Invalid", new Money(currency, 2), null);
+        Product invalidProduct = new Product("Invalid", new Money(currency, 2), food);
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addProduct(invalidProduct));
@@ -304,7 +308,7 @@ class BasketTest {
     @Test
     @DisplayName("Olika varuobjekt med samma namn och pris grupperas inte")
     void addItemKeepsDistinctProductObjectsSeparate() {
-        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         BasketItem first = new BasketItem(milk, 2);
         BasketItem second = new BasketItem(otherMilk, 3);
         basket.addItem(first);
@@ -384,7 +388,7 @@ class BasketTest {
     @DisplayName("En vara med samma namn men annan identitet tas inte bort")
     void removeProductDoesNotMatchByName() {
         basket.addProduct(milk);
-        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
 
         boolean removed = basket.removeProduct(otherMilk);
 

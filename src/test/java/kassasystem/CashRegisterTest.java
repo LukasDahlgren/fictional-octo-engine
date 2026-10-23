@@ -8,6 +8,8 @@ import java.time.ZoneId;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 import kassasystem.receipt.Receipt;
 
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CashRegisterTest {
+
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
     @Test
     @DisplayName("Kassan avvisar en saknad klocka")
@@ -60,7 +64,7 @@ class CashRegisterTest {
     void startPurchaseRejectsExistingCurrentPurchase() {
         CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         purchase.getBasket().addProduct(milk);
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
@@ -78,7 +82,7 @@ class CashRegisterTest {
     void completePurchaseCompletesCurrentPurchaseAndFreesRegister() {
         CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         purchase.getBasket().addProduct(milk);
 
         register.completePurchase();
@@ -101,8 +105,8 @@ class CashRegisterTest {
     void completePurchaseReturnsReceiptWithPurchaseContents() {
         CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20.00), null);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product bread = new Product("Bread", new Money(Sek.SEK, 20.00), food);
         purchase.getBasket().addProduct(milk);
         purchase.getBasket().addProduct(milk);
         purchase.getBasket().addProduct(bread);
@@ -127,7 +131,7 @@ class CashRegisterTest {
     void returnedReceiptKeepsSnapshotWhenPurchaseBasketChanges() {
         CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         purchase.getBasket().addProduct(milk);
         Receipt receipt = register.completePurchase();
 
@@ -145,7 +149,7 @@ class CashRegisterTest {
     void completePurchaseKeepsPurchaseActiveWhenReceiptCreationFails() {
         CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product invalidProduct = new Product("Milk", new Money(Sek.SEK, -1.00), null);
+        Product invalidProduct = new Product("Milk", new Money(Sek.SEK, -1.00), food);
         purchase.getBasket().addProduct(invalidProduct);
 
         assertThrows(IllegalArgumentException.class, () -> register.completePurchase());
@@ -186,7 +190,7 @@ class CashRegisterTest {
     void cancelPurchaseCancelsCurrentPurchaseAndFreesRegister() {
         CashRegister register = new CashRegister();
         Purchase purchase = register.startPurchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         purchase.getBasket().addProduct(milk);
 
         register.cancelPurchase();

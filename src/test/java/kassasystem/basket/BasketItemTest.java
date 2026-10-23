@@ -3,6 +3,8 @@ package kassasystem.basket;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,11 +17,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BasketItemTest {
 
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
     private Product product;
 
     @BeforeEach
     void setUp() {
-        product = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        product = new Product("Milk", new Money(Sek.SEK, 12.50), food);
     }
 
     @Test
@@ -149,7 +153,7 @@ class BasketItemTest {
     @CsvSource({"0, 3, 0", "0.10, 3, 0.30", "12.50, 1, 12.50"})
     @DisplayName("Nollpris, decimalpris och en enda enhet ger rätt radpris")
     void getTotalPriceHandlesPriceAndQuantityClasses(double price, int quantity, double expected) {
-        Product pricedProduct = new Product("Product", new Money(Sek.SEK, price), null);
+        Product pricedProduct = new Product("Product", new Money(Sek.SEK, price), food);
         BasketItem item = new BasketItem(pricedProduct, quantity);
 
         Money total = item.getTotalPrice();

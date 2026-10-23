@@ -4,6 +4,8 @@ import kassasystem.basket.Basket;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.EAN;
 import kassasystem.scanning.ScanResult;
@@ -21,11 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CashRegisterScanningTest {
 
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
     @Test
     @DisplayName("En lyckad scanning lägger till en vara i det pågående köpet")
     void scanProductAddsFoundProductToCurrentPurchase() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -50,7 +54,7 @@ class CashRegisterScanningTest {
     @DisplayName("En oläsbar kod lämnar det pågående köpet och dess varukorg oförändrade")
     void scanProductKeepsBasketUnchangedWhenCodeCannotBeRead() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader(null);
         FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -78,7 +82,7 @@ class CashRegisterScanningTest {
     @DisplayName("En ogiltig EAN-kod lämnar det pågående köpet och dess varukorg oförändrade")
     void scanProductKeepsBasketUnchangedWhenCodeIsInvalid() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader("123");
         FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -106,7 +110,7 @@ class CashRegisterScanningTest {
     @DisplayName("En okänd vara lämnar det pågående köpet och dess varukorg oförändrade")
     void scanProductKeepsBasketUnchangedWhenProductIsUnknown() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader("4006381333931");
         FixedProductCatalog productCatalog = new FixedProductCatalog(null);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -136,7 +140,7 @@ class CashRegisterScanningTest {
     @DisplayName("Utan ett pågående köp avvisas scanning innan kodläsaren används")
     void scanProductRejectsMissingCurrentPurchaseWithoutReadingCode() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -153,7 +157,7 @@ class CashRegisterScanningTest {
     @DisplayName("Ett slutfört köp avvisar scanning innan kodläsaren används och behåller varukorgen")
     void scanProductRejectsCompletedPurchaseWithoutReadingCode() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);

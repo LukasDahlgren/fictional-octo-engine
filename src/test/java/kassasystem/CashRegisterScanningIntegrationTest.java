@@ -4,6 +4,8 @@ import kassasystem.basket.Basket;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 import kassasystem.product.ProductCatalog;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.EAN;
@@ -18,11 +20,13 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 class CashRegisterScanningIntegrationTest {
 
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
     @Test
     @DisplayName("Två scanningar via den riktiga produktkatalogen ger en varurad med antal två och rätt totalpris")
     void scanProductTwiceWithRealCatalogGroupsProductInBasket() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         ProductCatalog productCatalog = new ProductCatalog();
         productCatalog.add(milk);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");

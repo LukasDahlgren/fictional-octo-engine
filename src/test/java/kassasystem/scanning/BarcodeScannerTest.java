@@ -3,6 +3,8 @@ package kassasystem.scanning;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 import kassasystem.product.ProductCatalog;
 import kassasystem.testdoubles.FixedCodeReader;
 import kassasystem.testdoubles.FixedProductCatalog;
@@ -15,6 +17,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BarcodeScannerTest {
+
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
     @Test
     @DisplayName("En oläsbar kod ger FAILED_READ utan att söka efter en vara")
@@ -75,7 +79,7 @@ class BarcodeScannerTest {
     @DisplayName("SC-01: En matchande kod ger FOUND och exakt samma vara")
     void scanReturnsFoundWithMatchingProduct() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
