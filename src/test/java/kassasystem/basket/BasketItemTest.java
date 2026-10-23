@@ -124,8 +124,10 @@ class BasketItemTest {
 
         Money total = item.getTotalPrice();
 
-        assertEquals(37.50, total.getAmount(), 0.001);
-        assertSame(Sek.SEK, total.getCurrency());
+        assertAll("Row total multiplies unit price by quantity and keeps the currency",
+                () -> assertEquals(37.50, total.getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
     }
 
     @Test
@@ -144,9 +146,11 @@ class BasketItemTest {
         BasketItem item = new BasketItem(product, 2);
 
         assertThrows(ArithmeticException.class, () -> item.increaseQuantity(Integer.MAX_VALUE));
-        assertEquals(2, item.getQuantity());
-        assertSame(product, item.getProduct());
-        assertEquals(25, item.getTotalPrice().getAmount(), 0.001);
+        assertAll("Overflow leaves the row unchanged",
+                () -> assertEquals(2, item.getQuantity()),
+                () -> assertSame(product, item.getProduct()),
+                () -> assertEquals(25, item.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @ParameterizedTest(name = "Styckpris {0}, antal {1}, total {2}")
@@ -158,21 +162,31 @@ class BasketItemTest {
 
         Money total = item.getTotalPrice();
 
-        assertEquals(expected, total.getAmount(), 0.000001);
-        assertSame(Sek.SEK, total.getCurrency());
+        assertAll("Row total has the expected amount and currency",
+                () -> assertEquals(expected, total.getAmount(), 0.000001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
     }
 
     @Test
-    @DisplayName("Radpriset uppdateras när antalet ökas och minskas")
-    void getTotalPriceFollowsQuantityChanges() {
+    @DisplayName("Radpriset uppdateras när antalet ökas")
+    void getTotalPriceUpdatesAfterQuantityIncrease() {
         BasketItem item = new BasketItem(product, 1);
 
         item.increaseQuantity(2);
-        Money increasedTotal = item.getTotalPrice();
-        item.decreaseQuantity();
-        Money decreasedTotal = item.getTotalPrice();
 
-        assertEquals(37.50, increasedTotal.getAmount(), 0.001);
-        assertEquals(25, decreasedTotal.getAmount(), 0.001);
+        Money total = item.getTotalPrice();
+        assertEquals(37.50, total.getAmount(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Radpriset uppdateras när antalet minskas")
+    void getTotalPriceUpdatesAfterQuantityDecrease() {
+        BasketItem item = new BasketItem(product, 3);
+
+        item.decreaseQuantity();
+
+        Money total = item.getTotalPrice();
+        assertEquals(25, total.getAmount(), 0.001);
     }
 }
