@@ -7,6 +7,7 @@ import kassasystem.product.Product;
 import kassasystem.product.ProductCategory;
 import kassasystem.product.VATCategory;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,14 +22,26 @@ class PurchaseTest {
 
     private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
+    private Product milk;
+    private Basket basket;
+    private Purchase purchase;
+
+    @BeforeEach
+    void setUp() {
+        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        basket = new Basket();
+        basket.addProduct(milk);
+        purchase = new Purchase(basket);
+    }
+
     @Test
     @DisplayName("Ett nytt köp börjar aktivt med en tom korg")
     void newPurchaseStartsActiveWithEmptyBasket() {
-        Purchase purchase = new Purchase();
+        Purchase newPurchase = new Purchase();
 
         assertAll("New purchase starts active and empty",
-                () -> assertEquals(Purchase.Status.ACTIVE, purchase.getStatus()),
-                () -> assertTrue(purchase.getBasket().isEmpty())
+                () -> assertEquals(Purchase.Status.ACTIVE, newPurchase.getStatus()),
+                () -> assertTrue(newPurchase.getBasket().isEmpty())
         );
     }
 
@@ -37,7 +50,6 @@ class PurchaseTest {
     void newPurchasesHaveIndependentBaskets() {
         Purchase firstPurchase = new Purchase();
         Purchase secondPurchase = new Purchase();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
 
         firstPurchase.getBasket().addProduct(milk);
 
@@ -51,23 +63,22 @@ class PurchaseTest {
     @Test
     @DisplayName("Ett köp med angiven korg börjar aktivt")
     void constructorWithSuppliedBasketStartsActive() {
-        Basket basket = new Basket();
+        Basket suppliedBasket = new Basket();
 
-        Purchase purchase = new Purchase(basket);
+        Purchase newPurchase = new Purchase(suppliedBasket);
 
-        assertEquals(Purchase.Status.ACTIVE, purchase.getStatus());
+        assertEquals(Purchase.Status.ACTIVE, newPurchase.getStatus());
     }
 
     @Test
     @DisplayName("Ett köp behåller den angivna korgen och dess varor")
     void constructorKeepsSuppliedBasketAndItsItems() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        basket.addProduct(milk);
+        Basket suppliedBasket = new Basket();
+        suppliedBasket.addProduct(milk);
 
-        Purchase purchase = new Purchase(basket);
+        Purchase newPurchase = new Purchase(suppliedBasket);
 
-        assertBasketPreserved(purchase, basket, milk);
+        assertBasketPreserved(newPurchase, suppliedBasket, milk);
     }
 
     @Test
@@ -79,11 +90,6 @@ class PurchaseTest {
     @Test
     @DisplayName("Ett aktivt köp slutförs med samma korg och varor")
     void completeChangesStatusAndKeepsBasketItems() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        basket.addProduct(milk);
-        Purchase purchase = new Purchase(basket);
-
         purchase.complete();
 
         assertAll("Completed purchase keeps its basket and contents",
@@ -95,10 +101,6 @@ class PurchaseTest {
     @Test
     @DisplayName("Ett slutfört köp kan inte slutföras igen")
     void completeRejectsCompletedPurchase() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        basket.addProduct(milk);
-        Purchase purchase = new Purchase(basket);
         purchase.complete();
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
@@ -114,10 +116,6 @@ class PurchaseTest {
     @Test
     @DisplayName("Ett avbrutet köp kan inte slutföras")
     void completeRejectsCancelledPurchase() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        basket.addProduct(milk);
-        Purchase purchase = new Purchase(basket);
         purchase.cancel();
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
@@ -133,11 +131,6 @@ class PurchaseTest {
     @Test
     @DisplayName("Ett aktivt köp avbryts med samma korg och varor")
     void cancelChangesStatusAndKeepsBasketItems() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        basket.addProduct(milk);
-        Purchase purchase = new Purchase(basket);
-
         purchase.cancel();
 
         assertAll("Cancelled purchase keeps its basket and contents",
@@ -149,10 +142,6 @@ class PurchaseTest {
     @Test
     @DisplayName("Ett slutfört köp kan inte avbrytas")
     void cancelRejectsCompletedPurchase() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        basket.addProduct(milk);
-        Purchase purchase = new Purchase(basket);
         purchase.complete();
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
@@ -168,10 +157,6 @@ class PurchaseTest {
     @Test
     @DisplayName("Ett avbrutet köp kan inte avbrytas igen")
     void cancelRejectsCancelledPurchase() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        basket.addProduct(milk);
-        Purchase purchase = new Purchase(basket);
         purchase.cancel();
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,

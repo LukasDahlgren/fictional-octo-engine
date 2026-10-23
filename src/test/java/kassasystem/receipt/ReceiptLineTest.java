@@ -19,21 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ReceiptLineTest {
 
     @ParameterizedTest(name = "{0} enheter")
-    @ValueSource(ints = {1, 2, 3})
-    @DisplayName("Radens totalpris är styckepriset gånger antalet")
-    void getTotalPriceMultipliesUnitPriceByQuantity(int quantity) {
-        Money unitPrice = new Money(Sek.SEK, 12.50);
-        ReceiptLine line = new ReceiptLine("Milk", quantity, unitPrice);
-
-        Money total = line.getTotalPrice();
-
-        assertAll("Total price multiplies unit price by quantity and keeps the currency",
-                () -> assertEquals(12.50 * quantity, total.getAmount(), 0.001),
-                () -> assertSame(Sek.SEK, total.getCurrency())
-        );
-    }
-
-    @ParameterizedTest(name = "{0} enheter")
     @ValueSource(ints = {1, 2, 3, 4})
     @DisplayName("Konstruktorn sparar antalet")
     void constructorStoresQuantity(int quantity) {
@@ -99,9 +84,10 @@ class ReceiptLineTest {
     }
 
     @ParameterizedTest(name = "Styckpris {0}, antal {1}, total {2}")
-    @CsvSource({"0, 3, 0", "0.10, 3, 0.30", "0.125, 3, 0.375", "20, 1, 20", "2.50, 4, 10"})
-    @DisplayName("Nollpris och olika positiva priser ger rätt total utan förtida avrundning")
-    void getTotalPriceHandlesPriceClasses(double amount, int quantity, double expected) {
+    @CsvSource({"12.50, 1, 12.50", "12.50, 2, 25", "12.50, 3, 37.50",
+            "0, 3, 0", "0.10, 3, 0.30", "0.125, 3, 0.375", "20, 1, 20", "2.50, 4, 10"})
+    @DisplayName("Totalpriset är styckepriset gånger antalet utan förtida avrundning")
+    void getTotalPriceMultipliesUnitPriceByQuantity(double amount, int quantity, double expected) {
         Money unitPrice = new Money(Sek.SEK, amount);
         ReceiptLine line = new ReceiptLine("Product", quantity, unitPrice);
 

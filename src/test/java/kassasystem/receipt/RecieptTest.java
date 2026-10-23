@@ -16,6 +16,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +30,17 @@ class RecieptTest {
 
     private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
+    private Basket basket;
+    private Product milk;
+    private Product bread;
+
+    @BeforeEach
+    void setUp() {
+        basket = new Basket();
+        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        bread = new Product("Bread", new Money(Sek.SEK, 20), food);
+    }
+
     private Clock fixedClock() {
         return Clock.fixed(Instant.parse("2026-01-15T10:30:00Z"),
                 ZoneId.of("Europe/Stockholm"));
@@ -37,14 +49,13 @@ class RecieptTest {
     @Test
     @DisplayName("Totalpriset behåller köpets summa när antalet i korgen ändras")
     void getTotalPriceKeepsSnapshotAfterQuantityChange() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
-        Product bread = new Product("Bread", new Money(Sek.SEK, 3), food);
-        basket.addItem(new BasketItem(milk, 2));
-        basket.addProduct(bread);
+        Product cheapMilk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
+        Product cheapBread = new Product("Bread", new Money(Sek.SEK, 3), food);
+        basket.addItem(new BasketItem(cheapMilk, 2));
+        basket.addProduct(cheapBread);
         Receipt receipt = new Receipt(basket, fixedClock());
 
-        basket.addProduct(milk);
+        basket.addProduct(cheapMilk);
 
         Money total = receipt.getTotalPrice();
         assertAll("Receipt keeps the original total",
@@ -56,14 +67,13 @@ class RecieptTest {
     @Test
     @DisplayName("Totalpriset behåller köpets summa när en rad tas bort ur korgen")
     void getTotalPriceKeepsSnapshotAfterRowRemoval() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
-        Product bread = new Product("Bread", new Money(Sek.SEK, 3), food);
-        basket.addItem(new BasketItem(milk, 2));
-        basket.addProduct(bread);
+        Product cheapMilk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
+        Product cheapBread = new Product("Bread", new Money(Sek.SEK, 3), food);
+        basket.addItem(new BasketItem(cheapMilk, 2));
+        basket.addProduct(cheapBread);
         Receipt receipt = new Receipt(basket, fixedClock());
 
-        basket.removeProduct(bread);
+        basket.removeProduct(cheapBread);
 
         Money total = receipt.getTotalPrice();
         assertAll("Receipt keeps the original total",
@@ -88,9 +98,6 @@ class RecieptTest {
     @Test
     @DisplayName("Kvittot visar köptid, varor i kolumner och totalpris")
     void toTextFormatsPurchaseSnapshot() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food);
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -111,8 +118,6 @@ class RecieptTest {
     @Test
     @DisplayName("Kvittots belopp använder decimalpunkt även med svenskt språk")
     void toTextUsesDecimalPointRegardlessOfLocale() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         basket.addItem(new BasketItem(milk, 2));
         Receipt receipt = new Receipt(basket, fixedClock());
         Locale originalLocale = Locale.getDefault();
@@ -135,8 +140,6 @@ class RecieptTest {
     @Test
     @DisplayName("Kvittotexten ändras inte när antalet i korgen ändras")
     void toTextKeepsSnapshotAfterQuantityChange() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         basket.addProduct(milk);
         Receipt receipt = new Receipt(basket, fixedClock());
         String originalText = receipt.toText();
@@ -151,8 +154,6 @@ class RecieptTest {
     @Test
     @DisplayName("Kvittotexten ändras inte när en rad tas bort ur korgen")
     void toTextKeepsSnapshotAfterRowRemoval() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         basket.addProduct(milk);
         Receipt receipt = new Receipt(basket, fixedClock());
         String originalText = receipt.toText();
@@ -191,7 +192,6 @@ class RecieptTest {
     @DisplayName("Långa varunamn skrivs ut utan att förkortas")
     void toTextPreservesLongProductNames() {
         String longName = "Extra long product name that fits on the receipt";
-        Basket basket = new Basket();
         basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food));
         Receipt receipt = new Receipt(basket, fixedClock());
 
@@ -204,7 +204,6 @@ class RecieptTest {
     @DisplayName("Beloppen ligger i samma kolumner efter ett långt varunamn")
     void toTextAlignsPricesAfterLongProductName() {
         String longName = "Extra long product name that fits on the receipt";
-        Basket basket = new Basket();
         basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food));
         basket.addProduct(new Product("Milk", new Money(Sek.SEK, 12.50), food));
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -232,9 +231,6 @@ class RecieptTest {
     @Test
     @DisplayName("Kvittoraderna behåller köpets antal när korgen ändras")
     void getItemsKeepsSnapshotAfterQuantityChange() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food);
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -253,9 +249,6 @@ class RecieptTest {
     @Test
     @DisplayName("Kvittoraderna behåller en vara som tas bort ur korgen")
     void getItemsKeepsSnapshotAfterRowRemoval() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food);
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -274,8 +267,6 @@ class RecieptTest {
     @Test
     @DisplayName("Kvittots lista med rader kan inte ändras utifrån")
     void getItemsReturnsUnmodifiableList() {
-        Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         basket.addItem(new BasketItem(milk, 2));
         Receipt receipt = new Receipt(basket, fixedClock());
 
@@ -289,7 +280,6 @@ class RecieptTest {
     @Test
     @DisplayName("Ett kvitto från en tom korg returnerar en tom lista")
     void getItemsReturnsEmptyListForEmptyBasket() {
-        Basket basket = new Basket();
         Receipt receipt = new Receipt(basket, fixedClock());
 
         List<ReceiptLine> items = receipt.getItems();
@@ -300,7 +290,6 @@ class RecieptTest {
     @Test
     @DisplayName("Kvittot sparar köpets tid från den angivna klockan och tidszonen")
     void constructorCapturesTimestampInClockTimeZone() {
-        Basket basket = new Basket();
         Clock clock = fixedClock();
         LocalDateTime expectedTimestamp = LocalDateTime.of(2026, 1, 15, 11, 30);
 
@@ -322,7 +311,6 @@ class RecieptTest {
     @Test
     @DisplayName("Konstruktorn avvisar en saknad klocka")
     void constructorRejectsNullClock() {
-        Basket basket = new Basket();
         Clock clock = null;
 
         assertThrows(IllegalArgumentException.class,
