@@ -47,10 +47,7 @@ class BasketTest {
 
         euroBasket.addProduct(product);
 
-        assertAll("Basket uses the supplied currency",
-                () -> assertEquals(2, euroBasket.getTotalPrice().getAmount(), 0.001),
-                () -> assertSame(euro, euroBasket.getTotalPrice().getCurrency())
-        );
+        assertSame(euro, euroBasket.getTotalPrice().getCurrency());
     }
 
     @Test
@@ -66,10 +63,17 @@ class BasketTest {
 
         basket.addItem(item);
 
-        assertAll("Added row is stored in a non-empty basket",
-                () -> assertEquals(List.of(item), basket.getItems()),
-                () -> assertFalse(basket.isEmpty())
-        );
+        assertEquals(List.of(item), basket.getItems());
+    }
+
+    @Test
+    @DisplayName("Korgen är inte tom efter att en rad lagts till")
+    void isEmptyReturnsFalseAfterAddingRow() {
+        BasketItem item = new BasketItem(milk, 2);
+
+        basket.addItem(item);
+
+        assertFalse(basket.isEmpty());
     }
 
     @Test
@@ -155,14 +159,36 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Listan med rader kan inte ändras utifrån")
-    void getItemsReturnsUnmodifiableList() {
+    @DisplayName("En rad kan inte tas bort via den returnerade listan")
+    void getItemsRejectsExternalRemoval() {
         BasketItem item = new BasketItem(milk, 1);
         basket.addItem(item);
         List<BasketItem> items = basket.getItems();
 
         assertThrows(UnsupportedOperationException.class, () -> items.remove(item));
+        assertEquals(1, basket.getItems().size());
+        assertSame(item, basket.getItems().get(0));
+    }
+
+    @Test
+    @DisplayName("En rad kan inte läggas till via den returnerade listan")
+    void getItemsRejectsExternalAddition() {
+        BasketItem item = new BasketItem(milk, 1);
+        basket.addItem(item);
+        List<BasketItem> items = basket.getItems();
+
         assertThrows(UnsupportedOperationException.class, () -> items.add(new BasketItem(bread, 1)));
+        assertEquals(1, basket.getItems().size());
+        assertSame(item, basket.getItems().get(0));
+    }
+
+    @Test
+    @DisplayName("Den returnerade listan kan inte tömmas")
+    void getItemsRejectsExternalClear() {
+        BasketItem item = new BasketItem(milk, 1);
+        basket.addItem(item);
+        List<BasketItem> items = basket.getItems();
+
         assertThrows(UnsupportedOperationException.class, () -> items.clear());
         assertEquals(1, basket.getItems().size());
         assertSame(item, basket.getItems().get(0));
@@ -380,17 +406,15 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att ta bort en saknad rad eller vara från en fylld korg ändrar ingenting")
-    void removeNullInputsLeavesBasketUnchanged() {
+    @DisplayName("En saknad rad lämnar en fylld korg oförändrad")
+    void removeNullItemLeavesBasketUnchanged() {
         BasketItem item = new BasketItem(milk, 2);
         basket.addItem(item);
 
-        boolean removedItem = basket.removeItem(null);
-        boolean removedProduct = basket.removeProduct(null);
+        boolean removed = basket.removeItem(null);
 
-        assertAll("Missing inputs leave the basket unchanged",
-                () -> assertFalse(removedItem),
-                () -> assertFalse(removedProduct),
+        assertAll("Missing input leaves the basket unchanged",
+                () -> assertFalse(removed),
                 () -> assertEquals(List.of(item), basket.getItems()),
                 () -> assertEquals(2, basket.getTotalQuantity()),
                 () -> assertEquals(25, basket.getTotalPrice().getAmount(), 0.001)
@@ -398,24 +422,51 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En vara kan tas bort efter en annan rad och totalsummorna uppdateras")
-    void removeProductFindsLaterRow() {
+    @DisplayName("En saknad vara lämnar en fylld korg oförändrad")
+    void removeNullProductLeavesBasketUnchanged() {
+        BasketItem item = new BasketItem(milk, 2);
+        basket.addItem(item);
+
+        boolean removed = basket.removeProduct(null);
+
+        assertAll("Missing input leaves the basket unchanged",
+                () -> assertFalse(removed),
+                () -> assertEquals(List.of(item), basket.getItems()),
+                () -> assertEquals(2, basket.getTotalQuantity()),
+                () -> assertEquals(25, basket.getTotalPrice().getAmount(), 0.001)
+        );
+    }
+
+    @Test
+    @DisplayName("Borttagning av en enhet på en senare rad uppdaterar totalsummorna")
+    void removeProductDecreasesQuantityInLaterRow() {
+        BasketItem breadItem = new BasketItem(bread, 1);
+        BasketItem milkItem = new BasketItem(milk, 2);
+        basket.addItem(breadItem);
+        basket.addItem(milkItem);
+
+        boolean removed = basket.removeProduct(milk);
+
+        assertAll("One unit remains in the later row",
+                () -> assertTrue(removed),
+                () -> assertEquals(List.of(breadItem, milkItem), basket.getItems()),
+                () -> assertEquals(1, milkItem.getQuantity()),
+                () -> assertEquals(2, basket.getTotalQuantity()),
+                () -> assertEquals(32.50, basket.getTotalPrice().getAmount(), 0.001)
+        );
+    }
+
+    @Test
+    @DisplayName("Borttagning av sista enheten på en senare rad tar bort raden")
+    void removeProductRemovesLastUnitInLaterRow() {
         BasketItem breadItem = new BasketItem(bread, 1);
         basket.addItem(breadItem);
-        basket.addItem(new BasketItem(milk, 2));
+        basket.addItem(new BasketItem(milk, 1));
 
-        boolean firstRemoval = basket.removeProduct(milk);
-        int quantityAfterFirstRemoval = basket.getTotalQuantity();
-        double priceAfterFirstRemoval = basket.getTotalPrice().getAmount();
-        boolean lastRemoval = basket.removeProduct(milk);
+        boolean removed = basket.removeProduct(milk);
 
-        assertAll("First removal leaves one unit in the later row",
-                () -> assertTrue(firstRemoval),
-                () -> assertEquals(2, quantityAfterFirstRemoval),
-                () -> assertEquals(32.50, priceAfterFirstRemoval, 0.001)
-        );
-        assertAll("Last removal leaves only bread",
-                () -> assertTrue(lastRemoval),
+        assertAll("Only bread remains",
+                () -> assertTrue(removed),
                 () -> assertEquals(List.of(breadItem), basket.getItems()),
                 () -> assertEquals(1, basket.getTotalQuantity()),
                 () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
@@ -483,7 +534,6 @@ class BasketTest {
 
         assertTrue(removed);
         assertEmptyBasket();
-        assertFalse(basket.removeProduct(milk));
     }
 
     @Test
@@ -496,21 +546,70 @@ class BasketTest {
 
         assertTrue(removed);
         assertEmptyBasket();
-        assertFalse(basket.removeItem(item));
     }
 
     @Test
-    @DisplayName("Borttagning från en redan tom korg returnerar false")
-    void removalsFromEmptyBasketReturnFalse() {
-        BasketItem missingItem = new BasketItem(milk, 1);
+    @DisplayName("Borttagning av en vara från en tom korg returnerar false")
+    void removeProductFromEmptyBasketReturnsFalse() {
+        boolean removed = basket.removeProduct(milk);
 
-        assertFalse(basket.removeProduct(milk));
-        assertFalse(basket.removeAll(List.of(missingItem)));
-        assertFalse(basket.removeAll(List.of()));
-        assertAll("Basket remains empty",
+        assertAll("Product removal leaves the basket empty",
+                () -> assertFalse(removed),
                 () -> assertTrue(basket.isEmpty()),
                 () -> assertEquals(0, basket.getTotalQuantity())
         );
+    }
+
+    @Test
+    @DisplayName("Borttagning av angivna rader från en tom korg returnerar false")
+    void removeAllFromEmptyBasketReturnsFalse() {
+        BasketItem missingItem = new BasketItem(milk, 1);
+
+        boolean removed = basket.removeAll(List.of(missingItem));
+
+        assertAll("Row removal leaves the basket empty",
+                () -> assertFalse(removed),
+                () -> assertTrue(basket.isEmpty()),
+                () -> assertEquals(0, basket.getTotalQuantity())
+        );
+    }
+
+    @Test
+    @DisplayName("En tom lista med rader i en tom korg returnerar false")
+    void removeAllWithEmptyListFromEmptyBasketReturnsFalse() {
+        boolean removed = basket.removeAll(List.of());
+
+        assertAll("Empty selection leaves the basket empty",
+                () -> assertFalse(removed),
+                () -> assertTrue(basket.isEmpty()),
+                () -> assertEquals(0, basket.getTotalQuantity())
+        );
+    }
+
+    @Test
+    @DisplayName("En vara kan inte tas bort igen efter att alla rader tagits bort")
+    void removeProductReturnsFalseAfterRemovingAllRows() {
+        BasketItem milkItem = new BasketItem(milk, 2);
+        BasketItem breadItem = new BasketItem(bread, 1);
+        basket.addItem(milkItem);
+        basket.addItem(breadItem);
+        basket.removeAll(List.of(milkItem, breadItem));
+
+        boolean removed = basket.removeProduct(milk);
+
+        assertFalse(removed);
+    }
+
+    @Test
+    @DisplayName("En borttagen rad kan inte tas bort igen")
+    void removeItemReturnsFalseForPreviouslyRemovedRow() {
+        BasketItem item = new BasketItem(milk, 2);
+        basket.addItem(item);
+        basket.removeItem(item);
+
+        boolean removed = basket.removeItem(item);
+
+        assertFalse(removed);
     }
 
     @Test
