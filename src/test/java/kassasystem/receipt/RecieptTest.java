@@ -16,10 +16,10 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 
-import kassasystem.scanning.EAN;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -35,21 +35,41 @@ class RecieptTest {
     }
 
     @Test
-    @DisplayName("Totalpriset behåller köpets summa och valuta när korgen ändras")
-    void getTotalPriceReturnsPurchaseTotal() {
+    @DisplayName("Totalpriset behåller köpets summa när antalet i korgen ändras")
+    void getTotalPriceKeepsSnapshotAfterQuantityChange() {
         Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 2.50), food, new EAN("4006381333931"));
-        Product bread = new Product("Bread", new Money(Sek.SEK, 3), food, new EAN("4006381333931"));
+        Product milk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
+        Product bread = new Product("Bread", new Money(Sek.SEK, 3), food);
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
 
         basket.addProduct(milk);
-        basket.removeProduct(bread);
-        Money total = receipt.getTotalPrice();
 
-        assertEquals(8, total.getAmount(), 0.001);
-        assertSame(Sek.SEK, total.getCurrency());
+        Money total = receipt.getTotalPrice();
+        assertAll("Receipt keeps the original total",
+                () -> assertEquals(8, total.getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
+    }
+
+    @Test
+    @DisplayName("Totalpriset behåller köpets summa när en rad tas bort ur korgen")
+    void getTotalPriceKeepsSnapshotAfterRowRemoval() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
+        Product bread = new Product("Bread", new Money(Sek.SEK, 3), food);
+        basket.addItem(new BasketItem(milk, 2));
+        basket.addProduct(bread);
+        Receipt receipt = new Receipt(basket, fixedClock());
+
+        basket.removeProduct(bread);
+
+        Money total = receipt.getTotalPrice();
+        assertAll("Receipt keeps the original total",
+                () -> assertEquals(8, total.getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
     }
 
     @Test
@@ -59,21 +79,21 @@ class RecieptTest {
 
         Money total = receipt.getTotalPrice();
 
-        assertEquals(0, total.getAmount(), 0.001);
-        assertSame(Sek.SEK, total.getCurrency());
+        assertAll("Empty receipt total",
+                () -> assertEquals(0, total.getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
     }
 
     @Test
-    @DisplayName("Kvittot visar köptid, varor i kolumner och totalpris oberoende av datorns språk")
+    @DisplayName("Kvittot visar köptid, varor i kolumner och totalpris")
     void toTextFormatsPurchaseSnapshot() {
         Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, new EAN("4006381333931"));
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food, new EAN("4006381333931"));
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food);
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
-        basket.addProduct(milk);
-        basket.removeProduct(bread);
         String expected = "Kvitto\n"
                 + "Datum: 2026-01-15 11:30\n"
                 + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
@@ -82,6 +102,19 @@ class RecieptTest {
                 + "Bread" + " ".repeat(20) + "1" + " ".repeat(6) + "20.00"
                 + " ".repeat(6) + "20.00\n"
                 + "Totalt: 45.00 SEK\n";
+
+        String text = receipt.toText();
+
+        assertEquals(expected, text);
+    }
+
+    @Test
+    @DisplayName("Kvittots belopp använder decimalpunkt även med svenskt språk")
+    void toTextUsesDecimalPointRegardlessOfLocale() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        basket.addItem(new BasketItem(milk, 2));
+        Receipt receipt = new Receipt(basket, fixedClock());
         Locale originalLocale = Locale.getDefault();
         String text;
 
@@ -92,7 +125,43 @@ class RecieptTest {
             Locale.setDefault(originalLocale);
         }
 
-        assertEquals(expected, text);
+        assertAll("Receipt formats amounts with decimal points",
+                () -> assertTrue(text.contains("12.50")),
+                () -> assertTrue(text.contains("25.00")),
+                () -> assertTrue(text.contains("Totalt: 25.00 SEK\n"))
+        );
+    }
+
+    @Test
+    @DisplayName("Kvittotexten ändras inte när antalet i korgen ändras")
+    void toTextKeepsSnapshotAfterQuantityChange() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        basket.addProduct(milk);
+        Receipt receipt = new Receipt(basket, fixedClock());
+        String originalText = receipt.toText();
+
+        basket.addProduct(milk);
+
+        String text = receipt.toText();
+
+        assertEquals(originalText, text);
+    }
+
+    @Test
+    @DisplayName("Kvittotexten ändras inte när en rad tas bort ur korgen")
+    void toTextKeepsSnapshotAfterRowRemoval() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        basket.addProduct(milk);
+        Receipt receipt = new Receipt(basket, fixedClock());
+        String originalText = receipt.toText();
+
+        basket.removeProduct(milk);
+
+        String text = receipt.toText();
+
+        assertEquals(originalText, text);
     }
 
     @Test
@@ -119,47 +188,87 @@ class RecieptTest {
     }
 
     @Test
-    @DisplayName("Långa varunamn behålls och beloppen ligger i samma kolumn")
-    void toTextWidensNameColumnForLongProductNames() {
+    @DisplayName("Långa varunamn skrivs ut utan att förkortas")
+    void toTextPreservesLongProductNames() {
         String longName = "Extra long product name that fits on the receipt";
         Basket basket = new Basket();
-        basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food, new EAN("4006381333931")));
-        basket.addProduct(new Product("Milk", new Money(Sek.SEK, 12.50), food, new EAN("4006381333931")));
+        basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food));
         Receipt receipt = new Receipt(basket, fixedClock());
 
         String[] lines = receipt.toText().split("\n");
 
         assertTrue(lines[3].startsWith(longName + " "));
-        assertTrue(lines[4].startsWith("Milk "));
-        assertEquals(lines[3].indexOf("12.50"), lines[4].indexOf("12.50"));
-        assertEquals(lines[3].lastIndexOf("12.50"), lines[4].lastIndexOf("12.50"));
-        assertEquals("Totalt: 25.00 SEK", lines[5]);
     }
 
     @Test
-    @DisplayName("Kvittot returnerar varorna och antalen från köpet även om korgen ändras")
-    void getItemsReturnsPurchaseSnapshot() {
+    @DisplayName("Beloppen ligger i samma kolumner efter ett långt varunamn")
+    void toTextAlignsPricesAfterLongProductName() {
+        String longName = "Extra long product name that fits on the receipt";
         Basket basket = new Basket();
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, new EAN("4006381333931"));
-        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food, new EAN("4006381333931"));
+        basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food));
+        basket.addProduct(new Product("Milk", new Money(Sek.SEK, 12.50), food));
+        Receipt receipt = new Receipt(basket, fixedClock());
+
+        String[] lines = receipt.toText().split("\n");
+        String longNameRow = lines[3];
+        String milkRow = lines[4];
+        int firstUnitPriceColumn = longNameRow.indexOf("12.50");
+        int firstTotalColumn = longNameRow.lastIndexOf("12.50");
+        int secondUnitPriceColumn = milkRow.indexOf("12.50");
+        int secondTotalColumn = milkRow.lastIndexOf("12.50");
+
+        assertAll("Both rows contain a unit price and a row total",
+                () -> assertTrue(firstUnitPriceColumn >= 0),
+                () -> assertTrue(firstTotalColumn > firstUnitPriceColumn),
+                () -> assertTrue(secondUnitPriceColumn >= 0),
+                () -> assertTrue(secondTotalColumn > secondUnitPriceColumn)
+        );
+        assertAll("Unit prices and row totals are aligned",
+                () -> assertEquals(firstUnitPriceColumn, secondUnitPriceColumn),
+                () -> assertEquals(firstTotalColumn, secondTotalColumn)
+        );
+    }
+
+    @Test
+    @DisplayName("Kvittoraderna behåller köpets antal när korgen ändras")
+    void getItemsKeepsSnapshotAfterQuantityChange() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food);
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
-        Receipt receipt = new Receipt(basket, Clock.systemUTC());
+        Receipt receipt = new Receipt(basket, fixedClock());
 
         basket.addProduct(milk);
+
+        List<ReceiptLine> items = receipt.getItems();
+
+        assertEquals(2, items.size());
+        assertAll("Receipt keeps the original rows",
+                () -> assertReceiptLine(items.get(0), "Milk", 2, 12.50, 25),
+                () -> assertReceiptLine(items.get(1), "Bread", 1, 20, 20)
+        );
+    }
+
+    @Test
+    @DisplayName("Kvittoraderna behåller en vara som tas bort ur korgen")
+    void getItemsKeepsSnapshotAfterRowRemoval() {
+        Basket basket = new Basket();
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product bread = new Product("Bread", new Money(Sek.SEK, 20), food);
+        basket.addItem(new BasketItem(milk, 2));
+        basket.addProduct(bread);
+        Receipt receipt = new Receipt(basket, fixedClock());
+
         basket.removeProduct(bread);
 
         List<ReceiptLine> items = receipt.getItems();
 
         assertEquals(2, items.size());
-        assertEquals("Milk", items.get(0).getProductName());
-        assertEquals(2, items.get(0).getQuantity());
-        assertEquals(12.50, items.get(0).getUnitPrice().getAmount(), 0.001);
-        assertEquals(25, items.get(0).getTotalPrice().getAmount(), 0.001);
-        assertSame(Sek.SEK, items.get(0).getUnitPrice().getCurrency());
-        assertEquals("Bread", items.get(1).getProductName());
-        assertEquals(1, items.get(1).getQuantity());
-        assertEquals(20, items.get(1).getUnitPrice().getAmount(), 0.001);
+        assertAll("Receipt keeps the original rows",
+                () -> assertReceiptLine(items.get(0), "Milk", 2, 12.50, 25),
+                () -> assertReceiptLine(items.get(1), "Bread", 1, 20, 20)
+        );
     }
 
     @Test
@@ -168,20 +277,20 @@ class RecieptTest {
         Basket basket = new Basket();
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         basket.addItem(new BasketItem(milk, 2));
-        Receipt receipt = new Receipt(basket, Clock.systemUTC());
+        Receipt receipt = new Receipt(basket, fixedClock());
 
         List<ReceiptLine> items = receipt.getItems();
 
         assertThrows(UnsupportedOperationException.class, () -> items.clear());
         assertEquals(1, receipt.getItems().size());
-        assertEquals(2, receipt.getItems().get(0).getQuantity());
+        assertReceiptLine(receipt.getItems().get(0), "Milk", 2, 12.50, 25);
     }
 
     @Test
     @DisplayName("Ett kvitto från en tom korg returnerar en tom lista")
     void getItemsReturnsEmptyListForEmptyBasket() {
         Basket basket = new Basket();
-        Receipt receipt = new Receipt(basket, Clock.systemUTC());
+        Receipt receipt = new Receipt(basket, fixedClock());
 
         List<ReceiptLine> items = receipt.getItems();
 
@@ -192,9 +301,7 @@ class RecieptTest {
     @DisplayName("Kvittot sparar köpets tid från den angivna klockan och tidszonen")
     void constructorCapturesTimestampInClockTimeZone() {
         Basket basket = new Basket();
-        Clock clock = Clock.fixed(
-                Instant.parse("2026-01-15T10:30:00Z"),
-                ZoneId.of("Europe/Stockholm"));
+        Clock clock = fixedClock();
         LocalDateTime expectedTimestamp = LocalDateTime.of(2026, 1, 15, 11, 30);
 
         Receipt receipt = new Receipt(basket, clock);
@@ -206,7 +313,7 @@ class RecieptTest {
     @DisplayName("Konstruktorn avvisar en saknad korg")
     void constructorRejectsNullBasket() {
         Basket basket = null;
-        Clock clock = Clock.systemUTC();
+        Clock clock = fixedClock();
 
         assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(basket, clock));
@@ -220,5 +327,17 @@ class RecieptTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(basket, clock));
+    }
+
+    private void assertReceiptLine(ReceiptLine line, String expectedName, int expectedQuantity,
+            double expectedUnitPrice, double expectedTotal) {
+        assertAll("Receipt line for " + expectedName,
+                () -> assertEquals(expectedName, line.getProductName()),
+                () -> assertEquals(expectedQuantity, line.getQuantity()),
+                () -> assertEquals(expectedUnitPrice, line.getUnitPrice().getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, line.getUnitPrice().getCurrency()),
+                () -> assertEquals(expectedTotal, line.getTotalPrice().getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, line.getTotalPrice().getCurrency())
+        );
     }
 }
