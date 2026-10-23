@@ -35,11 +35,7 @@ class BasketTest {
     @Test
     @DisplayName("En ny korg är tom och har noll i antal och pris i SEK")
     void constructorCreatesEmptySekBasket() {
-        assertTrue(basket.isEmpty());
-        assertTrue(basket.getItems().isEmpty());
-        assertEquals(0, basket.getTotalQuantity());
-        assertEquals(0, basket.getTotalPrice().getAmount(), 0.001);
-        assertSame(Sek.SEK, basket.getTotalPrice().getCurrency());
+        assertEmptyBasket();
     }
 
     @Test
@@ -51,8 +47,10 @@ class BasketTest {
 
         euroBasket.addProduct(product);
 
-        assertEquals(2, euroBasket.getTotalPrice().getAmount(), 0.001);
-        assertSame(euro, euroBasket.getTotalPrice().getCurrency());
+        assertAll("Basket uses the supplied currency",
+                () -> assertEquals(2, euroBasket.getTotalPrice().getAmount(), 0.001),
+                () -> assertSame(euro, euroBasket.getTotalPrice().getCurrency())
+        );
     }
 
     @Test
@@ -68,8 +66,10 @@ class BasketTest {
 
         basket.addItem(item);
 
-        assertEquals(List.of(item), basket.getItems());
-        assertFalse(basket.isEmpty());
+        assertAll("Added row is stored in a non-empty basket",
+                () -> assertEquals(List.of(item), basket.getItems()),
+                () -> assertFalse(basket.isEmpty())
+        );
     }
 
     @Test
@@ -89,9 +89,11 @@ class BasketTest {
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addItem(null));
-        assertEquals(1, basket.getTotalQuantity());
-        assertSame(bread, basket.getItems().get(0).getProduct());
-        assertEquals(20, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("Basket remains unchanged after a missing row",
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertSame(bread, basket.getItems().get(0).getProduct()),
+                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -103,9 +105,11 @@ class BasketTest {
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addItem(item));
-        assertEquals(1, basket.getTotalQuantity());
-        assertSame(bread, basket.getItems().get(0).getProduct());
-        assertEquals(20, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("Basket remains unchanged after a different currency",
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertSame(bread, basket.getItems().get(0).getProduct()),
+                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -116,9 +120,11 @@ class BasketTest {
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addItem(item));
-        assertEquals(1, basket.getTotalQuantity());
-        assertSame(bread, basket.getItems().get(0).getProduct());
-        assertEquals(20, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("Basket remains unchanged after a missing currency",
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertSame(bread, basket.getItems().get(0).getProduct()),
+                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -129,8 +135,10 @@ class BasketTest {
         basket.addProduct(milk);
 
         assertEquals(1, basket.getItems().size());
-        assertSame(milk, basket.getItems().get(0).getProduct());
-        assertEquals(2, basket.getTotalQuantity());
+        assertAll("Product is stored with two units",
+                () -> assertSame(milk, basket.getItems().get(0).getProduct()),
+                () -> assertEquals(2, basket.getTotalQuantity())
+        );
     }
 
     @Test
@@ -139,9 +147,11 @@ class BasketTest {
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addProduct(null));
-        assertEquals(1, basket.getTotalQuantity());
-        assertSame(bread, basket.getItems().get(0).getProduct());
-        assertEquals(20, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("Basket remains unchanged after a missing product",
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertSame(bread, basket.getItems().get(0).getProduct()),
+                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -166,8 +176,10 @@ class BasketTest {
 
         Money total = basket.getTotalPrice();
 
-        assertEquals(85, total.getAmount(), 0.001);
-        assertSame(Sek.SEK, total.getCurrency());
+        assertAll("Total price sums rows and keeps the currency",
+                () -> assertEquals(85, total.getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
     }
 
     @Test
@@ -190,9 +202,11 @@ class BasketTest {
 
         boolean removed = basket.removeItem(item);
 
-        assertTrue(removed);
-        assertEquals(1, basket.getTotalQuantity());
-        assertSame(bread, basket.getItems().get(0).getProduct());
+        assertAll("Whole row is removed and the other product remains",
+                () -> assertTrue(removed),
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertSame(bread, basket.getItems().get(0).getProduct())
+        );
     }
 
     @Test
@@ -212,8 +226,10 @@ class BasketTest {
 
         boolean removed = basket.removeProduct(milk);
 
-        assertTrue(removed);
-        assertEquals(2, basket.getItems().get(0).getQuantity());
+        assertAll("One unit is removed",
+                () -> assertTrue(removed),
+                () -> assertEquals(2, basket.getItems().get(0).getQuantity())
+        );
     }
 
     @Test
@@ -223,8 +239,10 @@ class BasketTest {
 
         boolean removed = basket.removeProduct(milk);
 
-        assertTrue(removed);
-        assertTrue(basket.isEmpty());
+        assertAll("Removing the last unit empties the basket",
+                () -> assertTrue(removed),
+                () -> assertTrue(basket.isEmpty())
+        );
     }
 
     @Test
@@ -234,9 +252,11 @@ class BasketTest {
 
         boolean removed = basket.removeProduct(milk);
 
-        assertFalse(removed);
-        assertEquals(1, basket.getTotalQuantity());
-        assertSame(bread, basket.getItems().get(0).getProduct());
+        assertAll("Missing product leaves the basket unchanged",
+                () -> assertFalse(removed),
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertSame(bread, basket.getItems().get(0).getProduct())
+        );
     }
 
     @Test
@@ -252,8 +272,10 @@ class BasketTest {
 
         boolean removed = basket.removeAll(List.of(milkItem, breadItem));
 
-        assertTrue(removed);
-        assertEquals(List.of(cheeseItem), basket.getItems());
+        assertAll("Only selected rows are removed",
+                () -> assertTrue(removed),
+                () -> assertEquals(List.of(cheeseItem), basket.getItems())
+        );
     }
 
     @Test
@@ -264,8 +286,10 @@ class BasketTest {
 
         boolean removed = basket.removeAll(List.of(missingItem));
 
-        assertFalse(removed);
-        assertEquals(1, basket.getTotalQuantity());
+        assertAll("Missing rows leave the quantity unchanged",
+                () -> assertFalse(removed),
+                () -> assertEquals(1, basket.getTotalQuantity())
+        );
     }
 
     @ParameterizedTest(name = "Saknad valuta: {0}")
@@ -298,11 +322,13 @@ class BasketTest {
 
         basket.addItem(new BasketItem(milk, 3));
 
-        assertEquals(List.of(breadItem, milkItem), basket.getItems());
-        assertEquals(1, breadItem.getQuantity());
-        assertEquals(5, milkItem.getQuantity());
-        assertEquals(6, basket.getTotalQuantity());
-        assertEquals(82.50, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("Later row is merged and totals are updated",
+                () -> assertEquals(List.of(breadItem, milkItem), basket.getItems()),
+                () -> assertEquals(1, breadItem.getQuantity()),
+                () -> assertEquals(5, milkItem.getQuantity()),
+                () -> assertEquals(6, basket.getTotalQuantity()),
+                () -> assertEquals(82.50, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -315,10 +341,12 @@ class BasketTest {
 
         basket.addItem(second);
 
-        assertEquals(List.of(first, second), basket.getItems());
-        assertEquals(2, first.getQuantity());
-        assertEquals(3, second.getQuantity());
-        assertEquals(5, basket.getTotalQuantity());
+        assertAll("Distinct product objects remain on separate rows",
+                () -> assertEquals(List.of(first, second), basket.getItems()),
+                () -> assertEquals(2, first.getQuantity()),
+                () -> assertEquals(3, second.getQuantity()),
+                () -> assertEquals(5, basket.getTotalQuantity())
+        );
     }
 
     @Test
@@ -328,8 +356,10 @@ class BasketTest {
         basket.addItem(item);
 
         assertThrows(ArithmeticException.class, () -> basket.addProduct(milk));
-        assertEquals(List.of(item), basket.getItems());
-        assertEquals(Integer.MAX_VALUE, item.getQuantity());
+        assertAll("Overflow leaves the row unchanged",
+                () -> assertEquals(List.of(item), basket.getItems()),
+                () -> assertEquals(Integer.MAX_VALUE, item.getQuantity())
+        );
     }
 
     @Test
@@ -341,10 +371,12 @@ class BasketTest {
 
         boolean removed = basket.removeItem(otherItem);
 
-        assertFalse(removed);
-        assertEquals(List.of(storedItem), basket.getItems());
-        assertEquals(2, basket.getTotalQuantity());
-        assertEquals(25, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("Different row leaves the stored row unchanged",
+                () -> assertFalse(removed),
+                () -> assertEquals(List.of(storedItem), basket.getItems()),
+                () -> assertEquals(2, basket.getTotalQuantity()),
+                () -> assertEquals(25, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -356,11 +388,13 @@ class BasketTest {
         boolean removedItem = basket.removeItem(null);
         boolean removedProduct = basket.removeProduct(null);
 
-        assertFalse(removedItem);
-        assertFalse(removedProduct);
-        assertEquals(List.of(item), basket.getItems());
-        assertEquals(2, basket.getTotalQuantity());
-        assertEquals(25, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("Missing inputs leave the basket unchanged",
+                () -> assertFalse(removedItem),
+                () -> assertFalse(removedProduct),
+                () -> assertEquals(List.of(item), basket.getItems()),
+                () -> assertEquals(2, basket.getTotalQuantity()),
+                () -> assertEquals(25, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -375,13 +409,17 @@ class BasketTest {
         double priceAfterFirstRemoval = basket.getTotalPrice().getAmount();
         boolean lastRemoval = basket.removeProduct(milk);
 
-        assertTrue(firstRemoval);
-        assertEquals(2, quantityAfterFirstRemoval);
-        assertEquals(32.50, priceAfterFirstRemoval, 0.001);
-        assertTrue(lastRemoval);
-        assertEquals(List.of(breadItem), basket.getItems());
-        assertEquals(1, basket.getTotalQuantity());
-        assertEquals(20, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("First removal leaves one unit in the later row",
+                () -> assertTrue(firstRemoval),
+                () -> assertEquals(2, quantityAfterFirstRemoval),
+                () -> assertEquals(32.50, priceAfterFirstRemoval, 0.001)
+        );
+        assertAll("Last removal leaves only bread",
+                () -> assertTrue(lastRemoval),
+                () -> assertEquals(List.of(breadItem), basket.getItems()),
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -392,9 +430,11 @@ class BasketTest {
 
         boolean removed = basket.removeProduct(otherMilk);
 
-        assertFalse(removed);
-        assertEquals(1, basket.getTotalQuantity());
-        assertSame(milk, basket.getItems().get(0).getProduct());
+        assertAll("Matching name leaves the original product unchanged",
+                () -> assertFalse(removed),
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertSame(milk, basket.getItems().get(0).getProduct())
+        );
     }
 
     @Test
@@ -408,10 +448,12 @@ class BasketTest {
 
         boolean removed = basket.removeAll(List.of(milkItem, missingItem, milkItem));
 
-        assertTrue(removed);
-        assertEquals(List.of(breadItem), basket.getItems());
-        assertEquals(1, basket.getTotalQuantity());
-        assertEquals(20, basket.getTotalPrice().getAmount(), 0.001);
+        assertAll("Only the existing selected row is removed",
+                () -> assertTrue(removed),
+                () -> assertEquals(List.of(breadItem), basket.getItems()),
+                () -> assertEquals(1, basket.getTotalQuantity()),
+                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @Test
@@ -422,9 +464,11 @@ class BasketTest {
 
         boolean removed = basket.removeAll(List.of());
 
-        assertFalse(removed);
-        assertEquals(List.of(item), basket.getItems());
-        assertEquals(2, basket.getTotalQuantity());
+        assertAll("Empty selection leaves the basket unchanged",
+                () -> assertFalse(removed),
+                () -> assertEquals(List.of(item), basket.getItems()),
+                () -> assertEquals(2, basket.getTotalQuantity())
+        );
     }
 
     @Test
@@ -438,11 +482,7 @@ class BasketTest {
         boolean removed = basket.removeAll(List.of(milkItem, breadItem));
 
         assertTrue(removed);
-        assertTrue(basket.isEmpty());
-        assertTrue(basket.getItems().isEmpty());
-        assertEquals(0, basket.getTotalQuantity());
-        assertEquals(0, basket.getTotalPrice().getAmount(), 0.001);
-        assertSame(Sek.SEK, basket.getTotalPrice().getCurrency());
+        assertEmptyBasket();
         assertFalse(basket.removeProduct(milk));
     }
 
@@ -455,9 +495,7 @@ class BasketTest {
         boolean removed = basket.removeItem(item);
 
         assertTrue(removed);
-        assertTrue(basket.isEmpty());
-        assertEquals(0, basket.getTotalQuantity());
-        assertEquals(0, basket.getTotalPrice().getAmount(), 0.001);
+        assertEmptyBasket();
         assertFalse(basket.removeItem(item));
     }
 
@@ -469,8 +507,10 @@ class BasketTest {
         assertFalse(basket.removeProduct(milk));
         assertFalse(basket.removeAll(List.of(missingItem)));
         assertFalse(basket.removeAll(List.of()));
-        assertTrue(basket.isEmpty());
-        assertEquals(0, basket.getTotalQuantity());
+        assertAll("Basket remains empty",
+                () -> assertTrue(basket.isEmpty()),
+                () -> assertEquals(0, basket.getTotalQuantity())
+        );
     }
 
     @Test
@@ -493,9 +533,11 @@ class BasketTest {
         basket.addItem(breadItem);
 
         assertThrows(ArithmeticException.class, () -> basket.getTotalQuantity());
-        assertEquals(List.of(milkItem, breadItem), basket.getItems());
-        assertEquals(Integer.MAX_VALUE, milkItem.getQuantity());
-        assertEquals(1, breadItem.getQuantity());
+        assertAll("Quantity overflow leaves both rows unchanged",
+                () -> assertEquals(List.of(milkItem, breadItem), basket.getItems()),
+                () -> assertEquals(Integer.MAX_VALUE, milkItem.getQuantity()),
+                () -> assertEquals(1, breadItem.getQuantity())
+        );
 
         basket.removeItem(breadItem);
 
@@ -515,6 +557,16 @@ class BasketTest {
         assertThrows(IllegalArgumentException.class, () -> basket.removeAll(null));
 
         assertBasketEquals(expectedBasket, basket);
+    }
+
+    private void assertEmptyBasket() {
+        assertAll("Empty basket",
+                () -> assertTrue(basket.isEmpty()),
+                () -> assertTrue(basket.getItems().isEmpty()),
+                () -> assertEquals(0, basket.getTotalQuantity()),
+                () -> assertEquals(0, basket.getTotalPrice().getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, basket.getTotalPrice().getCurrency())
+        );
     }
 
     private void assertBasketEquals(Basket expected, Basket actual) {
