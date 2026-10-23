@@ -11,7 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,8 +30,10 @@ class ScanResultTest {
     void constructorStoresFoundStatusAndProduct() {
         ScanResult result = new ScanResult(ScanResult.Status.FOUND, milk);
 
-        assertEquals(ScanResult.Status.FOUND, result.getStatus());
-        assertSame(milk, result.getProduct());
+        assertAll("Found result stores status and product",
+                () -> assertEquals(ScanResult.Status.FOUND, result.getStatus()),
+                () -> assertSame(milk, result.getProduct())
+        );
     }
 
     @Test
@@ -49,8 +50,10 @@ class ScanResultTest {
     void constructorStoresFailureStatusWithoutProduct(ScanResult.Status status) {
         ScanResult result = new ScanResult(status, null);
 
-        assertEquals(status, result.getStatus());
-        assertNull(result.getProduct());
+        assertAll("Failure result stores status without a product",
+                () -> assertEquals(status, result.getStatus()),
+                () -> assertNull(result.getProduct())
+        );
     }
 
     @ParameterizedTest(name = "Status: {0}")
@@ -62,18 +65,17 @@ class ScanResultTest {
                 () -> new ScanResult(status, milk));
     }
 
-    @ParameterizedTest(name = "Vara finns: {0}")
-    @ValueSource(booleans = {false, true})
-    @DisplayName("SR-05: Saknad status avvisas med och utan vara")
-    void constructorRejectsMissingStatus(boolean productProvided) {
-        Product product;
-        if (productProvided) {
-            product = milk;
-        } else {
-            product = null;
-        }
-
+    @Test
+    @DisplayName("SR-05: Saknad status avvisas utan vara")
+    void constructorRejectsMissingStatusWithoutProduct() {
         assertThrows(IllegalArgumentException.class,
-                () -> new ScanResult(null, product));
+                () -> new ScanResult(null, null));
+    }
+
+    @Test
+    @DisplayName("SR-05: Saknad status avvisas med vara")
+    void constructorRejectsMissingStatusWithProduct() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new ScanResult(null, milk));
     }
 }
