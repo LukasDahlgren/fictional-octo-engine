@@ -3,6 +3,8 @@ package kassasystem.basket;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,11 +17,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BasketItemTest {
 
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
     private Product product;
 
     @BeforeEach
     void setUp() {
-        product = new Product("Milk", new Money(Sek.SEK, 12.50), null);
+        product = new Product("Milk", new Money(Sek.SEK, 12.50), food);
     }
 
     @Test
@@ -120,8 +124,10 @@ class BasketItemTest {
 
         Money total = item.getTotalPrice();
 
-        assertEquals(37.50, total.getAmount(), 0.001);
-        assertSame(Sek.SEK, total.getCurrency());
+        assertAll("Row total multiplies unit price by quantity and keeps the currency",
+                () -> assertEquals(37.50, total.getAmount(), 0.001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
     }
 
     @Test
@@ -140,35 +146,47 @@ class BasketItemTest {
         BasketItem item = new BasketItem(product, 2);
 
         assertThrows(ArithmeticException.class, () -> item.increaseQuantity(Integer.MAX_VALUE));
-        assertEquals(2, item.getQuantity());
-        assertSame(product, item.getProduct());
-        assertEquals(25, item.getTotalPrice().getAmount(), 0.001);
+        assertAll("Overflow leaves the row unchanged",
+                () -> assertEquals(2, item.getQuantity()),
+                () -> assertSame(product, item.getProduct()),
+                () -> assertEquals(25, item.getTotalPrice().getAmount(), 0.001)
+        );
     }
 
     @ParameterizedTest(name = "Styckpris {0}, antal {1}, total {2}")
     @CsvSource({"0, 3, 0", "0.10, 3, 0.30", "12.50, 1, 12.50"})
     @DisplayName("Nollpris, decimalpris och en enda enhet ger rätt radpris")
     void getTotalPriceHandlesPriceAndQuantityClasses(double price, int quantity, double expected) {
-        Product pricedProduct = new Product("Product", new Money(Sek.SEK, price), null);
+        Product pricedProduct = new Product("Product", new Money(Sek.SEK, price), food);
         BasketItem item = new BasketItem(pricedProduct, quantity);
 
         Money total = item.getTotalPrice();
 
-        assertEquals(expected, total.getAmount(), 0.000001);
-        assertSame(Sek.SEK, total.getCurrency());
+        assertAll("Row total has the expected amount and currency",
+                () -> assertEquals(expected, total.getAmount(), 0.000001),
+                () -> assertSame(Sek.SEK, total.getCurrency())
+        );
     }
 
     @Test
-    @DisplayName("Radpriset uppdateras när antalet ökas och minskas")
-    void getTotalPriceFollowsQuantityChanges() {
+    @DisplayName("Radpriset uppdateras när antalet ökas")
+    void getTotalPriceUpdatesAfterQuantityIncrease() {
         BasketItem item = new BasketItem(product, 1);
 
         item.increaseQuantity(2);
-        Money increasedTotal = item.getTotalPrice();
-        item.decreaseQuantity();
-        Money decreasedTotal = item.getTotalPrice();
 
-        assertEquals(37.50, increasedTotal.getAmount(), 0.001);
-        assertEquals(25, decreasedTotal.getAmount(), 0.001);
+        Money total = item.getTotalPrice();
+        assertEquals(37.50, total.getAmount(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Radpriset uppdateras när antalet minskas")
+    void getTotalPriceUpdatesAfterQuantityDecrease() {
+        BasketItem item = new BasketItem(product, 3);
+
+        item.decreaseQuantity();
+
+        Money total = item.getTotalPrice();
+        assertEquals(25, total.getAmount(), 0.001);
     }
 }

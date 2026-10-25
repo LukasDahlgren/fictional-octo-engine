@@ -3,6 +3,8 @@ package kassasystem.scanning;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
 import kassasystem.product.ProductCatalog;
 import kassasystem.testdoubles.FixedCodeReader;
 import kassasystem.testdoubles.FixedProductCatalog;
@@ -15,6 +17,26 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BarcodeScannerTest {
+
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
+    @Test
+    @DisplayName("Konstruktorn avvisar en saknad kodläsare")
+    void constructorRejectsMissingCodeReader() {
+        ProductCatalog productCatalog = new FixedProductCatalog(null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new BarcodeScanner(null, productCatalog));
+    }
+
+    @Test
+    @DisplayName("Konstruktorn avvisar en saknad produktkatalog")
+    void constructorRejectsMissingProductCatalog() {
+        FixedCodeReader codeReader = new FixedCodeReader("4006381333931");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new BarcodeScanner(codeReader, null));
+    }
 
     @Test
     @DisplayName("En oläsbar kod ger FAILED_READ utan att söka efter en vara")
@@ -30,9 +52,11 @@ class BarcodeScannerTest {
 
         ScanResult result = scanner.scan();
 
-        assertEquals(ScanResult.Status.FAILED_READ, result.getStatus());
-        assertNull(result.getProduct());
-        assertEquals(1, codeReader.getReadCalls());
+        assertAll("Unreadable code returns failure after one read",
+                () -> assertEquals(ScanResult.Status.FAILED_READ, result.getStatus()),
+                () -> assertNull(result.getProduct()),
+                () -> assertEquals(1, codeReader.getReadCalls())
+        );
     }
 
     @ParameterizedTest(name = "Ogiltig kod: [{0}]")
@@ -48,10 +72,12 @@ class BarcodeScannerTest {
 
         ScanResult result = scanner.scan();
 
-        assertEquals(ScanResult.Status.INVALID_CODE, result.getStatus());
-        assertNull(result.getProduct());
-        assertEquals(1, codeReader.getReadCalls());
-        assertEquals(0, productCatalog.getLookupCalls());
+        assertAll("Invalid code returns failure without a catalog lookup",
+                () -> assertEquals(ScanResult.Status.INVALID_CODE, result.getStatus()),
+                () -> assertNull(result.getProduct()),
+                () -> assertEquals(1, codeReader.getReadCalls()),
+                () -> assertEquals(0, productCatalog.getLookupCalls())
+        );
     }
 
     @Test
@@ -63,31 +89,33 @@ class BarcodeScannerTest {
 
         ScanResult result = scanner.scan();
 
-        assertEquals(ScanResult.Status.UNKNOWN_PRODUCT, result.getStatus());
-        assertNull(result.getProduct());
-        assertEquals(1, codeReader.getReadCalls());
-        assertEquals(1, productCatalog.getLookupCalls());
-        assertNotNull(productCatalog.getReceivedEan());
-        assertEquals("4006381333931", productCatalog.getReceivedEan().getCode());
+        assertAll("Unknown code is looked up once and returns no product",
+                () -> assertEquals(ScanResult.Status.UNKNOWN_PRODUCT, result.getStatus()),
+                () -> assertNull(result.getProduct()),
+                () -> assertEquals(1, codeReader.getReadCalls()),
+                () -> assertEquals(1, productCatalog.getLookupCalls()),
+                () -> assertEquals(new EAN("4006381333931"), productCatalog.getReceivedEan())
+        );
     }
 
     @Test
     @DisplayName("SC-01: En matchande kod ger FOUND och exakt samma vara")
     void scanReturnsFoundWithMatchingProduct() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
 
         ScanResult result = scanner.scan();
 
-        assertEquals(ScanResult.Status.FOUND, result.getStatus());
-        assertSame(milk, result.getProduct());
-        assertEquals(1, codeReader.getReadCalls());
-        assertEquals(1, productCatalog.getLookupCalls());
-        assertNotNull(productCatalog.getReceivedEan());
-        assertEquals("0123456789012", productCatalog.getReceivedEan().getCode());
+        assertAll("Matching code is looked up once and returns the product",
+                () -> assertEquals(ScanResult.Status.FOUND, result.getStatus()),
+                () -> assertSame(milk, result.getProduct()),
+                () -> assertEquals(1, codeReader.getReadCalls()),
+                () -> assertEquals(1, productCatalog.getLookupCalls()),
+                () -> assertEquals(ean, productCatalog.getReceivedEan())
+        );
     }
 
     @Test
@@ -106,8 +134,10 @@ class BarcodeScannerTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> scanner.scan());
 
-        assertSame(failure, exception);
-        assertEquals(0, productCatalog.getLookupCalls());
+        assertAll("Reader failure is propagated without a catalog lookup",
+                () -> assertSame(failure, exception),
+                () -> assertEquals(0, productCatalog.getLookupCalls())
+        );
     }
 
     @Test
@@ -126,7 +156,9 @@ class BarcodeScannerTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> scanner.scan());
 
-        assertSame(failure, exception);
-        assertEquals(1, codeReader.getReadCalls());
+        assertAll("Catalog failure is propagated after one read",
+                () -> assertSame(failure, exception),
+                () -> assertEquals(1, codeReader.getReadCalls())
+        );
     }
 }
