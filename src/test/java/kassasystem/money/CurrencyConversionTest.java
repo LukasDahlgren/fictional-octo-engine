@@ -5,9 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CurrencyConversionTest {
 
-     private final Currency sek = Sek.SEK;
-     private final Currency eur = Eur.EUR;
-
      @Test
      void euroToSekShouldBeCorrect() {
          CurrencyConversion conversion = new CurrencyConversion(10.0, 0.02);
