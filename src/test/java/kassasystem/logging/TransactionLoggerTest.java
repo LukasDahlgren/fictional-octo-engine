@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.time.Clock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
  class TransactionLoggerTest {
 
@@ -29,4 +30,5 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
         assertEquals(receipt.toText(), Files.readString(logFile));
     }
+
 }

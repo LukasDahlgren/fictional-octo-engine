@@ -17,6 +17,11 @@ public class TransactionLogger {
     }
 
     public void log(Receipt receipt) throws IOException {
-
+        Files.writeString(
+                logFile,
+                receipt.toText(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.APPEND
+        );
     }
 }
