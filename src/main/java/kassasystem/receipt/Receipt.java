@@ -20,24 +20,47 @@ public class Receipt {
    private final List<ReceiptLine> items;
 
    public Receipt(Basket basket, Clock clock) {
+      this(basket, getBasketTotalPrice(basket), clock);
+   }
+
+   public Receipt(Basket basket, Money totalPrice, Clock clock) {
       if (basket == null) {
          throw new IllegalArgumentException("Basket cannot be null");
       }
+
+      if (totalPrice == null) {
+         throw new IllegalArgumentException("Total price cannot be null");
+      }
+
       if (clock == null) {
          throw new IllegalArgumentException("Clock cannot be null");
       }
 
-      this.totalPrice = basket.getTotalPrice();
       if (totalPrice.getCurrency().compareTo(Sek.SEK) != 0) {
          throw new IllegalArgumentException("Receipt must use SEK");
       }
+
+      this.totalPrice = totalPrice;
       this.timestamp = LocalDateTime.now(clock);
       this.items = new ArrayList<>();
+
       for (BasketItem item : basket.getItems()) {
          Product product = item.getProduct();
-         ReceiptLine line = new ReceiptLine(product.getName(), item.getQuantity(), product.getPrice());
+         ReceiptLine line = new ReceiptLine(
+                 product.getName(),
+                 item.getQuantity(),
+                 product.getPrice()
+         );
          items.add(line);
       }
+   }
+
+   private static Money getBasketTotalPrice(Basket basket) {
+      if (basket == null) {
+         throw new IllegalArgumentException("Basket cannot be null");
+      }
+
+      return basket.getTotalPrice();
    }
 
    public List<ReceiptLine> getItems() {

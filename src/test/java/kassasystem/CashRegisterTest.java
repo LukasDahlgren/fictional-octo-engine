@@ -2,9 +2,12 @@ package kassasystem;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+import kassasystem.customer.Customer;
+import kassasystem.customer.Membership;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -251,6 +254,34 @@ class CashRegisterTest {
                 () -> assertSame(purchase, register.getCurrentPurchase()),
                 () -> assertEquals(Purchase.Status.COMPLETED, purchase.getStatus())
         );
+    }
+
+    @Test
+    @DisplayName("Aktiv medlem får tio procent rabatt på hela köpet")
+    void completePurchaseAppliesMembershipDiscountToWholePurchase() {
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-10-16T10:00:00Z"),
+                ZoneId.of("UTC")
+        );
+        register = new CashRegister(clock);
+
+        Membership membership = new Membership(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31)
+        );
+        Customer customer = new Customer("C001", "Medlem", membership);
+        Product product = new Product(
+                "Testprodukt",
+                new Money(Sek.SEK, 100.0),
+                food
+        );
+
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(product);
+
+        Receipt receipt = register.completePurchase(customer);
+
+        assertEquals(90.0, receipt.getTotalPrice().getAmount(), 0.001);
     }
 
     private void assertCurrentActiveEmptyPurchase(Purchase purchase) {
