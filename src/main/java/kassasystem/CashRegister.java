@@ -9,6 +9,7 @@ import kassasystem.scanning.ScanResult;
 import kassasystem.receipt.Receipt;
 import kassasystem.customer.Customer;
 import kassasystem.discount.DiscountCalculator;
+import kassasystem.discount.DiscountOffer;
 import kassasystem.money.Money;
 
 import kassasystem.logging.TransactionLogger;
@@ -90,6 +91,13 @@ public class CashRegister {
     }
 
     public Receipt completePurchase(Customer customer) {
+        return completePurchase(customer, null);
+    }
+
+    public Receipt completePurchase(
+            Customer customer,
+            DiscountOffer offer
+    ) {
         if (customer == null) {
             throw new IllegalArgumentException("Customer must not be null");
         }
@@ -103,7 +111,8 @@ public class CashRegister {
         Money discountedPrice = calculator.calculatePrice(
                 originalPrice,
                 customer,
-                purchaseDate
+                purchaseDate,
+                offer
         );
 
         return finishPurchase(discountedPrice);

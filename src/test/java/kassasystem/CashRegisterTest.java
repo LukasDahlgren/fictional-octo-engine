@@ -15,6 +15,7 @@ import kassasystem.product.ProductCategory;
 import kassasystem.product.VATCategory;
 import kassasystem.receipt.Receipt;
 import kassasystem.receipt.ReceiptLine;
+import kassasystem.discount.DiscountOffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -282,6 +283,41 @@ class CashRegisterTest {
         Receipt receipt = register.completePurchase(customer);
 
         assertEquals(90.0, receipt.getTotalPrice().getAmount(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Det största erbjudandet väljs framför medlemsrabatten")
+    void completePurchaseAppliesGreatestOfferDiscount() {
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-10-16T10:00:00Z"),
+                ZoneId.of("UTC")
+        );
+        register = new CashRegister(clock);
+
+        Membership membership = new Membership(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31)
+        );
+        Customer customer = new Customer("C001", "Medlem", membership);
+
+        DiscountOffer offer = new DiscountOffer(
+                20.0,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31)
+        );
+
+        Product product = new Product(
+                "Testprodukt",
+                new Money(Sek.SEK, 100.0),
+                food
+        );
+
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(product);
+
+        Receipt receipt = register.completePurchase(customer, offer);
+
+        assertEquals(80.0, receipt.getTotalPrice().getAmount(), 0.001);
     }
 
     private void assertCurrentActiveEmptyPurchase(Purchase purchase) {
