@@ -17,6 +17,10 @@ public class TransactionLogger {
     }
 
     public void log(Receipt receipt) throws IOException {
+        if(receipt == null) {
+            throw new IllegalArgumentException("Receipt must not be null");
+        }
+
         Files.writeString(
                 logFile,
                 receipt.toText(),
