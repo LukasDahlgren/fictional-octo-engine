@@ -31,4 +31,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
         assertEquals(receipt.toText(), Files.readString(logFile));
     }
 
+    @Test
+     @DisplayName("Rejects a null receipt")
+     void rejectsNullReceipt() {
+        TransactionLogger logger =
+                new TransactionLogger(tempDir.resolve("transactions.txt"));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> logger.log(null)
+        );
+    }
+
 }
