@@ -43,4 +43,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
         );
     }
 
+     @Test
+     @DisplayName("Rejects a null log file path")
+     void rejectsNullLogFilePath() {
+         assertThrows(
+                 IllegalArgumentException.class,
+                 () -> new TransactionLogger(null)
+         );
+     }
+
 }
