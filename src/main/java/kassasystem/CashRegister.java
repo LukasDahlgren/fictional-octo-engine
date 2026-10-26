@@ -83,7 +83,7 @@ public class CashRegister {
     }
 
     public Receipt completePurchase() {
-        ensureCurrentPurchaseExists();
+        ensureActivePurchase();
 
         Money totalPrice = currentPurchase.getBasket().getTotalPrice();
 
@@ -102,7 +102,7 @@ public class CashRegister {
             throw new IllegalArgumentException("Customer must not be null");
         }
 
-        ensureCurrentPurchaseExists();
+        ensureActivePurchase();
 
         Money originalPrice = currentPurchase.getBasket().getTotalPrice();
         LocalDate purchaseDate = LocalDate.now(clock);
@@ -123,13 +123,19 @@ public class CashRegister {
         return receipt;
     }
 
-    private void ensureCurrentPurchaseExists() {
-        if (currentPurchase == null) {
-            throw new IllegalStateException(
-                    "Cannot complete a purchase when there is no current purchase"
-            );
-        }
+    private void ensureActivePurchase() {
+    if (currentPurchase == null) {
+        throw new IllegalStateException(
+                "Cannot complete a purchase when there is no current purchase"
+        );
     }
+
+    if (currentPurchase.getStatus() != Purchase.Status.ACTIVE) {
+        throw new IllegalStateException(
+                "Only active purchases can be completed"
+        );
+    }
+}
 
     private Receipt finishPurchase(Money totalPrice) {
         Receipt receipt = new Receipt(
