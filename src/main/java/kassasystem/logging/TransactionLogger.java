@@ -13,6 +13,9 @@ public class TransactionLogger {
     private final Path logFile;
 
     public TransactionLogger(Path logFile) {
+        if (logFile == null) {
+            throw new IllegalArgumentException("Log file path must not be null");
+        }
         this.logFile = logFile;
     }
 
