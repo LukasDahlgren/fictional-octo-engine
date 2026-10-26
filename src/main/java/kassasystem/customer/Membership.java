@@ -15,14 +15,9 @@ public class Membership {
     }
 
     public boolean isActiveOn(LocalDate date) {
-        if (date.isBefore(startDate)) {
-            return false;
-        }
+        boolean hasStarted = !date.isBefore(startDate);
+        boolean hasNotEnded = !date.isAfter(endDate);
 
-        if (date.isAfter(endDate)) {
-            return false;
-        }
-
-        return true;
+        return hasStarted && hasNotEnded;
     }
 }

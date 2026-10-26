@@ -28,6 +28,16 @@ public class Receipt {
 
    // The checkout supplies the calculated discount; the receipt only records it.
    public Receipt(Basket basket, Clock clock, Money discountAmount, String discountLabel) {
+      this(basket, clock, discountAmount, discountLabel, null);
+   }
+
+   // Supports checkout flows that already calculated the final amount.
+   public Receipt(Basket basket, Money totalPrice, Clock clock) {
+      this(basket, clock, calculateDiscount(basket, totalPrice), "Rabatt", totalPrice);
+   }
+
+   private Receipt(Basket basket, Clock clock, Money discountAmount,
+           String discountLabel, Money suppliedTotal) {
       if (basket == null) {
          throw new IllegalArgumentException("Basket cannot be null");
       }
@@ -59,7 +69,11 @@ public class Receipt {
       }
       this.discountAmount = new Money(Sek.SEK, discount);
       this.discountLabel = discountLabel;
-      this.totalPrice = subtotal.subtract(this.discountAmount);
+      if (suppliedTotal == null) {
+         this.totalPrice = subtotal.subtract(this.discountAmount);
+      } else {
+         this.totalPrice = new Money(Sek.SEK, suppliedTotal.getAmount());
+      }
       this.timestamp = LocalDateTime.now(clock);
       this.items = new ArrayList<>();
       for (BasketItem item : basket.getItems()) {
@@ -67,6 +81,25 @@ public class Receipt {
          ReceiptLine line = new ReceiptLine(product.getName(), item.getQuantity(), product.getPrice());
          items.add(line);
       }
+   }
+
+   private static Money calculateDiscount(Basket basket, Money totalPrice) {
+      if (basket == null) {
+         throw new IllegalArgumentException("Basket cannot be null");
+      }
+      if (totalPrice == null) {
+         throw new IllegalArgumentException("Total price cannot be null");
+      }
+      if (totalPrice.getCurrency() == null
+              || totalPrice.getCurrency().compareTo(Sek.SEK) != 0) {
+         throw new IllegalArgumentException("Receipt must use SEK");
+      }
+      Money subtotal = basket.getTotalPrice();
+      double total = totalPrice.getAmount();
+      if (!Double.isFinite(total) || total < 0 || total > subtotal.getAmount()) {
+         throw new IllegalArgumentException("Total price must be between zero and the subtotal");
+      }
+      return new Money(Sek.SEK, subtotal.getAmount() - total);
    }
 
    public List<ReceiptLine> getItems() {

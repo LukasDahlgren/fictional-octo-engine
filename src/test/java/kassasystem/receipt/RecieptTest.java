@@ -50,6 +50,57 @@ class RecieptTest {
     }
 
     @Test
+    @DisplayName("Kvittot bevarar exakt det slutbelopp som checkout skickar in")
+    void constructorPreservesSuppliedTotal() {
+        basket.addProduct(milk);
+        Money total = new Money(Sek.SEK, 0.10);
+
+        Receipt receipt = new Receipt(basket, total, fixedClock());
+
+        assertEquals(total, receipt.getTotalPrice());
+        assertEquals(new Money(Sek.SEK, 12.50), receipt.getSubtotal());
+        assertEquals(12.40, receipt.getDiscountAmount().getAmount(), 0.000001);
+        assertEquals("Rabatt", receipt.getDiscountLabel());
+        assertTrue(receipt.toText().endsWith("Rabatt: -12.40 SEK\nTotalt: 0.10 SEK\n"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = { -1, 12.51, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
+    @DisplayName("Kvittot avvisar ogiltiga slutbelopp från checkout")
+    void constructorRejectsInvalidSuppliedTotal(double amount) {
+        basket.addProduct(milk);
+        Money total = new Money(Sek.SEK, amount);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Receipt(basket, total, fixedClock()));
+    }
+
+    @Test
+    @DisplayName("Kvittot avvisar ett saknat slutbelopp från checkout")
+    void constructorRejectsNullSuppliedTotal() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Receipt(basket, null, fixedClock()));
+    }
+
+    @Test
+    @DisplayName("Kvittot avvisar ett slutbelopp i annan valuta än SEK")
+    void constructorRejectsNonSekSuppliedTotal() {
+        Money total = new Money(new Currency("EUR", "€"), 0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Receipt(basket, total, fixedClock()));
+    }
+
+    @Test
+    @DisplayName("Kvittot avvisar ett slutbelopp utan valuta")
+    void constructorRejectsSuppliedTotalWithoutCurrency() {
+        Money total = new Money(null, 0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Receipt(basket, total, fixedClock()));
+    }
+
+    @Test
     @DisplayName("Kvittot visar delsumman, angiven rabatt och slutpriset med ursprungliga varupriser")
     void toTextShowsSuppliedDiscount() {
         basket.addItem(new BasketItem(milk, 2));
@@ -233,6 +284,33 @@ class RecieptTest {
         String text = receipt.toText();
 
         assertEquals(expected, text);
+    }
+
+    @Test
+    @DisplayName("Kvittot visar delsumma, rabatt och totalpris")
+    void toTextShowsAppliedDiscount() {
+        Product product = new Product(
+                "Testprodukt",
+                new Money(Sek.SEK, 100.0),
+                food
+        );
+        basket.addProduct(product);
+
+        Money discountedTotal = new Money(Sek.SEK, 80.0);
+        Receipt receipt = new Receipt(
+                basket,
+                discountedTotal,
+                fixedClock()
+        );
+
+        String text = receipt.toText();
+
+        assertAll(
+                "Kvittot visar hur totalpriset har beräknats",
+                () -> assertTrue(text.contains("Delsumma: 100.00 SEK\n")),
+                () -> assertTrue(text.contains("Rabatt: -20.00 SEK\n")),
+                () -> assertTrue(text.contains("Totalt: 80.00 SEK\n"))
+        );
     }
 
     @Test

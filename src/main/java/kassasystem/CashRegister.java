@@ -1,11 +1,16 @@
 package kassasystem;
 
 import java.time.Clock;
+import java.time.LocalDate;
 
 import kassasystem.basket.Basket;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.ScanResult;
 import kassasystem.receipt.Receipt;
+import kassasystem.customer.Customer;
+import kassasystem.discount.DiscountCalculator;
+import kassasystem.discount.DiscountOffer;
+import kassasystem.money.Money;
 
 import kassasystem.logging.TransactionLogger;
 
@@ -78,13 +83,60 @@ public class CashRegister {
     }
 
     public Receipt completePurchase() {
+        ensureCurrentPurchaseExists();
+
+        Money totalPrice = currentPurchase.getBasket().getTotalPrice();
+
+        return finishPurchase(totalPrice);
+    }
+
+    public Receipt completePurchase(Customer customer) {
+        return completePurchase(customer, null);
+    }
+
+    public Receipt completePurchase(
+            Customer customer,
+            DiscountOffer offer
+    ) {
+        if (customer == null) {
+            throw new IllegalArgumentException("Customer must not be null");
+        }
+
+        ensureCurrentPurchaseExists();
+
+        Money originalPrice = currentPurchase.getBasket().getTotalPrice();
+        LocalDate purchaseDate = LocalDate.now(clock);
+        DiscountCalculator calculator = new DiscountCalculator();
+
+        Money discountedPrice = calculator.calculatePrice(
+                originalPrice,
+                customer,
+                purchaseDate,
+                offer
+        );
+
+        Purchase completedPurchase = currentPurchase;
+        Receipt receipt = finishPurchase(discountedPrice);
+
+        customer.addPurchase(completedPurchase);
+
+        return receipt;
+    }
+
+    private void ensureCurrentPurchaseExists() {
         if (currentPurchase == null) {
             throw new IllegalStateException(
                     "Cannot complete a purchase when there is no current purchase"
             );
         }
+    }
 
-        Receipt receipt = new Receipt(currentPurchase.getBasket(), clock);
+    private Receipt finishPurchase(Money totalPrice) {
+        Receipt receipt = new Receipt(
+                currentPurchase.getBasket(),
+                totalPrice,
+                clock
+        );
 
         if (transactionLogger != null) {
             try {
@@ -99,6 +151,7 @@ public class CashRegister {
 
         currentPurchase.complete();
         currentPurchase = null;
+
         return receipt;
     }
 
