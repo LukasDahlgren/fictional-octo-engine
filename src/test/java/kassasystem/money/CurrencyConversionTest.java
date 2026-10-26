@@ -46,4 +46,22 @@ class CurrencyConversionTest {
          assertThrows(IllegalArgumentException.class, () -> new CurrencyConversion(10, 0));
      }
 
+     @Test
+    void rejectNullAsAmount() {
+         CurrencyConversion conversion = new CurrencyConversion(10.0, 0.02);
+
+         assertThrows(NullPointerException.class, () -> conversion.convertToSek(null));
+
+     }
+
+     @Test
+    void rejectUnknownCurrency() {
+         Currency unsupportedCurrency = new Currency("USD", "Usd") {};
+
+         CurrencyConversion conversion = new CurrencyConversion(10.0, 0.02);
+         Money amount = new Money(unsupportedCurrency, 100.0);
+
+         assertThrows(IllegalArgumentException.class,() -> conversion.convertToSek(amount));
+     }
+
 }
