@@ -26,4 +26,9 @@ class CurrencyConversionTest {
          assertSame(amount, result);
      }
 
+     @Test
+    void rejectZeroExchangeRate() {
+         assertThrows(IllegalArgumentException.class, () -> new CurrencyConversion(0, 0.02));
+     }
+
 }
