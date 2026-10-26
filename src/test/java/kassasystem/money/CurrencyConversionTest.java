@@ -36,4 +36,10 @@ class CurrencyConversionTest {
          assertThrows(IllegalArgumentException.class, () -> new CurrencyConversion(-1, 0.02));
      }
 
+     @Test
+    void rejectNegativeConversionFee() {
+         assertThrows(IllegalArgumentException.class, () -> new CurrencyConversion(10.0, -0.02));
+     }
+
+
 }
