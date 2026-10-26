@@ -1,0 +1,22 @@
+package kassasystem.logging;
+
+import kassasystem.receipt.Receipt;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+
+
+public class TransactionLogger {
+
+    private final Path logFile;
+
+    public TransactionLogger(Path logFile) {
+        this.logFile = logFile;
+    }
+
+    public void log(Receipt receipt) throws IOException {
+
+    }
+}
