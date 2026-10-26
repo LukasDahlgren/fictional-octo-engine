@@ -116,6 +116,33 @@ class RecieptTest {
     }
 
     @Test
+    @DisplayName("Kvittot visar delsumma, rabatt och totalpris")
+    void toTextShowsAppliedDiscount() {
+        Product product = new Product(
+                "Testprodukt",
+                new Money(Sek.SEK, 100.0),
+                food
+        );
+        basket.addProduct(product);
+
+        Money discountedTotal = new Money(Sek.SEK, 80.0);
+        Receipt receipt = new Receipt(
+                basket,
+                discountedTotal,
+                fixedClock()
+        );
+
+        String text = receipt.toText();
+
+        assertAll(
+                "Kvittot visar hur totalpriset har beräknats",
+                () -> assertTrue(text.contains("Delsumma: 100.00 SEK\n")),
+                () -> assertTrue(text.contains("Rabatt: -20.00 SEK\n")),
+                () -> assertTrue(text.contains("Totalt: 80.00 SEK\n"))
+        );
+    }
+
+    @Test
     @DisplayName("Kvittots belopp använder decimalpunkt även med svenskt språk")
     void toTextUsesDecimalPointRegardlessOfLocale() {
         basket.addItem(new BasketItem(milk, 2));
