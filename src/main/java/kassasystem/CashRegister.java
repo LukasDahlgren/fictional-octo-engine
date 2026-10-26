@@ -7,10 +7,17 @@ import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.ScanResult;
 import kassasystem.receipt.Receipt;
 
+import kassasystem.logging.TransactionLogger;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 public class CashRegister {
 
     private final Clock clock;
     private Purchase currentPurchase;
+
+    private final TransactionLogger transactionLogger;
 
     public CashRegister() {
         this(Clock.systemUTC());
@@ -21,7 +28,21 @@ public class CashRegister {
             throw new IllegalArgumentException("Clock must not be null");
         }
         this.clock = clock;
+        this.transactionLogger = null;
     }
+
+    public CashRegister(TransactionLogger transactionLogger, Clock clock) {
+        if (transactionLogger == null) {
+            throw new IllegalArgumentException("Transaction logger must not be null");
+        }
+        if (clock == null) {
+            throw new IllegalArgumentException("Clock must not be null");
+        }
+
+        this.transactionLogger = transactionLogger;
+        this.clock = clock;
+    }
+
 
     // Returns null when the register has no current purchase.
     public Purchase getCurrentPurchase() {
@@ -58,12 +79,24 @@ public class CashRegister {
 
     public Receipt completePurchase() {
         if (currentPurchase == null) {
-            throw new IllegalStateException("Cannot complete a purchase when there is no current purchase");
+            throw new IllegalStateException(
+                    "Cannot complete a purchase when there is no current purchase"
+            );
         }
 
-        //Här borde någon form av "betalning" ske.
-        //
         Receipt receipt = new Receipt(currentPurchase.getBasket(), clock);
+
+        if (transactionLogger != null) {
+            try {
+                transactionLogger.log(receipt);
+            } catch (IOException exception) {
+                throw new UncheckedIOException(
+                        "Could not log completed purchase",
+                        exception
+                );
+            }
+        }
+
         currentPurchase.complete();
         currentPurchase = null;
         return receipt;
