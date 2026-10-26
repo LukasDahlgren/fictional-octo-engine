@@ -115,7 +115,12 @@ public class CashRegister {
                 offer
         );
 
-        return finishPurchase(discountedPrice);
+        Purchase completedPurchase = currentPurchase;
+        Receipt receipt = finishPurchase(discountedPrice);
+
+        customer.addPurchase(completedPurchase);
+
+        return receipt;
     }
 
     private void ensureCurrentPurchaseExists() {

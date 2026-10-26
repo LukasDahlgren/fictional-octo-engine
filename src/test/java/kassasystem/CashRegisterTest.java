@@ -320,6 +320,30 @@ class CashRegisterTest {
         assertEquals(80.0, receipt.getTotalPrice().getAmount(), 0.001);
     }
 
+    @Test
+    @DisplayName("Ett slutfört köp sparas i kundens köphistorik")
+    void completedPurchaseIsStoredInCustomerHistory() {
+        Customer customer = new Customer("C001", "Testkund");
+
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(milk);
+
+        register.completePurchase(customer);
+
+        assertAll(
+                "Köphistoriken innehåller det slutförda köpet",
+                () -> assertEquals(1, customer.getPurchaseHistory().size()),
+                () -> assertSame(
+                        purchase,
+                        customer.getPurchaseHistory().get(0)
+                ),
+                () -> assertEquals(
+                        Purchase.Status.COMPLETED,
+                        purchase.getStatus()
+                )
+        );
+    }
+
     private void assertCurrentActiveEmptyPurchase(Purchase purchase) {
         assertAll("Current purchase is active and empty",
                 () -> assertSame(purchase, register.getCurrentPurchase()),
