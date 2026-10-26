@@ -2,9 +2,12 @@ package kassasystem;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+import kassasystem.customer.Customer;
+import kassasystem.customer.Membership;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -12,6 +15,7 @@ import kassasystem.product.ProductCategory;
 import kassasystem.product.VATCategory;
 import kassasystem.receipt.Receipt;
 import kassasystem.receipt.ReceiptLine;
+import kassasystem.discount.DiscountOffer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -250,6 +254,93 @@ class CashRegisterTest {
         assertAll("Failed cancellation preserves the current completed purchase",
                 () -> assertSame(purchase, register.getCurrentPurchase()),
                 () -> assertEquals(Purchase.Status.COMPLETED, purchase.getStatus())
+        );
+    }
+
+    @Test
+    @DisplayName("Aktiv medlem får tio procent rabatt på hela köpet")
+    void completePurchaseAppliesMembershipDiscountToWholePurchase() {
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-10-16T10:00:00Z"),
+                ZoneId.of("UTC")
+        );
+        register = new CashRegister(clock);
+
+        Membership membership = new Membership(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31)
+        );
+        Customer customer = new Customer("C001", "Medlem", membership);
+        Product product = new Product(
+                "Testprodukt",
+                new Money(Sek.SEK, 100.0),
+                food
+        );
+
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(product);
+
+        Receipt receipt = register.completePurchase(customer);
+
+        assertEquals(90.0, receipt.getTotalPrice().getAmount(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Det största erbjudandet väljs framför medlemsrabatten")
+    void completePurchaseAppliesGreatestOfferDiscount() {
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-10-16T10:00:00Z"),
+                ZoneId.of("UTC")
+        );
+        register = new CashRegister(clock);
+
+        Membership membership = new Membership(
+                LocalDate.of(2026, 1, 1),
+                LocalDate.of(2026, 12, 31)
+        );
+        Customer customer = new Customer("C001", "Medlem", membership);
+
+        DiscountOffer offer = new DiscountOffer(
+                20.0,
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 31)
+        );
+
+        Product product = new Product(
+                "Testprodukt",
+                new Money(Sek.SEK, 100.0),
+                food
+        );
+
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(product);
+
+        Receipt receipt = register.completePurchase(customer, offer);
+
+        assertEquals(80.0, receipt.getTotalPrice().getAmount(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Ett slutfört köp sparas i kundens köphistorik")
+    void completedPurchaseIsStoredInCustomerHistory() {
+        Customer customer = new Customer("C001", "Testkund");
+
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(milk);
+
+        register.completePurchase(customer);
+
+        assertAll(
+                "Köphistoriken innehåller det slutförda köpet",
+                () -> assertEquals(1, customer.getPurchaseHistory().size()),
+                () -> assertSame(
+                        purchase,
+                        customer.getPurchaseHistory().get(0)
+                ),
+                () -> assertEquals(
+                        Purchase.Status.COMPLETED,
+                        purchase.getStatus()
+                )
         );
     }
 

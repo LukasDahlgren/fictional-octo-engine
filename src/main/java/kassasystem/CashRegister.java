@@ -1,16 +1,28 @@
 package kassasystem;
 
 import java.time.Clock;
+import java.time.LocalDate;
 
 import kassasystem.basket.Basket;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.ScanResult;
 import kassasystem.receipt.Receipt;
+import kassasystem.customer.Customer;
+import kassasystem.discount.DiscountCalculator;
+import kassasystem.discount.DiscountOffer;
+import kassasystem.money.Money;
+
+import kassasystem.logging.TransactionLogger;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 public class CashRegister {
 
     private final Clock clock;
     private Purchase currentPurchase;
+
+    private final TransactionLogger transactionLogger;
 
     public CashRegister() {
         this(Clock.systemUTC());
@@ -21,7 +33,21 @@ public class CashRegister {
             throw new IllegalArgumentException("Clock must not be null");
         }
         this.clock = clock;
+        this.transactionLogger = null;
     }
+
+    public CashRegister(TransactionLogger transactionLogger, Clock clock) {
+        if (transactionLogger == null) {
+            throw new IllegalArgumentException("Transaction logger must not be null");
+        }
+        if (clock == null) {
+            throw new IllegalArgumentException("Clock must not be null");
+        }
+
+        this.transactionLogger = transactionLogger;
+        this.clock = clock;
+    }
+
 
     // Returns null when the register has no current purchase.
     public Purchase getCurrentPurchase() {
@@ -57,15 +83,75 @@ public class CashRegister {
     }
 
     public Receipt completePurchase() {
-        if (currentPurchase == null) {
-            throw new IllegalStateException("Cannot complete a purchase when there is no current purchase");
+        ensureCurrentPurchaseExists();
+
+        Money totalPrice = currentPurchase.getBasket().getTotalPrice();
+
+        return finishPurchase(totalPrice);
+    }
+
+    public Receipt completePurchase(Customer customer) {
+        return completePurchase(customer, null);
+    }
+
+    public Receipt completePurchase(
+            Customer customer,
+            DiscountOffer offer
+    ) {
+        if (customer == null) {
+            throw new IllegalArgumentException("Customer must not be null");
         }
 
-        //Här borde någon form av "betalning" ske.
-        //
-        Receipt receipt = new Receipt(currentPurchase.getBasket(), clock);
+        ensureCurrentPurchaseExists();
+
+        Money originalPrice = currentPurchase.getBasket().getTotalPrice();
+        LocalDate purchaseDate = LocalDate.now(clock);
+        DiscountCalculator calculator = new DiscountCalculator();
+
+        Money discountedPrice = calculator.calculatePrice(
+                originalPrice,
+                customer,
+                purchaseDate,
+                offer
+        );
+
+        Purchase completedPurchase = currentPurchase;
+        Receipt receipt = finishPurchase(discountedPrice);
+
+        customer.addPurchase(completedPurchase);
+
+        return receipt;
+    }
+
+    private void ensureCurrentPurchaseExists() {
+        if (currentPurchase == null) {
+            throw new IllegalStateException(
+                    "Cannot complete a purchase when there is no current purchase"
+            );
+        }
+    }
+
+    private Receipt finishPurchase(Money totalPrice) {
+        Receipt receipt = new Receipt(
+                currentPurchase.getBasket(),
+                totalPrice,
+                clock
+        );
+
+        if (transactionLogger != null) {
+            try {
+                transactionLogger.log(receipt);
+            } catch (IOException exception) {
+                throw new UncheckedIOException(
+                        "Could not log completed purchase",
+                        exception
+                );
+            }
+        }
+
         currentPurchase.complete();
         currentPurchase = null;
+
         return receipt;
     }
 
