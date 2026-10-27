@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 
 import kassasystem.basket.Basket;
+import kassasystem.payment.FakePayer;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.ScanResult;
 import kassasystem.receipt.Receipt;
@@ -20,6 +21,7 @@ import java.io.UncheckedIOException;
 public class CashRegister {
 
     private final Clock clock;
+    private FakePayer fakePayer;
     private Purchase currentPurchase;
 
     private final TransactionLogger transactionLogger;
@@ -34,6 +36,7 @@ public class CashRegister {
         }
         this.clock = clock;
         this.transactionLogger = null;
+        this.fakePayer = new FakePayer(true);
     }
 
     public CashRegister(TransactionLogger transactionLogger, Clock clock) {
@@ -86,6 +89,10 @@ public class CashRegister {
         ensureActivePurchase();
 
         Money totalPrice = currentPurchase.getBasket().getTotalPrice();
+
+        if (!fakePayer.pay()) {
+            throw new IllegalStateException("Payment failed");
+        }
 
         return finishPurchase(totalPrice);
     }
