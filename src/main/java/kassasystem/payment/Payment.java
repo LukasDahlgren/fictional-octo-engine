@@ -8,6 +8,10 @@ public class Payment {
     private final Payer payer;
 
     public Payment(Money amount, Payer payer) {
+        if (payer == null) {
+            throw new IllegalArgumentException("Payer must not be null");
+        }
+
         this.amount = amount;
         this.payer = payer;
     }
