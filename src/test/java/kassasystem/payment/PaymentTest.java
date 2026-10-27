@@ -60,4 +60,15 @@ class PaymentTest {
                 () -> new Payment(amount, null)
         );
     }
+
+    @Test
+    @DisplayName("Betalningen avvisar ett saknat belopp")
+    void constructorRejectsNullAmount() {
+        Payer payer = paymentAmount -> true;
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Payment(null, payer)
+        );
+    }
 }
