@@ -20,6 +20,7 @@ public class Money{
 
    // Adderar två pengabelopp och returnerar ett nytt Money-objekt.
    public Money add(Money other) {
+      requireSameCurrency(other);
       return new Money(currency, amount + other.amount);
    }
 
