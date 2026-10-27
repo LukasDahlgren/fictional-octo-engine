@@ -89,4 +89,16 @@ class PaymentTest {
 
         assertEquals(1, callCount[0]);
     }
+
+    @Test
+    @DisplayName("Betalningen avvisar ett negativt belopp")
+    void constructorRejectsNegativeAmount() {
+        Money amount = new Money(Sek.SEK, -100.0);
+        Payer payer = paymentAmount -> true;
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Payment(amount, payer)
+        );
+    }
 }
