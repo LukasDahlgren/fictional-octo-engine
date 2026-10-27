@@ -71,4 +71,22 @@ class PaymentTest {
                 () -> new Payment(null, payer)
         );
     }
+
+    @Test
+    @DisplayName("Betalningen anropar betalaren exakt en gång")
+    void payCallsPayerExactlyOnce() {
+        Money amount = new Money(Sek.SEK, 100.0);
+        int[] callCount = new int[1];
+
+        Payer payer = paymentAmount -> {
+            callCount[0]++;
+            return true;
+        };
+
+        Payment payment = new Payment(amount, payer);
+
+        payment.pay();
+
+        assertEquals(1, callCount[0]);
+    }
 }
