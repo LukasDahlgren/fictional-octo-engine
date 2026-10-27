@@ -2,24 +2,22 @@ package kassasystem.payment;
 
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PaymentTest {
 
     @Test
-    void successfulPaymentCompletesPurchase() {
-        // Arrange
-        Payer payer = amount -> true;
+    @DisplayName("Betalningen lyckas när betalaren godkänner den")
+    void payReturnsTrueWhenPayerApproves() {
         Money amount = new Money(Sek.SEK, 100.0);
+        Payer payer = paymentAmount -> true;
         Payment payment = new Payment(amount, payer);
 
-        // Act
         boolean result = payment.pay();
 
-        // Assert
         assertTrue(result);
     }
 }
-
