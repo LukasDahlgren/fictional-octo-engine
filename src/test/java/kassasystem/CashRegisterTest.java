@@ -16,6 +16,7 @@ import kassasystem.product.VATCategory;
 import kassasystem.receipt.Receipt;
 import kassasystem.receipt.ReceiptLine;
 import kassasystem.discount.DiscountOffer;
+import kassasystem.payment.Payer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class CashRegisterTest {
 
@@ -358,6 +360,25 @@ class CashRegisterTest {
                 () -> assertEquals(expectedName, line.getProductName()),
                 () -> assertEquals(expectedQuantity, line.getQuantity()),
                 () -> assertEquals(expectedUnitPrice, line.getUnitPrice().getAmount(), 0.001)
+        );
+    }
+
+    @Test
+    @DisplayName("Kassan slutför köpet när betalaren godkänner betalningen")
+    void completePurchaseCompletesPurchaseWhenPayerApproves() {
+        Payer payer = amount -> true;
+        CashRegister register = new CashRegister(payer);
+        Purchase purchase = register.startPurchase();
+
+        Receipt receipt = register.completePurchase();
+
+        assertAll(
+                () -> assertEquals(
+                        Purchase.Status.COMPLETED,
+                        purchase.getStatus()
+                ),
+                () -> assertNull(register.getCurrentPurchase()),
+                () -> assertNotNull(receipt)
         );
     }
 }
