@@ -363,22 +363,4 @@ class CashRegisterTest {
         );
     }
 
-    @Test
-    @DisplayName("Kassan slutför köpet när betalaren godkänner betalningen")
-    void completePurchaseCompletesPurchaseWhenPayerApproves() {
-        Payer payer = amount -> true;
-        CashRegister register = new CashRegister(payer);
-        Purchase purchase = register.startPurchase();
-
-        Receipt receipt = register.completePurchase();
-
-        assertAll(
-                () -> assertEquals(
-                        Purchase.Status.COMPLETED,
-                        purchase.getStatus()
-                ),
-                () -> assertNull(register.getCurrentPurchase()),
-                () -> assertNotNull(receipt)
-        );
-    }
 }

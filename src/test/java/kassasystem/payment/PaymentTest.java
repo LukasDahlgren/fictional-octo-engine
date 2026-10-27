@@ -48,4 +48,15 @@ class PaymentTest {
 
         assertEquals(amount, receivedAmount[0]);
     }
+
+    @Test
+    @DisplayName("Betalningen avvisar en saknad betalare")
+    void constructorRejectsNullPayer() {
+        Money amount = new Money(Sek.SEK, 100.0);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Payment(amount, null)
+        );
+    }
 }
