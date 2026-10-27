@@ -5,8 +5,7 @@ import kassasystem.money.Sek;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PaymentTest {
 
@@ -31,5 +30,22 @@ class PaymentTest {
         boolean result = payment.pay();
 
         assertFalse(result);
+    }
+    @Test
+    @DisplayName("Betalningen skickar rätt belopp till betalaren")
+    void payPassesAmountToPayer() {
+        Money amount = new Money(Sek.SEK, 100.0);
+        Money[] receivedAmount = new Money[1];
+
+        Payer payer = paymentAmount -> {
+            receivedAmount[0] = paymentAmount;
+            return true;
+        };
+
+        Payment payment = new Payment(amount, payer);
+
+        payment.pay();
+
+        assertEquals(amount, receivedAmount[0]);
     }
 }
