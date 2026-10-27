@@ -11,6 +11,9 @@ public class Payment {
         if (amount == null) {
             throw new IllegalArgumentException("Amount must not be null");
         }
+        if (amount.getAmount() < 0) {
+            throw new IllegalArgumentException("Amount must not be negative");
+        }
 
         if (payer == null) {
             throw new IllegalArgumentException("Payer must not be null");
