@@ -3,8 +3,7 @@ package kassasystem.scanning;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class EANTest {
 
@@ -88,6 +87,39 @@ public class EANTest {
         EAN ean = new EAN("4006381333931");
 
         assertEquals("4006381333931", ean.toString());
+    }
+
+    @Test
+    @DisplayName("An EAN is equal to itself")
+    void equalsReturnsTrueForSameInstance() {
+        EAN ean = new EAN("4006381333931");
+
+        assertEquals(ean, ean);
+    }
+
+    @Test
+    @DisplayName("Different EAN objects with the same code are equal")
+    void equalsReturnsTrueForSameCode() {
+        EAN first = new EAN("4006381333931");
+        EAN second = new EAN("4006381333931");
+
+        assertEquals(first, second);
+    }
+
+    @Test
+    @DisplayName("An EAN is not equal to an object of another type")
+    void equalsReturnsFalseForDifferentType() {
+        EAN ean = new EAN("4006381333931");
+
+        assertNotEquals(ean, "4006381333931");
+    }
+
+    @Test
+    @DisplayName("An EAN is not equal to null")
+    void equalsReturnsFalseForNull() {
+        EAN ean = new EAN("4006381333931");
+
+        assertNotEquals(ean, null);
     }
 
 

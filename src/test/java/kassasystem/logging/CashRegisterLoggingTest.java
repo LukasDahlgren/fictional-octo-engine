@@ -36,6 +36,29 @@ class CashRegisterLoggingTest {
     Path tempDir;
 
     @Test
+    @DisplayName("Kassan avvisar en saknad transaktionslogg")
+    void constructorRejectsNullTransactionLogger() {
+        Clock clock = Clock.systemUTC();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new CashRegister(null, clock));
+
+        assertEquals("Transaction logger must not be null", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Kassan med transaktionslogg avvisar en saknad klocka")
+    void constructorRejectsNullClockWithTransactionLogger() {
+        Path logFile = tempDir.resolve("transactions.txt");
+        TransactionLogger logger = new TransactionLogger(logFile);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new CashRegister(logger, null));
+
+        assertEquals("Clock must not be null", exception.getMessage());
+    }
+
+    @Test
     @DisplayName("Logs a completed purchase")
     void logsCompletedPurchase() throws IOException {
         Path logFile = tempDir.resolve("transactions.txt");

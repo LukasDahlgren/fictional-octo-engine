@@ -1,6 +1,6 @@
-package kassasystem.product;
+package kassasystem.scanning;
 
-import kassasystem.scanning.EAN;
+import kassasystem.product.Product;
 
 import java.util.HashMap;
 import java.util.Map;

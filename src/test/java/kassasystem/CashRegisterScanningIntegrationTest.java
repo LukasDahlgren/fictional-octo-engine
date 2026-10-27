@@ -6,7 +6,7 @@ import kassasystem.money.Sek;
 import kassasystem.product.Product;
 import kassasystem.product.ProductCategory;
 import kassasystem.product.VATCategory;
-import kassasystem.product.ProductCatalog;
+import kassasystem.scanning.ProductCatalog;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.EAN;
 import kassasystem.scanning.ScanResult;

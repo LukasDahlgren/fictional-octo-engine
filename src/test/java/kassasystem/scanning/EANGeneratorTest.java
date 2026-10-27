@@ -3,8 +3,7 @@ package kassasystem.scanning;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class EANGeneratorTest {
 
@@ -31,4 +30,20 @@ public class EANGeneratorTest {
 
         assertNotEquals(firstEAN.getCode(), secondEAN.getCode());
     }
+
+    @Test
+    @DisplayName("Rejects generating a code after all codes are used")
+    void rejectsGenerationAfterAllCodesAreUsed() {
+        EANGenerator generator = new EANGenerator();
+
+        for (int i = 0; i < 100_000; i++) {
+            generator.generate();
+        }
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> generator.generate()
+        );
+    }
+
 }

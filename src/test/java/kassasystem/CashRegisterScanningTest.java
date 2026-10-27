@@ -15,6 +15,8 @@ import kassasystem.testdoubles.FixedProductCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -157,6 +159,35 @@ class CashRegisterScanningTest {
         assertAll("Cancelled purchase is preserved without reading a code",
                 () -> assertEquals(0, codeReader.getReadCalls()),
                 () -> assertPurchasePreserved(purchase, basket, Purchase.Status.CANCELLED)
+        );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = Purchase.Status.class, names = { "CANCELLED", "COMPLETED" })
+    @DisplayName("Scanning avvisar ett inaktivt aktuellt köp innan kodläsaren används")
+    void scanProductRejectsInactiveCurrentPurchaseWithoutReadingCode(Purchase.Status status) {
+        FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
+        BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
+        Purchase purchase = register.startPurchase();
+        Basket basket = purchase.getBasket();
+        basket.addProduct(milk);
+        if (status == Purchase.Status.CANCELLED) {
+            purchase.cancel();
+        } else {
+            purchase.complete();
+        }
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> register.scanProduct(scanner));
+
+        assertAll("Inactive current purchase is preserved without using the scanner",
+                () -> assertEquals("Varor kan endast scannas till ett aktivt köp", exception.getMessage()),
+                () -> assertEquals(0, codeReader.getReadCalls()),
+                () -> assertEquals(0, productCatalog.getLookupCalls()),
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(status, purchase.getStatus()),
+                () -> assertSame(basket, purchase.getBasket()),
+                () -> assertSingleMilkBasket(basket)
         );
     }
 

@@ -49,6 +49,7 @@ public class CashRegister {
 
         this.transactionLogger = transactionLogger;
         this.clock = clock;
+        this.fakePayer = new FakePayer(true);
     }
 
 

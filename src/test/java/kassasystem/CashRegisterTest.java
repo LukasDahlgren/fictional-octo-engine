@@ -21,6 +21,8 @@ import kassasystem.payment.Payer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -202,6 +204,29 @@ class CashRegisterTest {
         );
     }
 
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = Purchase.Status.class, names = { "CANCELLED", "COMPLETED" })
+    @DisplayName("Kassan avvisar ett inaktivt köp som fortfarande är aktuellt")
+    void completePurchaseRejectsInactiveCurrentPurchase(Purchase.Status status) {
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(milk);
+        if (status == Purchase.Status.CANCELLED) {
+            purchase.cancel();
+        } else {
+            purchase.complete();
+        }
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> register.completePurchase());
+
+        assertAll("Rejected completion preserves the current purchase",
+                () -> assertEquals("Only active purchases can be completed", exception.getMessage()),
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(status, purchase.getStatus()),
+                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice())
+        );
+    }
+
     @Test
     @DisplayName("Ett avbrutet köp frigör kassan")
     void cancelPurchaseCancelsCurrentPurchaseAndFreesRegister() {
@@ -256,6 +281,23 @@ class CashRegisterTest {
         assertAll("Rejected cancellation preserves the completed purchase and free register",
                 () -> assertNull(register.getCurrentPurchase()),
                 () -> assertEquals(Purchase.Status.COMPLETED, purchase.getStatus())
+        );
+    }
+
+    @Test
+    @DisplayName("Kundcheckout avvisar en saknad kund och behåller köpet aktivt")
+    void completePurchaseRejectsNullCustomer() {
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(milk);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> register.completePurchase(null));
+
+        assertAll("Rejected checkout preserves the active purchase",
+                () -> assertEquals("Customer must not be null", exception.getMessage()),
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(Purchase.Status.ACTIVE, purchase.getStatus()),
+                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice())
         );
     }
 
