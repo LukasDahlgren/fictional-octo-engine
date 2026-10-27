@@ -118,6 +118,18 @@ class RecieptTest {
     }
 
     @Test
+    @DisplayName("Kvittot avvisar en saknad korg när slutbelopp anges")
+    void constructorRejectsNullBasketWithSuppliedTotal() {
+        Money total = new Money(Sek.SEK, 0);
+        Clock clock = fixedClock();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new Receipt(null, total, clock));
+
+        assertEquals("Basket cannot be null", exception.getMessage());
+    }
+
+    @Test
     @DisplayName("Kvittot avvisar ett saknat slutbelopp från checkout")
     void constructorRejectsNullSuppliedTotal() {
         assertThrows(IllegalArgumentException.class,
@@ -426,6 +438,24 @@ class RecieptTest {
         Clock clock = fixedClock();
 
         assertThrows(IllegalArgumentException.class, () -> new Receipt(basket, clock));
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = { -1, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
+    @DisplayName("Kvittot avvisar negativa och icke ändliga delsummor")
+    void constructorRejectsInvalidSubtotal(double amount) {
+        Basket invalidBasket = new Basket() {
+            @Override
+            public Money getTotalPrice() {
+                return new Money(Sek.SEK, amount);
+            }
+        };
+        Clock clock = fixedClock();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new Receipt(invalidBasket, clock));
+
+        assertEquals("Subtotal must be finite and non-negative", exception.getMessage());
     }
 
     @Test
