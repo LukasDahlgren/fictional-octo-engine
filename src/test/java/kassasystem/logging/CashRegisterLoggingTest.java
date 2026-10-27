@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -25,6 +26,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -64,14 +66,15 @@ class CashRegisterLoggingTest {
         TransactionLogger logger = new TransactionLogger(logFile);
         CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC());
         Purchase purchase = startInactivePurchase(cashRegister, status);
+        String logBeforeRejectedCheckout = Files.readString(logFile);
 
         assertThrows(IllegalStateException.class, () -> cashRegister.completePurchase());
 
         assertAll("Rejected checkout preserves the purchase and log",
-                () -> assertSame(purchase, cashRegister.getCurrentPurchase()),
+                () -> assertNull(cashRegister.getCurrentPurchase()),
                 () -> assertEquals(status, purchase.getStatus()),
                 () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice()),
-                () -> assertEquals(previousLog, Files.readString(logFile))
+                () -> assertEquals(logBeforeRejectedCheckout, Files.readString(logFile))
         );
     }
 
@@ -86,19 +89,21 @@ class CashRegisterLoggingTest {
         TransactionLogger logger = new TransactionLogger(logFile);
         CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC());
         Customer customer = new Customer("C001", "Testkund");
-        Purchase previousPurchase = new Purchase();
-        previousPurchase.complete();
+        CashRegister previousRegister = new CashRegister();
+        Purchase previousPurchase = previousRegister.startPurchase();
+        previousRegister.completePurchase();
         customer.addPurchase(previousPurchase);
         Purchase purchase = startInactivePurchase(cashRegister, status);
+        String logBeforeRejectedCheckout = Files.readString(logFile);
 
         assertThrows(IllegalStateException.class,
                 () -> cashRegister.completePurchase(customer));
 
         assertAll("Rejected checkout preserves the purchase, log and existing history",
-                () -> assertSame(purchase, cashRegister.getCurrentPurchase()),
+                () -> assertNull(cashRegister.getCurrentPurchase()),
                 () -> assertEquals(status, purchase.getStatus()),
                 () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice()),
-                () -> assertEquals(previousLog, Files.readString(logFile)),
+                () -> assertEquals(logBeforeRejectedCheckout, Files.readString(logFile)),
                 () -> assertEquals(List.of(previousPurchase), customer.getPurchaseHistory())
         );
     }
@@ -114,10 +119,12 @@ class CashRegisterLoggingTest {
         TransactionLogger logger = new TransactionLogger(logFile);
         CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC());
         Customer customer = new Customer("C001", "Testkund");
-        Purchase previousPurchase = new Purchase();
-        previousPurchase.complete();
+        CashRegister previousRegister = new CashRegister();
+        Purchase previousPurchase = previousRegister.startPurchase();
+        previousRegister.completePurchase();
         customer.addPurchase(previousPurchase);
         Purchase purchase = startInactivePurchase(cashRegister, status);
+        String logBeforeRejectedCheckout = Files.readString(logFile);
         DiscountOffer offer = new DiscountOffer(20,
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
 
@@ -125,12 +132,35 @@ class CashRegisterLoggingTest {
                 () -> cashRegister.completePurchase(customer, offer));
 
         assertAll("Rejected checkout preserves the purchase, log and existing history",
-                () -> assertSame(purchase, cashRegister.getCurrentPurchase()),
+                () -> assertNull(cashRegister.getCurrentPurchase()),
                 () -> assertEquals(status, purchase.getStatus()),
                 () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice()),
-                () -> assertEquals(previousLog, Files.readString(logFile)),
+                () -> assertEquals(logBeforeRejectedCheckout, Files.readString(logFile)),
                 () -> assertEquals(List.of(previousPurchase), customer.getPurchaseHistory())
         );
+    }
+
+    @Test
+    @DisplayName("Loggfel behåller köpet aktivt och redigerbart utan att lägga till köphistorik")
+    void loggingFailureLeavesPurchaseEditableForRetry() {
+        TransactionLogger logger = new TransactionLogger(tempDir);
+        CashRegister register = new CashRegister(logger, Clock.systemUTC());
+        Customer customer = new Customer("C001", "Testkund");
+        ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(milk);
+
+        assertThrows(UncheckedIOException.class, () -> register.completePurchase(customer));
+
+        assertSame(purchase, register.getCurrentPurchase());
+        assertEquals(Purchase.Status.ACTIVE, purchase.getStatus());
+        assertEquals(List.of(), customer.getPurchaseHistory());
+        purchase.getBasket().getItems().get(0).increaseQuantity();
+        purchase.getBasket().addProduct(milk);
+        assertEquals(3, purchase.getBasket().getTotalQuantity());
+        register.cancelPurchase();
+        assertNull(register.getCurrentPurchase());
     }
 
     private Purchase startInactivePurchase(CashRegister cashRegister, Purchase.Status status) {
@@ -139,9 +169,9 @@ class CashRegisterLoggingTest {
         Purchase purchase = cashRegister.startPurchase();
         purchase.getBasket().addProduct(milk);
         if (status == Purchase.Status.CANCELLED) {
-            purchase.cancel();
+            cashRegister.cancelPurchase();
         } else {
-            purchase.complete();
+            cashRegister.completePurchase();
         }
         return purchase;
     }

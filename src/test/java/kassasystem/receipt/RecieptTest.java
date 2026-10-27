@@ -44,6 +44,48 @@ class RecieptTest {
         bread = new Product("Bread", new Money(Sek.SEK, 20), food);
     }
 
+    @Test
+    @DisplayName("Kvittot behåller namn, pris, antal och text när produkt och korg ändras")
+    void receiptCopiesValuesFromMutableProductAndBasket() {
+        // Product currently has no setters, but subclasses can expose changing values.
+        class MutableProduct extends Product {
+            private String currentName = "Milk";
+            private Money currentPrice = new Money(Sek.SEK, 12.50);
+
+            MutableProduct() {
+                super("Milk", new Money(Sek.SEK, 12.50), food);
+            }
+
+            @Override
+            public String getName() {
+                return currentName;
+            }
+
+            @Override
+            public Money getPrice() {
+                return currentPrice;
+            }
+        }
+        MutableProduct product = new MutableProduct();
+        BasketItem row = new BasketItem(product, 2);
+        basket.addItem(row);
+        Receipt receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 5), "Rabatt");
+        String originalText = receipt.toText();
+
+        product.currentName = "Changed name";
+        product.currentPrice = new Money(Sek.SEK, 99);
+        row.increaseQuantity();
+        basket.removeItem(row);
+        basket.addProduct(bread);
+
+        assertEquals(1, receipt.getItems().size());
+        assertReceiptLine(receipt.getItems().get(0), "Milk", 2, 12.50, 25);
+        assertEquals(new Money(Sek.SEK, 25), receipt.getSubtotal());
+        assertEquals(new Money(Sek.SEK, 5), receipt.getDiscountAmount());
+        assertEquals(new Money(Sek.SEK, 20), receipt.getTotalPrice());
+        assertEquals(originalText, receipt.toText());
+    }
+
     private Clock fixedClock() {
         return Clock.fixed(Instant.parse("2026-01-15T10:30:00Z"),
                 ZoneId.of("Europe/Stockholm"));

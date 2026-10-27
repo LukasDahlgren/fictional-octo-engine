@@ -1,6 +1,8 @@
 package kassasystem;
 
 import kassasystem.basket.Basket;
+import kassasystem.basket.BasketItem;
+import java.util.List;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -10,6 +12,8 @@ import kassasystem.product.VATCategory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -167,6 +171,34 @@ class PurchaseTest {
                 () -> assertEquals(Purchase.Status.CANCELLED, purchase.getStatus()),
                 () -> assertBasketPreserved(purchase, basket, milk)
         );
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(value = Purchase.Status.class, names = {"COMPLETED", "CANCELLED"})
+    @DisplayName("Avslutade köp skyddar både korgen och tidigare hämtade korgrader")
+    void closedPurchaseRejectsChangesThroughRetainedReferences(Purchase.Status status) {
+        BasketItem row = basket.getItems().get(0);
+        row.increaseQuantity();
+        if (status == Purchase.Status.COMPLETED) {
+            purchase.complete();
+        } else {
+            purchase.cancel();
+        }
+
+        assertAll("Every mutation is rejected after closing the purchase",
+                () -> assertThrows(IllegalStateException.class, () -> basket.addProduct(milk)),
+                () -> assertThrows(IllegalStateException.class,
+                        () -> basket.addItem(new BasketItem(milk, 1))),
+                () -> assertThrows(IllegalStateException.class, () -> basket.removeItem(row)),
+                () -> assertThrows(IllegalStateException.class, () -> basket.removeProduct(milk)),
+                () -> assertThrows(IllegalStateException.class, () -> basket.removeAll(List.of(row))),
+                () -> assertThrows(IllegalStateException.class, () -> row.increaseQuantity()),
+                () -> assertThrows(IllegalStateException.class, () -> row.increaseQuantity(2)),
+                () -> assertThrows(IllegalStateException.class, () -> row.decreaseQuantity())
+        );
+        assertEquals(status, purchase.getStatus());
+        assertEquals(2, basket.getTotalQuantity());
+        assertSame(row, basket.getItems().get(0));
     }
 
     private void assertBasketPreserved(Purchase purchase, Basket expectedBasket, Product expectedProduct) {
