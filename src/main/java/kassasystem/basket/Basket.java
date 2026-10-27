@@ -37,7 +37,7 @@ public class Basket{
          throw new IllegalArgumentException("Item must use the basket currency");
       }
       for (BasketItem existingItem : items) {
-         if (existingItem.getProduct() == item.getProduct()) {
+         if (existingItem.getProduct().getEan().equals(item.getProduct().getEan())) {
             existingItem.increaseQuantity(item.getQuantity());
             return;
          }
@@ -75,9 +75,14 @@ public class Basket{
 
    public boolean removeProduct(Product product){
       ensureMutable();
+
+      if(product == null){
+         return false;
+      }
+
       for (int i = 0; i < items.size(); i++) {
          BasketItem item = items.get(i);
-         if (item.getProduct() == product) {
+         if (item.getProduct().getEan().equals(product.getEan())) {
             if (item.getQuantity() == 1) {
                items.remove(i);
             } else {
