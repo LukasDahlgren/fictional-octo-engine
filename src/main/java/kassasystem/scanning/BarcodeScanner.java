@@ -1,7 +1,6 @@
 package kassasystem.scanning;
 
 import kassasystem.product.Product;
-import kassasystem.product.ProductCatalog;
 
 public class BarcodeScanner {
 

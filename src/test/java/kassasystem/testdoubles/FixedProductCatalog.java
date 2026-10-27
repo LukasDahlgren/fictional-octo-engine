@@ -1,7 +1,7 @@
 package kassasystem.testdoubles;
 
 import kassasystem.product.Product;
-import kassasystem.product.ProductCatalog;
+import kassasystem.scanning.ProductCatalog;
 import kassasystem.scanning.EAN;
 
 public class FixedProductCatalog extends ProductCatalog {

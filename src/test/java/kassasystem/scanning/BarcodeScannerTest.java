@@ -5,7 +5,6 @@ import kassasystem.money.Sek;
 import kassasystem.product.Product;
 import kassasystem.product.ProductCategory;
 import kassasystem.product.VATCategory;
-import kassasystem.product.ProductCatalog;
 import kassasystem.testdoubles.FixedCodeReader;
 import kassasystem.testdoubles.FixedProductCatalog;
 
