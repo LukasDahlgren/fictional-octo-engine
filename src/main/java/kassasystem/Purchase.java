@@ -34,18 +34,21 @@ public class Purchase {
         return status;
     }
 
-    public void complete() {
+    // Only checkout code in this package may change purchase status.
+    void complete() {
         if (status != Status.ACTIVE) {
             throw new IllegalStateException("Only active purchases can be completed");
         }
+        basket.freeze();
         status = Status.COMPLETED;
     }
 
-    public void cancel() {
+    void cancel() {
         if (status != Status.ACTIVE) {
             throw new IllegalStateException("Only active purchases can be cancelled");
         }
 
+        basket.freeze();
         status = Status.CANCELLED;
     }
 }

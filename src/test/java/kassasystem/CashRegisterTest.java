@@ -141,17 +141,17 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Det returnerade kvittot behåller köpets innehåll när den gamla korgen ändras")
-    void returnedReceiptKeepsSnapshotWhenPurchaseBasketChanges() {
+    @DisplayName("Ett slutfört köp avvisar ändringar och behåller kvittots innehåll")
+    void completedPurchaseRejectsBasketChangesAndPreservesReceipt() {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
         Receipt receipt = register.completePurchase();
 
-        purchase.getBasket().addProduct(milk);
+        assertThrows(IllegalStateException.class, () -> purchase.getBasket().addProduct(milk));
 
         assertEquals(1, receipt.getItems().size());
         assertAll("Returned receipt keeps the original purchase contents",
-                () -> assertEquals(2, purchase.getBasket().getTotalQuantity()),
+                () -> assertEquals(1, purchase.getBasket().getTotalQuantity()),
                 () -> assertReceiptLine(receipt.getItems().get(0), "Milk", 1, 12.50),
                 () -> assertEquals(12.50, receipt.getTotalPrice().getAmount(), 0.001)
         );
@@ -187,15 +187,15 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett misslyckat slutförande behåller kassans pågående köp")
-    void completePurchaseKeepsCurrentPurchaseWhenCompletionFails() {
+    @DisplayName("Kassan kan inte slutföra ett redan avbrutet köp")
+    void completePurchaseRejectsPreviouslyCancelledPurchase() {
         Purchase purchase = register.startPurchase();
-        purchase.cancel();
+        register.cancelPurchase();
 
         assertThrows(IllegalStateException.class, () -> register.completePurchase());
 
-        assertAll("Failed completion preserves the current cancelled purchase",
-                () -> assertSame(purchase, register.getCurrentPurchase()),
+        assertAll("Rejected completion preserves the cancelled purchase and free register",
+                () -> assertNull(register.getCurrentPurchase()),
                 () -> assertEquals(Purchase.Status.CANCELLED, purchase.getStatus())
         );
     }
@@ -244,15 +244,15 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett misslyckat avbrytande behåller kassans pågående köp")
-    void cancelPurchaseKeepsCurrentPurchaseWhenCancellationFails() {
+    @DisplayName("Kassan kan inte avbryta ett redan slutfört köp")
+    void cancelPurchaseRejectsPreviouslyCompletedPurchase() {
         Purchase purchase = register.startPurchase();
-        purchase.complete();
+        register.completePurchase();
 
         assertThrows(IllegalStateException.class, () -> register.cancelPurchase());
 
-        assertAll("Failed cancellation preserves the current completed purchase",
-                () -> assertSame(purchase, register.getCurrentPurchase()),
+        assertAll("Rejected cancellation preserves the completed purchase and free register",
+                () -> assertNull(register.getCurrentPurchase()),
                 () -> assertEquals(Purchase.Status.COMPLETED, purchase.getStatus())
         );
     }

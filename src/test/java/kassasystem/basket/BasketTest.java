@@ -6,6 +6,7 @@ import kassasystem.money.Sek;
 import kassasystem.product.Product;
 import kassasystem.product.ProductCategory;
 import kassasystem.product.VATCategory;
+import kassasystem.scanning.EAN;
 
 import java.util.List;
 
@@ -72,14 +73,17 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Samma vara grupperas på en rad med sammanlagt antal")
-    void addItemMergesSameProduct() {
+    @DisplayName("Olika produktobjekt med samma EAN grupperas på en rad")
+    void addItemMergesProductsWithSameEan() {
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
+                new EAN(milk.getEan().getCode()));
         basket.addItem(new BasketItem(milk, 2));
 
-        basket.addItem(new BasketItem(milk, 3));
+        basket.addItem(new BasketItem(otherMilk, 3));
 
         assertEquals(1, basket.getItems().size());
         assertEquals(5, basket.getItems().get(0).getQuantity());
+        assertEquals(62.50, basket.getTotalPrice().getAmount(), 0.001);
     }
 
     @Test
@@ -238,11 +242,13 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att ta bort en vara minskar antalet med ett")
-    void removeProductRemovesOneUnit() {
+    @DisplayName("Ett annat produktobjekt med samma EAN minskar antalet med ett")
+    void removeProductWithSameEanRemovesOneUnit() {
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
+                new EAN(milk.getEan().getCode()));
         basket.addItem(new BasketItem(milk, 3));
 
-        boolean removed = basket.removeProduct(milk);
+        boolean removed = basket.removeProduct(otherMilk);
 
         assertAll("One unit is removed",
                 () -> assertTrue(removed),
@@ -251,11 +257,13 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att ta bort sista enheten tar bort raden")
-    void removeProductRemovesLastUnit() {
+    @DisplayName("Ett annat produktobjekt med samma EAN tar bort sista enheten")
+    void removeProductWithSameEanRemovesLastUnit() {
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
+                new EAN(milk.getEan().getCode()));
         basket.addProduct(milk);
 
-        boolean removed = basket.removeProduct(milk);
+        boolean removed = basket.removeProduct(otherMilk);
 
         assertAll("Removing the last unit empties the basket",
                 () -> assertTrue(removed),

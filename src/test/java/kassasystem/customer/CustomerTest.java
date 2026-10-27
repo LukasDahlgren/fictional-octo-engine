@@ -1,6 +1,7 @@
 package kassasystem.customer;
 
 import kassasystem.Purchase;
+import kassasystem.CashRegister;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,8 +25,9 @@ class CustomerTest {
     @Test
     @DisplayName("Kunden sparar ett genomfört köp i sin köphistorik")
     void customerStoresCompletedPurchase() {
-        Purchase purchase = new Purchase();
-        purchase.complete();
+        CashRegister register = new CashRegister();
+        Purchase purchase = register.startPurchase();
+        register.completePurchase();
 
         customer.addPurchase(purchase);
 

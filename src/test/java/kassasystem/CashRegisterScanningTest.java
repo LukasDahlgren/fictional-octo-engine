@@ -132,7 +132,7 @@ class CashRegisterScanningTest {
         Purchase purchase = register.startPurchase();
         Basket basket = purchase.getBasket();
         basket.addProduct(milk);
-        purchase.complete();
+        register.completePurchase();
 
         assertThrows(IllegalStateException.class, () -> register.scanProduct(scanner));
 
@@ -150,7 +150,7 @@ class CashRegisterScanningTest {
         Purchase purchase = register.startPurchase();
         Basket basket = purchase.getBasket();
         basket.addProduct(milk);
-        purchase.cancel();
+        register.cancelPurchase();
 
         assertThrows(IllegalStateException.class, () -> register.scanProduct(scanner));
 
@@ -185,8 +185,12 @@ class CashRegisterScanningTest {
     }
 
     private void assertPurchasePreserved(Purchase purchase, Basket basket, Purchase.Status expectedStatus) {
-        assertAll("Current purchase and basket are preserved",
-                () -> assertSame(purchase, register.getCurrentPurchase()),
+        if (expectedStatus == Purchase.Status.ACTIVE) {
+            assertSame(purchase, register.getCurrentPurchase());
+        } else {
+            assertNull(register.getCurrentPurchase());
+        }
+        assertAll("Purchase status and basket are preserved",
                 () -> assertEquals(expectedStatus, purchase.getStatus()),
                 () -> assertSame(basket, purchase.getBasket()),
                 () -> assertSingleMilkBasket(purchase.getBasket())

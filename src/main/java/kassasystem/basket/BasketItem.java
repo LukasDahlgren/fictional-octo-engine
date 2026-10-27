@@ -6,6 +6,7 @@ import kassasystem.product.Product;
 public class BasketItem{
    private final Product product;
    private int quantity;
+   private boolean frozen;
 
 
    public BasketItem(Product product, int quantity){
@@ -32,6 +33,7 @@ public class BasketItem{
    }
 
    public void increaseQuantity(int amount){
+      ensureMutable();
       if (amount < 1) {
          throw new IllegalArgumentException("Amount must be at least 1");
       }
@@ -39,10 +41,21 @@ public class BasketItem{
    }
 
    public void decreaseQuantity(){
+      ensureMutable();
       if (quantity == 1) {
          return;
       }
       quantity--;
+   }
+
+   void freeze(){
+      frozen = true;
+   }
+
+   private void ensureMutable(){
+      if (frozen) {
+         throw new IllegalStateException("Closed purchase rows cannot be changed");
+      }
    }
 
    public Money getTotalPrice(){
