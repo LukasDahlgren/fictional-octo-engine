@@ -14,6 +14,9 @@ public class CurrencyConversion {
         if (sekPerEur <= 0) {
             throw new IllegalArgumentException("Valutakursen måste vara över 0");
         }
+        if (!Double.isFinite(conversionFee)) {
+            throw new IllegalArgumentException("Växlingsavgiften måste vara ändlig");
+        }
         if (conversionFee <= 0) {
             throw new IllegalArgumentException("Växlingsavgiften får inte vara noll");
         }
