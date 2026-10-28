@@ -77,4 +77,13 @@ class CurrencyConversionTest {
         assertEquals(new Money(Sek.SEK, 20.33), result);
     }
 
+    @Test
+    @DisplayName("Valutaväxlingen avvisar NaN som valutakurs")
+    void constructorRejectsNaNExchangeRate() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new CurrencyConversion(Double.NaN, 0.02)
+        );
+    }
+
 }
