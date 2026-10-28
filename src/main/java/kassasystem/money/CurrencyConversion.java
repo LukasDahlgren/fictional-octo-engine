@@ -5,6 +5,7 @@ import java.util.Objects;
 public class CurrencyConversion {
     private final double sekPerEur;
     private final double conversionFee;
+    private static final double FIXED_CONVERSION_FEE = 10.0;
 
     public CurrencyConversion(double sekPerEur, double conversionFee) {
         if (sekPerEur <= 0) {
@@ -26,10 +27,15 @@ public class CurrencyConversion {
         }
 
         if (amount.getCurrency() == Eur.EUR) {
-            double MINIMAL_CONVERSION_FEE = 10;
-            double convertedAmount = amount.getAmount() * sekPerEur * (1 + conversionFee) + MINIMAL_CONVERSION_FEE;
-            convertedAmount = Math.round(convertedAmount * 100.0) / 100.0;
-            return new Money(Sek.SEK, convertedAmount);
+            double convertedAmount = amount.getAmount() * sekPerEur;
+            double percentageFee = convertedAmount * conversionFee;
+            double totalWithFees =
+                    convertedAmount + percentageFee + FIXED_CONVERSION_FEE;
+
+            double roundedAmount =
+                    Math.round(totalWithFees * 100.0) / 100.0;
+
+            return new Money(Sek.SEK, roundedAmount);
         }
 
         throw new IllegalArgumentException("Valutan finns inte");
