@@ -86,4 +86,13 @@ class CurrencyConversionTest {
         );
     }
 
+    @Test
+    @DisplayName("Valutaväxlingen avvisar NaN som växlingsavgift")
+    void constructorRejectsNaNConversionFee() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new CurrencyConversion(10.0, Double.NaN)
+        );
+    }
+
 }
