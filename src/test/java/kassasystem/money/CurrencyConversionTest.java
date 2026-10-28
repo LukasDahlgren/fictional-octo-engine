@@ -95,4 +95,17 @@ class CurrencyConversionTest {
         );
     }
 
+    @Test
+    @DisplayName("Valutaväxlingen avvisar NaN som belopp")
+    void conversionRejectsNaNAmount() {
+        CurrencyConversion conversion =
+                new CurrencyConversion(10.0, 0.02);
+        Money amount = new Money(Eur.EUR, Double.NaN);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> conversion.convertToSek(amount)
+        );
+    }
+
 }
