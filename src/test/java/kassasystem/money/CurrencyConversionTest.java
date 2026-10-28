@@ -2,6 +2,9 @@ package kassasystem.money;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class CurrencyConversionTest {
@@ -77,30 +80,45 @@ class CurrencyConversionTest {
         assertEquals(new Money(Sek.SEK, 20.33), result);
     }
 
-    @Test
-    @DisplayName("Valutaväxlingen avvisar NaN som valutakurs")
-    void constructorRejectsNaNExchangeRate() {
+    @ParameterizedTest(name = "Valutakurs: {0}")
+    @ValueSource(doubles = {
+            Double.NaN,
+            Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY
+    })
+    @DisplayName("Valutaväxlingen avvisar icke-ändliga valutakurser")
+    void constructorRejectsNonFiniteExchangeRate(double rate) {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new CurrencyConversion(Double.NaN, 0.02)
+                () -> new CurrencyConversion(rate, 0.02)
         );
     }
 
-    @Test
-    @DisplayName("Valutaväxlingen avvisar NaN som växlingsavgift")
-    void constructorRejectsNaNConversionFee() {
+    @ParameterizedTest(name = "Växlingsavgift: {0}")
+    @ValueSource(doubles = {
+            Double.NaN,
+            Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY
+    })
+    @DisplayName("Valutaväxlingen avvisar icke-ändliga avgifter")
+    void constructorRejectsNonFiniteConversionFee(double fee) {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new CurrencyConversion(10.0, Double.NaN)
+                () -> new CurrencyConversion(10.0, fee)
         );
     }
 
-    @Test
-    @DisplayName("Valutaväxlingen avvisar NaN som belopp")
-    void conversionRejectsNaNAmount() {
+    @ParameterizedTest(name = "Belopp: {0}")
+    @ValueSource(doubles = {
+            Double.NaN,
+            Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY
+    })
+    @DisplayName("Valutaväxlingen avvisar icke-ändliga belopp")
+    void conversionRejectsNonFiniteAmount(double value) {
         CurrencyConversion conversion =
                 new CurrencyConversion(10.0, 0.02);
-        Money amount = new Money(Eur.EUR, Double.NaN);
+        Money amount = new Money(Eur.EUR, value);
 
         assertThrows(
                 IllegalArgumentException.class,
