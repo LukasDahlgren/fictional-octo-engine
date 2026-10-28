@@ -27,6 +27,9 @@ public class CurrencyConversion {
 
     public Money convertToSek(Money amount) {
         Objects.requireNonNull(amount, "Beloppet amount får inte vara null");
+        if (!Double.isFinite(amount.getAmount())) {
+            throw new IllegalArgumentException("Beloppet måste vara ändligt");
+        }
 
         if (amount.getCurrency() == Sek.SEK) {
             return amount;
