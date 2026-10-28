@@ -1,6 +1,7 @@
 
 package kassasystem.money;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -64,6 +65,21 @@ class GiftCardTest {
         );
 
         assertEquals(100.0, giftCard.getBalance().getAmount(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Presentkortet avvisar NaN utan att ändra saldot")
+    void useRejectsNaNAndPreservesBalance() {
+        Money initialBalance = new Money(Sek.SEK, 100.0);
+        GiftCard giftCard = new GiftCard(initialBalance);
+        Money invalidAmount = new Money(Sek.SEK, Double.NaN);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> giftCard.use(invalidAmount)
+        );
+
+        assertEquals(initialBalance, giftCard.getBalance());
     }
 }
 
