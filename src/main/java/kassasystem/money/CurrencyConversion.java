@@ -8,6 +8,9 @@ public class CurrencyConversion {
     private static final double FIXED_CONVERSION_FEE = 10.0;
 
     public CurrencyConversion(double sekPerEur, double conversionFee) {
+        if (!Double.isFinite(sekPerEur)) {
+            throw new IllegalArgumentException("Valutakursen måste vara ändlig");
+        }
         if (sekPerEur <= 0) {
             throw new IllegalArgumentException("Valutakursen måste vara över 0");
         }
