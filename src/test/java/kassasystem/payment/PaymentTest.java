@@ -4,6 +4,8 @@ import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -109,6 +111,23 @@ class PaymentTest {
         Payer payer = paymentAmount -> true;
 
         assertDoesNotThrow(() -> new Payment(amount, payer));
+    }
+
+    @ParameterizedTest(name = "Belopp: {0}")
+    @ValueSource(doubles = {
+            Double.NaN,
+            Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY
+    })
+    @DisplayName("Betalningen avvisar belopp som inte är ändliga")
+    void constructorRejectsNonFiniteAmount(double value) {
+        Money amount = new Money(Sek.SEK, value);
+        Payer payer = paymentAmount -> true;
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Payment(amount, payer)
+        );
     }
 
 }
