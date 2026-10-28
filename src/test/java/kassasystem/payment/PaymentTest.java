@@ -101,4 +101,14 @@ class PaymentTest {
                 () -> new Payment(amount, payer)
         );
     }
+
+    @Test
+    @DisplayName("Betalningen tillåter beloppet noll")
+    void constructorAllowsZeroAmount() {
+        Money amount = new Money(Sek.SEK, 0.0);
+        Payer payer = paymentAmount -> true;
+
+        assertDoesNotThrow(() -> new Payment(amount, payer));
+    }
+
 }
