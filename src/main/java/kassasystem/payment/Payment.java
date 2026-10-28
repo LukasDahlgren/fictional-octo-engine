@@ -18,6 +18,9 @@ public class Payment {
         if (payer == null) {
             throw new IllegalArgumentException("Payer must not be null");
         }
+        if (!Double.isFinite(amount.getAmount())) {
+            throw new IllegalArgumentException("Amount must be finite");
+        }
 
         this.amount = amount;
         this.payer = payer;
