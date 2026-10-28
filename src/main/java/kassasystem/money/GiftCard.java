@@ -25,6 +25,9 @@ public class GiftCard {
 
     public void use(Money amount) {
         Objects.requireNonNull(amount, "Belopp får inte vara null.");
+        if (!Double.isFinite(amount.getAmount())) {
+            throw new IllegalArgumentException("Beloppet måste vara ändligt.");
+        }
 
         if (!balance.getCurrency().equals(amount.getCurrency())) {
             throw new IllegalArgumentException(
