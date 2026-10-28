@@ -1,5 +1,6 @@
 package kassasystem.money;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -63,5 +64,17 @@ class CurrencyConversionTest {
 
          assertThrows(IllegalArgumentException.class,() -> conversion.convertToSek(amount));
      }
+
+    @Test
+    @DisplayName("Valutaväxlingen avrundar till två decimaler")
+    void conversionRoundsToTwoDecimalPlaces() {
+        CurrencyConversion conversion =
+                new CurrencyConversion(10.123, 0.02);
+        Money amount = new Money(Eur.EUR, 1.0);
+
+        Money result = conversion.convertToSek(amount);
+
+        assertEquals(new Money(Sek.SEK, 20.33), result);
+    }
 
 }
