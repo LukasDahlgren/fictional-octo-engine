@@ -1,5 +1,6 @@
 package kassasystem.money;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -114,6 +115,21 @@ class MoneyTest {
 
         assertFalse(first.isGreaterThan(second));
         assertFalse(first.isLessThan(second));
+    }
+
+    @Test
+    @DisplayName("Pengar i olika valutor kan inte adderas")
+    void addRejectsDifferentCurrencies() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Eur.EUR, 50.0);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> first.add(second)
+        );
+
+        assertEquals(new Money(Sek.SEK, 100.0), first);
+        assertEquals(new Money(Eur.EUR, 50.0), second);
     }
 
 }
