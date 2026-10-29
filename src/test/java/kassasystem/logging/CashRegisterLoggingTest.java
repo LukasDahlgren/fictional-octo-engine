@@ -114,6 +114,9 @@ class CashRegisterLoggingTest {
         Customer customer = new Customer("C001", "Testkund");
         CashRegister previousRegister = new CashRegister();
         Purchase previousPurchase = previousRegister.startPurchase();
+        ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        previousPurchase.getBasket().addProduct(milk);
         previousRegister.completePurchase();
         customer.addPurchase(previousPurchase);
         Purchase purchase = startInactivePurchase(cashRegister, status);
@@ -144,6 +147,9 @@ class CashRegisterLoggingTest {
         Customer customer = new Customer("C001", "Testkund");
         CashRegister previousRegister = new CashRegister();
         Purchase previousPurchase = previousRegister.startPurchase();
+        ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        previousPurchase.getBasket().addProduct(milk);
         previousRegister.completePurchase();
         customer.addPurchase(previousPurchase);
         Purchase purchase = startInactivePurchase(cashRegister, status);
