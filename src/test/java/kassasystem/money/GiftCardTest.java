@@ -81,5 +81,19 @@ class GiftCardTest {
 
         assertEquals(initialBalance, giftCard.getBalance());
     }
+    @Test
+    @DisplayName("Presentkortet avvisar annan valuta utan att ändra saldot")
+    void useRejectsDifferentCurrencyAndPreservesBalance() {
+        Money initialBalance = new Money(Sek.SEK, 100.0);
+        GiftCard giftCard = new GiftCard(initialBalance);
+        Money euroAmount = new Money(Eur.EUR, 10.0);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> giftCard.use(euroAmount)
+        );
+
+        assertEquals(initialBalance, giftCard.getBalance());
+    }
 }
 
