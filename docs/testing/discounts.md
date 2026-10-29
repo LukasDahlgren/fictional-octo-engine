@@ -1,38 +1,38 @@
-# Beslutstabell för rabatter
+# Discount Decision Table
 
-Systemet har följande rabattregler:
+The system follows these discount rules:
 
-- En kund med ett aktivt medlemskap får 10 % medlemsrabatt.
-- En vara kan omfattas av en tidsbegränsad erbjudanderabatt.
-- Högst en rabatt får användas på samma vara.
-- Om både medlemsrabatten och erbjudanderabatten gäller används den rabatt
-  som ger kunden den största besparingen.
-- En kund utan giltig rabatt betalar ordinarie pris.
+- A customer with an active membership receives a 10% membership discount.
+- An item can be eligible for a time-limited offer discount.
+- At most one discount can be applied to the same item.
+- If both the membership discount and the offer discount apply, use the discount
+  that gives the customer the greatest savings.
+- A customer without a valid discount pays the regular price.
 
-T = sant  
-F = falskt
-- = villkoret saknar betydelse för regeln
+T = true<br>
+F = false<br>
+- = the condition does not affect the rule
 
-| Villkor/handling | Regel 1 | Regel 2 | Regel 3 | Regel 4 | Regel 5 |
+| Condition/action | Rule 1 | Rule 2 | Rule 3 | Rule 4 | Rule 5 |
 |---|---:|---:|---:|---:|---:|
-| Har kunden ett aktivt medlemskap? | F | T | F | T | T |
-| Finns en aktiv erbjudanderabatt? | F | F | T | T | T |
-| Är erbjudanderabatten större än 10 %? | - | - | - | F | T |
-| Ingen rabatt används | T | F | F | F | F |
-| Medlemsrabatt på 10 % används | F | T | F | T | F |
-| Erbjudanderabatten används | F | F | T | F | T |
+| Does the customer have an active membership? | F | T | F | T | T |
+| Is an offer discount active? | F | F | T | T | T |
+| Is the offer discount greater than 10%? | - | - | - | F | T |
+| No discount is applied | T | F | F | F | F |
+| The 10% membership discount is applied | F | T | F | T | F |
+| The offer discount is applied | F | F | T | F | T |
 
-## Testfall som ska tas fram
+## Test Cases
 
-1. Kund utan aktivt medlemskap och utan erbjudande får ingen rabatt.
-2. Kund med aktivt medlemskap men utan erbjudande får 10 % rabatt.
-3. Kund utan aktivt medlemskap får en aktiv erbjudanderabatt.
-4. Kund med aktivt medlemskap får medlemsrabatten när erbjudandet är högst 10 %.
-5. Kund med aktivt medlemskap får erbjudanderabatten när den är större än 10 %.
+1. A customer without an active membership or an offer receives no discount.
+2. A customer with an active membership and no offer receives a 10% discount.
+3. A customer without an active membership receives an active offer discount.
+4. A customer with an active membership receives the membership discount when the offer is 10% or less.
+5. A customer with an active membership receives the offer discount when it is greater than 10%.
 
-Utöver beslutstabellen ska gränserna för erbjudandets giltighetsperiod testas:
+In addition to the decision table, test the boundaries of the offer's validity period:
 
-- erbjudandet är aktivt på startdatumet,
-- erbjudandet är aktivt på slutdatumet,
-- erbjudandet är inaktivt före startdatumet,
-- erbjudandet är inaktivt efter slutdatumet.
+- the offer is active on its start date,
+- the offer is active on its end date,
+- the offer is inactive before its start date,
+- the offer is inactive after its end date.

@@ -42,7 +42,7 @@ public class BasketItem{
 
    public void decreaseQuantity(){
       ensureMutable();
-      // En rad måste ha minst en vara. Basket.removeProduct() tar bort raden vid antal 1.
+      // A row must contain at least one item. Basket.removeProduct() removes the row at quantity 1.
       if (quantity == 1) {
          throw new IllegalStateException("Cannot decrease quantity below 1");
       }

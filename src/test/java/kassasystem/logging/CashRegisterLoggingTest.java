@@ -83,14 +83,14 @@ class CashRegisterLoggingTest {
         assertEquals(receipt.toText(), Files.readString(logFile));
     }
 
-    @ParameterizedTest(name = "Med erbjudande: {0}")
+    @ParameterizedTest(name = "With offer: {0}")
     @ValueSource(booleans = {false, true})
-    @DisplayName("Misslyckad kundbetalning behåller köp, logg och tidigare köphistorik")
+    @DisplayName("Failed Customer Payment Preserves The Purchase Log And Existing Purchase History")
     void failedCustomerPaymentPreservesPurchaseLogAndHistory(boolean withOffer) throws IOException {
         Clock clock = Clock.fixed(Instant.parse("2026-10-16T10:00:00Z"), ZoneOffset.UTC);
         Path logFile = tempDir.resolve("transactions.txt");
         TransactionLogger logger = new TransactionLogger(logFile);
-        Customer customer = new Customer("C001", "Testkund");
+        Customer customer = new Customer("C001", "Test customer");
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         CashRegister previousRegister = new CashRegister(logger, clock, new FakePayer(true));
@@ -214,7 +214,7 @@ class CashRegisterLoggingTest {
     }
 
     @Test
-    @DisplayName("Ett loggfel behåller det betalda köpet i historiken och tillåter nästa köp")
+    @DisplayName("Logging Failure Keeps The Paid Purchase In History And Allows The Next Purchase")
     void loggingFailureDoesNotPreventNextPurchase() throws IOException {
         Path logFile = tempDir.resolve("transactions.txt");
         Files.createDirectory(logFile);

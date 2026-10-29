@@ -58,14 +58,14 @@ class CashRegisterPaymentTest {
         product = new Product("Milk", new Money(Sek.SEK, 100.0), food);
         Membership membership = new Membership(
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
-        customer = new Customer("C001", "Medlem", membership);
+        customer = new Customer("C001", "Member", membership);
         offer = new DiscountOffer(20,
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
     }
 
-    @ParameterizedTest(name = "Med logg: {0}")
+    @ParameterizedTest(name = "With logger: {0}")
     @ValueSource(booleans = {false, true})
-    @DisplayName("Båda konstruktorerna avvisar en saknad betalare")
+    @DisplayName("Both Constructors Reject A Missing Payer")
     void constructorRejectsNullPayer(boolean withLogger) {
         TransactionLogger logger = new TransactionLogger(tempDir.resolve("transactions.txt"));
 
@@ -83,7 +83,7 @@ class CashRegisterPaymentTest {
 
     @ParameterizedTest(name = "{0}: {1} SEK")
     @CsvSource({"ANONYMOUS, 100.0", "CUSTOMER, 90.0", "OFFER, 80.0"})
-    @DisplayName("Godkänd betalning slutför och loggar varje checkoutvariant med rätt slutbelopp")
+    @DisplayName("Successful Payment Completes And Logs Each Checkout Variant With The Correct Final Amount")
     void checkoutCompletesAtFinalPrice(CheckoutType checkoutType, double expectedAmount) throws IOException {
         Path logFile = tempDir.resolve("transactions.txt");
         List<Money> paymentAttempts = new ArrayList<>();
@@ -116,7 +116,7 @@ class CashRegisterPaymentTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(CheckoutType.class)
-    @DisplayName("Avvisad betalning behåller köp, tidigare logg och köphistorik")
+    @DisplayName("Rejected Payment Preserves The Purchase Previous Log And Purchase History")
     void rejectedPaymentPreservesPurchaseLogAndHistory(CheckoutType checkoutType) throws IOException {
         CashRegister previousRegister = new CashRegister(clock, new FakePayer(true));
         Purchase previousPurchase = previousRegister.startPurchase();
@@ -147,7 +147,7 @@ class CashRegisterPaymentTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(CheckoutType.class)
-    @DisplayName("Ett fel från betalaren skickas vidare utan att slutföra eller logga köpet")
+    @DisplayName("Payer Failure Is Propagated Without Completing Or Logging The Purchase")
     void payerExceptionPreservesPurchase(CheckoutType checkoutType) {
         IllegalStateException failure = new IllegalStateException("Payment service unavailable");
         Payer payer = amount -> {
@@ -174,7 +174,7 @@ class CashRegisterPaymentTest {
 
     @ParameterizedTest(name = "{0}: {1} SEK")
     @CsvSource({"ANONYMOUS, 100.0", "CUSTOMER, 90.0", "OFFER, 80.0"})
-    @DisplayName("Loggfel efter betalning lämnar köpet slutfört och förhindrar en ny betalning")
+    @DisplayName("Logging Failure After Payment Leaves The Purchase Completed And Prevents Another Charge")
     void loggingFailureCannotChargePurchaseAgain(CheckoutType checkoutType, double expectedAmount) {
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {
@@ -209,7 +209,7 @@ class CashRegisterPaymentTest {
 
     @ParameterizedTest(name = "{0}: {1} SEK")
     @CsvSource({"ANONYMOUS, 100.0", "CUSTOMER, 90.0", "OFFER, 80.0"})
-    @DisplayName("En avvisad betalning kan försökas igen utan dubbla loggrader eller köphistorik")
+    @DisplayName("Rejected Payment Can Be Retried Without Duplicate Log Entries Or Purchase History")
     void rejectedPaymentCanBeRetried(CheckoutType checkoutType, double expectedAmount) throws IOException {
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {
@@ -249,7 +249,7 @@ class CashRegisterPaymentTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(CheckoutType.class)
-    @DisplayName("Utan ett pågående köp används inte betalaren")
+    @DisplayName("Payer Is Not Used Without A Current Purchase")
     void missingPurchaseDoesNotCallPayer(CheckoutType checkoutType) {
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {
@@ -267,7 +267,7 @@ class CashRegisterPaymentTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(CheckoutType.class)
-    @DisplayName("En tom varukorg avvisas innan betalaren används")
+    @DisplayName("An Empty Basket Is Rejected Before The Payer Is Used")
     void emptyBasketDoesNotCallPayer(CheckoutType checkoutType) {
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {
@@ -290,7 +290,7 @@ class CashRegisterPaymentTest {
     @ParameterizedTest(name = "{0}: {1}")
     @CsvSource({"ANONYMOUS, CANCELLED", "CUSTOMER, CANCELLED", "OFFER, CANCELLED",
             "ANONYMOUS, COMPLETED", "CUSTOMER, COMPLETED", "OFFER, COMPLETED"})
-    @DisplayName("Ett inaktivt köp avvisas innan betalaren används")
+    @DisplayName("An Inactive Purchase Is Rejected Before The Payer Is Used")
     void inactivePurchaseDoesNotCallPayer(CheckoutType checkoutType, Purchase.Status status) {
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {
@@ -318,7 +318,7 @@ class CashRegisterPaymentTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(CheckoutType.class)
-    @DisplayName("Ett ogiltigt kvitto avvisas innan betalaren används")
+    @DisplayName("An Invalid Receipt Is Rejected Before The Payer Is Used")
     void invalidReceiptDoesNotCallPayer(CheckoutType checkoutType) {
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {

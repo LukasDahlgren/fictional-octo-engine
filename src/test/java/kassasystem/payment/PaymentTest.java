@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PaymentTest {
 
-    @ParameterizedTest(name = "Godkänd betalning: {0}")
+    @ParameterizedTest(name = "Successful payment: {0}")
     @ValueSource(booleans = {false, true})
-    @DisplayName("Payment använder resultatet från FakePayer genom Payer-gränssnittet")
+    @DisplayName("Payment Uses The FakePayer Result Through The Payer Interface")
     void payUsesConfiguredFakePayer(boolean paymentSucceeds) {
         Money amount = new Money(Sek.SEK, 100.0);
         Payer payer = new FakePayer(paymentSucceeds);

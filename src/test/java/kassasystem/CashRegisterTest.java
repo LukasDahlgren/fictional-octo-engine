@@ -50,14 +50,14 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan avvisar en saknad klocka")
+    @DisplayName("Register Rejects A Missing Clock")
     void constructorRejectsNullClock() {
         assertThrows(IllegalArgumentException.class, () -> new CashRegister((Clock) null, new FakePayer(true)));
     }
 
 
     @Test
-    @DisplayName("Misslyckad betalning behåller köpet aktivt och skapar inget kvitto")
+    @DisplayName("Failed Payment Keeps The Purchase Active And Creates No Receipt")
     void completePurchaseKeepsPurchaseActiveWhenPaymentFails() {
         register = new CashRegister(Clock.systemUTC(), new FakePayer(false));
         Purchase purchase = register.startPurchase();
@@ -75,7 +75,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kvittot får tid och tidszon från kassans angivna klocka")
+    @DisplayName("Receipt Uses The Time And Time Zone From The Supplied Register Clock")
     void completePurchaseUsesSuppliedClockForReceiptTimestamp() {
         Clock clock = Clock.fixed(Instant.parse("2026-10-20T10:15:30Z"),
                 ZoneId.of("Europe/Stockholm"));
@@ -90,7 +90,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan startar ett aktivt köp med en tom korg")
+    @DisplayName("Register Starts An Active Purchase With An Empty Basket")
     void startPurchaseCreatesCurrentActivePurchase() {
         Purchase purchase = register.startPurchase();
 
@@ -98,7 +98,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett nytt köp kan inte skriva över kassans pågående köp")
+    @DisplayName("A New Purchase Cannot Replace The Current Purchase")
     void startPurchaseRejectsExistingCurrentPurchase() {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -116,7 +116,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett slutfört köp frigör kassan")
+    @DisplayName("Completing A Purchase Frees The Register")
     void completePurchaseCompletesCurrentPurchaseAndFreesRegister() {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -132,7 +132,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan kan starta ett nytt köp efter ett slutfört köp")
+    @DisplayName("Register Can Start A New Purchase After Completion")
     void startPurchaseAfterCompletePurchase() {
         Purchase previousPurchase = register.startPurchase();
         previousPurchase.getBasket().addProduct(milk);
@@ -147,7 +147,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett slutfört köp returnerar ett kvitto med köpets varor, antal och totalpris")
+    @DisplayName("Completed Purchase Returns A Receipt With Its Items Quantities And Total")
     void completePurchaseReturnsReceiptWithPurchaseContents() {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -166,7 +166,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett slutfört köp avvisar ändringar och behåller kvittots innehåll")
+    @DisplayName("Completed Purchase Rejects Changes And Preserves The Receipt Contents")
     void completedPurchaseRejectsBasketChangesAndPreservesReceipt() {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -183,7 +183,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett fel vid kvittoskapandet behåller köpet aktivt i kassan")
+    @DisplayName("Receipt Creation Failure Keeps The Purchase Active In The Register")
     void completePurchaseKeepsPurchaseActiveWhenReceiptCreationFails() {
         Purchase purchase = register.startPurchase();
         Product invalidProduct = new Product("Milk", new Money(Sek.SEK, -1.00), food);
@@ -200,7 +200,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan kan inte slutföra när det saknas ett pågående köp")
+    @DisplayName("Register Cannot Complete A Purchase When There Is No Current Purchase")
     void completePurchaseRejectsMissingCurrentPurchase() {
         IllegalStateException exception = assertThrows(IllegalStateException.class,
                 () -> register.completePurchase());
@@ -212,7 +212,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan avvisar en tom varukorg och behåller köpet aktivt")
+    @DisplayName("Register Rejects An Empty Basket And Keeps The Purchase Active")
     void completePurchaseRejectsEmptyBasket() {
         Purchase purchase = register.startPurchase();
 
@@ -225,11 +225,11 @@ class CashRegisterTest {
         );
     }
 
-    @ParameterizedTest(name = "Med erbjudande: {0}")
+    @ParameterizedTest(name = "With offer: {0}")
     @ValueSource(booleans = {false, true})
-    @DisplayName("Kundcheckout avvisar en tom varukorg och behåller tidigare köphistorik")
+    @DisplayName("Customer Checkout Rejects An Empty Basket And Preserves Purchase History")
     void completeCustomerPurchaseRejectsEmptyBasket(boolean withOffer) {
-        Customer customer = new Customer("C001", "Testkund");
+        Customer customer = new Customer("C001", "Test customer");
         Purchase previousPurchase = register.startPurchase();
         previousPurchase.getBasket().addProduct(milk);
         register.completePurchase(customer);
@@ -254,7 +254,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan kan inte slutföra ett redan avbrutet köp")
+    @DisplayName("Register Cannot Complete A Previously Cancelled Purchase")
     void completePurchaseRejectsPreviouslyCancelledPurchase() {
         Purchase purchase = register.startPurchase();
         register.cancelPurchase();
@@ -269,7 +269,7 @@ class CashRegisterTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(value = Purchase.Status.class, names = { "CANCELLED", "COMPLETED" })
-    @DisplayName("Kassan avvisar ett inaktivt köp som fortfarande är aktuellt")
+    @DisplayName("Register Rejects An Inactive Purchase That Is Still Current")
     void completePurchaseRejectsInactiveCurrentPurchase(Purchase.Status status) {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -291,7 +291,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett avbrutet köp frigör kassan")
+    @DisplayName("Cancelling A Purchase Frees The Register")
     void cancelPurchaseCancelsCurrentPurchaseAndFreesRegister() {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -307,7 +307,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan kan starta ett nytt köp efter ett avbrutet köp")
+    @DisplayName("Register Can Start A New Purchase After Cancellation")
     void startPurchaseAfterCancelPurchase() {
         Purchase previousPurchase = register.startPurchase();
         previousPurchase.getBasket().addProduct(milk);
@@ -322,7 +322,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan kan inte avbryta när det saknas ett pågående köp")
+    @DisplayName("Register Cannot Cancel A Purchase When There Is No Current Purchase")
     void cancelPurchaseRejectsMissingCurrentPurchase() {
         IllegalStateException exception = assertThrows(IllegalStateException.class,
                 () -> register.cancelPurchase());
@@ -334,7 +334,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kassan kan inte avbryta ett redan slutfört köp")
+    @DisplayName("Register Cannot Cancel A Previously Completed Purchase")
     void cancelPurchaseRejectsPreviouslyCompletedPurchase() {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -349,7 +349,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Kundcheckout avvisar en saknad kund och behåller köpet aktivt")
+    @DisplayName("Customer Checkout Rejects A Missing Customer And Keeps The Purchase Active")
     void completePurchaseRejectsNullCustomer() {
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -366,7 +366,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Aktiv medlem får tio procent rabatt på hela köpet")
+    @DisplayName("Active Member Receives Ten Percent Off The Entire Purchase")
     void completePurchaseAppliesMembershipDiscountToWholePurchase() {
         Clock clock = Clock.fixed(
                 Instant.parse("2026-10-16T10:00:00Z"),
@@ -378,9 +378,9 @@ class CashRegisterTest {
                 LocalDate.of(2026, 1, 1),
                 LocalDate.of(2026, 12, 31)
         );
-        Customer customer = new Customer("C001", "Medlem", membership);
+        Customer customer = new Customer("C001", "Member", membership);
         Product product = new Product(
-                "Testprodukt",
+                "Test product",
                 new Money(Sek.SEK, 100.0),
                 food
         );
@@ -394,7 +394,7 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Det största erbjudandet väljs framför medlemsrabatten")
+    @DisplayName("The Largest Offer Is Chosen Over The Membership Discount")
     void completePurchaseAppliesGreatestOfferDiscount() {
         Clock clock = Clock.fixed(
                 Instant.parse("2026-10-16T10:00:00Z"),
@@ -406,7 +406,7 @@ class CashRegisterTest {
                 LocalDate.of(2026, 1, 1),
                 LocalDate.of(2026, 12, 31)
         );
-        Customer customer = new Customer("C001", "Medlem", membership);
+        Customer customer = new Customer("C001", "Member", membership);
 
         DiscountOffer offer = new DiscountOffer(
                 20.0,
@@ -415,7 +415,7 @@ class CashRegisterTest {
         );
 
         Product product = new Product(
-                "Testprodukt",
+                "Test product",
                 new Money(Sek.SEK, 100.0),
                 food
         );
@@ -429,9 +429,9 @@ class CashRegisterTest {
     }
 
     @Test
-    @DisplayName("Ett slutfört köp sparas i kundens köphistorik")
+    @DisplayName("A Completed Purchase Is Stored In The Customer Purchase History")
     void completedPurchaseIsStoredInCustomerHistory() {
-        Customer customer = new Customer("C001", "Testkund");
+        Customer customer = new Customer("C001", "Test customer");
 
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -439,7 +439,7 @@ class CashRegisterTest {
         register.completePurchase(customer);
 
         assertAll(
-                "Köphistoriken innehåller det slutförda köpet",
+                "Purchase history contains the completed purchase",
                 () -> assertEquals(1, customer.getPurchaseHistory().size()),
                 () -> assertSame(
                         purchase,

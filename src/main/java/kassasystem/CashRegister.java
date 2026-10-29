@@ -76,11 +76,11 @@ public class CashRegister {
             throw new IllegalArgumentException("Scanner must not be null");
         }
         if(currentPurchase == null){
-            throw new IllegalStateException("Utan ett pågående köp kan en vara inte scannas");
+            throw new IllegalStateException("Cannot scan an item without a current purchase");
         }
 
         if(currentPurchase.getStatus() != Purchase.Status.ACTIVE){
-            throw new IllegalStateException("Varor kan endast scannas till ett aktivt köp");
+            throw new IllegalStateException("Items can only be scanned into an active purchase");
         }
 
         ScanResult result = scanner.scan();

@@ -20,7 +20,7 @@ class ReceiptLineTest {
 
     @ParameterizedTest
     @ValueSource(doubles = { 0, 0.06, 0.12, 0.25, 1 })
-    @DisplayName("Konstruktorn sparar momssatsen")
+    @DisplayName("Constructor Stores The VAT Rate")
     void constructorStoresVatRate(double vatRate) {
         Money unitPrice = new Money(Sek.SEK, 125);
 
@@ -32,7 +32,7 @@ class ReceiptLineTest {
     @ParameterizedTest
     @ValueSource(doubles = { -0.01, 1.01, Double.NaN, Double.POSITIVE_INFINITY,
             Double.NEGATIVE_INFINITY })
-    @DisplayName("Konstruktorn avvisar ogiltiga momssatser")
+    @DisplayName("Constructor Rejects Invalid VAT Rates")
     void constructorRejectsInvalidVatRate(double vatRate) {
         Money unitPrice = new Money(Sek.SEK, 125);
 
@@ -40,7 +40,7 @@ class ReceiptLineTest {
                 () -> new ReceiptLine("Product", 1, unitPrice, vatRate));
     }
 
-    @ParameterizedTest(name = "{0} enheter")
+    @ParameterizedTest(name = "{0} units")
     @ValueSource(ints = {1, 2, 3, 4})
     @DisplayName("Constructor Stores Quantity")
     void constructorStoresQuantity(int quantity) {
@@ -76,7 +76,7 @@ class ReceiptLineTest {
                 () -> new ReceiptLine(productName, 1, unitPrice));
     }
 
-    @ParameterizedTest(name = "{0} enheter")
+    @ParameterizedTest(name = "{0} units")
     @ValueSource(ints = {0, -1, Integer.MIN_VALUE})
     @DisplayName("Constructor Rejects Invalid Quantity")
     void constructorRejectsInvalidQuantity(int quantity) {
