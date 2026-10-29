@@ -53,11 +53,11 @@ public class Basket{
    }
 
    public Money getTotalPrice(){
-      double total = 0;
+      Money total = currency.getZeroMoney();
       for(BasketItem item : items){
-         total += item.getTotalPrice().getAmount();
+         total = total.add(item.getTotalPrice());
       }
-      return new Money(currency, total);
+      return total;
    }
 
    public int getTotalQuantity(){
