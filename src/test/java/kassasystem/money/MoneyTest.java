@@ -78,6 +78,15 @@ class MoneyTest {
         assertAmountEquals("75.75", result);
     }
 
+    @ParameterizedTest(name = "Factor {0}")
+    @ValueSource(ints = { -1, -2, Integer.MIN_VALUE })
+    @DisplayName("Multiply Rejects Negative Factors")
+    void multiplyRejectsNegativeFactors(int factor) {
+        Money money = new Money(Sek.SEK, new BigDecimal("25.0"));
+
+        assertThrows(IllegalArgumentException.class, () -> money.multiply(factor));
+    }
+
     @Test
     void shouldMultiplyMoneyByZero() {
         Money money = new Money(sek, new BigDecimal("25.00"));

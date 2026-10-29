@@ -32,6 +32,9 @@ public class Money {
     }
 
     public Money multiply(int factor) {
+        if (factor < 0) {
+            throw new IllegalArgumentException("Factor must not be negative");
+        }
         return new Money(currency, amount.multiply(BigDecimal.valueOf(factor)));
     }
 
