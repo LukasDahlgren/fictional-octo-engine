@@ -27,7 +27,7 @@ class DiscountOfferTest {
     }
 
     @Test
-    @DisplayName("Erbjudandet är aktivt på startdatumet")
+    @DisplayName("Offer Is Active On Start Date")
     void offerIsActiveOnStartDate() {
         boolean active = offer.isActiveOn(startDate);
 
@@ -35,7 +35,7 @@ class DiscountOfferTest {
     }
 
     @Test
-    @DisplayName("Erbjudandet är aktivt på slutdatumet")
+    @DisplayName("Offer Is Active On End Date")
     void offerIsActiveOnEndDate() {
         boolean active = offer.isActiveOn(endDate);
 
@@ -43,7 +43,7 @@ class DiscountOfferTest {
     }
 
     @Test
-    @DisplayName("Erbjudandet är inaktivt före startdatumet")
+    @DisplayName("Offer Is Inactive Before Start Date")
     void offerIsInactiveBeforeStartDate() {
         LocalDate dayBeforeStart = LocalDate.of(2026, 9, 30);
 
@@ -53,7 +53,7 @@ class DiscountOfferTest {
     }
 
     @Test
-    @DisplayName("Erbjudandet är inaktivt efter slutdatumet")
+    @DisplayName("Offer Is Inactive After End Date")
     void offerIsInactiveAfterEndDate() {
         LocalDate dayAfterEnd = LocalDate.of(2026, 11, 1);
 
@@ -63,14 +63,14 @@ class DiscountOfferTest {
     }
 
     @Test
-    @DisplayName("Erbjudandet har en rabattprocent")
+    @DisplayName("Offer Has Discount Percentage")
     void offerHasDiscountPercentage() {
         assertEquals(20.0, offer.getDiscountPercentage());
     }
 
     @ParameterizedTest(name = "{0} procent")
     @ValueSource(doubles = {-1.0, 101.0})
-    @DisplayName("Rabattprocent utanför 0 till 100 är ogiltig")
+    @DisplayName("Discount Percentage Outside Valid Range Is Rejected")
     void discountPercentageOutsideValidRangeIsRejected(
             double discountPercentage
     ) {
@@ -85,7 +85,7 @@ class DiscountOfferTest {
     }
     @ParameterizedTest(name = "{0} procent")
     @ValueSource(doubles = {0.0, 100.0})
-    @DisplayName("Rabattprocent 0 och 100 är giltiga")
+    @DisplayName("Discount Percentage On Boundaries Is Accepted")
     void discountPercentageOnBoundariesIsAccepted(
             double discountPercentage
     ) {

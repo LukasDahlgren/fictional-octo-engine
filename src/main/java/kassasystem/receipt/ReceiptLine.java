@@ -61,10 +61,10 @@ public final class ReceiptLine {
    }
 
    public Money getTotalPrice() {
-      double total = unitPrice.getAmount() * quantity;
-      if (!Double.isFinite(total)) {
+      Money total = unitPrice.multiply(quantity);
+      if (!Double.isFinite(total.getAmount())) {
          throw new ArithmeticException("Total price overflow");
       }
-      return new Money(unitPrice.getCurrency(), total);
+      return total;
    }
 }

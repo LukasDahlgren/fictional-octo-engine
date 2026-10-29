@@ -69,7 +69,7 @@ class CurrencyConversionTest {
      }
 
     @Test
-    @DisplayName("Valutaväxlingen avrundar till två decimaler")
+    @DisplayName("Conversion Rounds To Two Decimal Places")
     void conversionRoundsToTwoDecimalPlaces() {
         CurrencyConversion conversion =
                 new CurrencyConversion(10.123, 0.02);
@@ -80,13 +80,13 @@ class CurrencyConversionTest {
         assertEquals(new Money(Sek.SEK, 20.33), result);
     }
 
-    @ParameterizedTest(name = "Valutakurs: {0}")
+    @ParameterizedTest(name = "Exchange rate: {0}")
     @ValueSource(doubles = {
             Double.NaN,
             Double.POSITIVE_INFINITY,
             Double.NEGATIVE_INFINITY
     })
-    @DisplayName("Valutaväxlingen avvisar icke-ändliga valutakurser")
+    @DisplayName("Constructor Rejects Non Finite Exchange Rate")
     void constructorRejectsNonFiniteExchangeRate(double rate) {
         assertThrows(
                 IllegalArgumentException.class,
@@ -94,13 +94,13 @@ class CurrencyConversionTest {
         );
     }
 
-    @ParameterizedTest(name = "Växlingsavgift: {0}")
+    @ParameterizedTest(name = "Conversion fee: {0}")
     @ValueSource(doubles = {
             Double.NaN,
             Double.POSITIVE_INFINITY,
             Double.NEGATIVE_INFINITY
     })
-    @DisplayName("Valutaväxlingen avvisar icke-ändliga avgifter")
+    @DisplayName("Constructor Rejects Non Finite Conversion Fee")
     void constructorRejectsNonFiniteConversionFee(double fee) {
         assertThrows(
                 IllegalArgumentException.class,
@@ -108,13 +108,13 @@ class CurrencyConversionTest {
         );
     }
 
-    @ParameterizedTest(name = "Belopp: {0}")
+    @ParameterizedTest(name = "Amount: {0}")
     @ValueSource(doubles = {
             Double.NaN,
             Double.POSITIVE_INFINITY,
             Double.NEGATIVE_INFINITY
     })
-    @DisplayName("Valutaväxlingen avvisar icke-ändliga belopp")
+    @DisplayName("Conversion Rejects Non Finite Amount")
     void conversionRejectsNonFiniteAmount(double value) {
         CurrencyConversion conversion =
                 new CurrencyConversion(10.0, 0.02);

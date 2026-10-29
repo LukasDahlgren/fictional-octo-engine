@@ -36,7 +36,7 @@ class CashRegisterLoggingTest {
     Path tempDir;
 
     @Test
-    @DisplayName("Kassan avvisar en saknad transaktionslogg")
+    @DisplayName("Constructor Rejects Null Transaction Logger")
     void constructorRejectsNullTransactionLogger() {
         Clock clock = Clock.systemUTC();
 
@@ -47,7 +47,7 @@ class CashRegisterLoggingTest {
     }
 
     @Test
-    @DisplayName("Kassan med transaktionslogg avvisar en saknad klocka")
+    @DisplayName("Constructor Rejects Null Clock With Transaction Logger")
     void constructorRejectsNullClockWithTransactionLogger() {
         Path logFile = tempDir.resolve("transactions.txt");
         TransactionLogger logger = new TransactionLogger(logFile);
@@ -59,7 +59,7 @@ class CashRegisterLoggingTest {
     }
 
     @Test
-    @DisplayName("Logs a completed purchase")
+    @DisplayName("Logs Completed Purchase")
     void logsCompletedPurchase() throws IOException {
         Path logFile = tempDir.resolve("transactions.txt");
         TransactionLogger logger = new TransactionLogger(logFile);
@@ -81,7 +81,7 @@ class CashRegisterLoggingTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(value = Purchase.Status.class, names = {"CANCELLED", "COMPLETED"})
-    @DisplayName("Checkout avvisar inaktiva köp utan att ändra köp eller transaktionslogg")
+    @DisplayName("Inactive Purchase Does Not Change Transaction Log")
     void inactivePurchaseDoesNotChangeTransactionLog(Purchase.Status status) throws IOException {
         Path logFile = tempDir.resolve("transactions.txt");
         String previousLog = "Previous transaction\n";
@@ -103,7 +103,7 @@ class CashRegisterLoggingTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(value = Purchase.Status.class, names = {"CANCELLED", "COMPLETED"})
-    @DisplayName("Kundcheckout avvisar inaktiva köp utan att ändra logg eller köphistorik")
+    @DisplayName("Inactive Customer Purchase Preserves Log And History")
     void inactiveCustomerPurchasePreservesLogAndHistory(Purchase.Status status)
             throws IOException {
         Path logFile = tempDir.resolve("transactions.txt");
@@ -111,7 +111,7 @@ class CashRegisterLoggingTest {
         Files.writeString(logFile, previousLog);
         TransactionLogger logger = new TransactionLogger(logFile);
         CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC());
-        Customer customer = new Customer("C001", "Testkund");
+        Customer customer = new Customer("C001", "Test Customer");
         CashRegister previousRegister = new CashRegister();
         Purchase previousPurchase = previousRegister.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -136,7 +136,7 @@ class CashRegisterLoggingTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(value = Purchase.Status.class, names = {"CANCELLED", "COMPLETED"})
-    @DisplayName("Kundcheckout med erbjudande avvisar inaktiva köp utan att ändra logg eller köphistorik")
+    @DisplayName("Inactive Customer Purchase With Offer Preserves Log And History")
     void inactiveCustomerPurchaseWithOfferPreservesLogAndHistory(Purchase.Status status)
             throws IOException {
         Path logFile = tempDir.resolve("transactions.txt");
@@ -144,7 +144,7 @@ class CashRegisterLoggingTest {
         Files.writeString(logFile, previousLog);
         TransactionLogger logger = new TransactionLogger(logFile);
         CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC());
-        Customer customer = new Customer("C001", "Testkund");
+        Customer customer = new Customer("C001", "Test Customer");
         CashRegister previousRegister = new CashRegister();
         Purchase previousPurchase = previousRegister.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -170,11 +170,11 @@ class CashRegisterLoggingTest {
     }
 
     @Test
-    @DisplayName("Loggfel behåller köpet aktivt och redigerbart utan att lägga till köphistorik")
+    @DisplayName("Logging Failure Leaves Purchase Editable For Retry")
     void loggingFailureLeavesPurchaseEditableForRetry() {
         TransactionLogger logger = new TransactionLogger(tempDir);
         CashRegister register = new CashRegister(logger, Clock.systemUTC());
-        Customer customer = new Customer("C001", "Testkund");
+        Customer customer = new Customer("C001", "Test Customer");
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         Purchase purchase = register.startPurchase();

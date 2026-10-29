@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EANGeneratorTest {
 
     @Test
-    @DisplayName("Generates a valid EAN-13 code")
+    @DisplayName("Generates Valid EAN13")
     public void generatesValidEAN13() {
         EANGenerator generator = new EANGenerator();
 
@@ -21,7 +21,7 @@ public class EANGeneratorTest {
     }
 
     @Test
-    @DisplayName("Generates a different code each time")
+    @DisplayName("Generates Different Codes")
     public void generatesDifferentCodes() {
         EANGenerator generator = new EANGenerator();
 
@@ -32,7 +32,7 @@ public class EANGeneratorTest {
     }
 
     @Test
-    @DisplayName("Rejects generating a code after all codes are used")
+    @DisplayName("Rejects Generation After All Codes Are Used")
     void rejectsGenerationAfterAllCodesAreUsed() {
         EANGenerator generator = new EANGenerator();
 

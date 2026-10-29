@@ -8,11 +8,11 @@ public class GiftCard {
     private Money balance;
 
     public GiftCard(Money initialBalance) {
-        Objects.requireNonNull(initialBalance, "Startsaldo får inte vara null.");
+        Objects.requireNonNull(initialBalance, "Initial balance must not be null.");
 
         if (initialBalance.getAmount() < 0) {
             throw new IllegalArgumentException(
-                    "Startsaldo får inte vara negativt."
+                    "Initial balance must not be negative."
             );
         }
 
@@ -24,26 +24,26 @@ public class GiftCard {
     }
 
     public void use(Money amount) {
-        Objects.requireNonNull(amount, "Belopp får inte vara null.");
+        Objects.requireNonNull(amount, "Amount must not be null.");
         if (!Double.isFinite(amount.getAmount())) {
-            throw new IllegalArgumentException("Beloppet måste vara ändligt.");
+            throw new IllegalArgumentException("Amount must be finite.");
         }
 
         if (!balance.getCurrency().equals(amount.getCurrency())) {
             throw new IllegalArgumentException(
-                    "Valutorna måste vara samma."
+                    "Currencies must match."
             );
         }
 
         if (amount.getAmount() < 0) {
             throw new IllegalArgumentException(
-                    "Beloppet får inte vara negativt."
+                    "Amount must not be negative."
             );
         }
 
         if (amount.getAmount() > balance.getAmount()) {
             throw new IllegalArgumentException(
-                    "Presentkortet har inte tillräckligt saldo."
+                    "Gift card balance is insufficient."
             );
         }
 

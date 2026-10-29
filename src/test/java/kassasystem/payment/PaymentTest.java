@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PaymentTest {
 
     @Test
-    @DisplayName("Betalningen lyckas när betalaren godkänner den")
+    @DisplayName("Pay Returns True When Payer Approves")
     void payReturnsTrueWhenPayerApproves() {
         Money amount = new Money(Sek.SEK, 100.0);
         Payer payer = paymentAmount -> true;
@@ -24,7 +24,7 @@ class PaymentTest {
         assertTrue(result);
     }
     @Test
-    @DisplayName("Betalningen misslyckas när betalaren avvisar den")
+    @DisplayName("Pay Returns False When Payer Rejects")
     void payReturnsFalseWhenPayerRejects() {
         Money amount = new Money(Sek.SEK, 100.0);
         Payer payer = paymentAmount -> false;
@@ -35,7 +35,7 @@ class PaymentTest {
         assertFalse(result);
     }
     @Test
-    @DisplayName("Betalningen skickar rätt belopp till betalaren")
+    @DisplayName("Pay Passes Amount To Payer")
     void payPassesAmountToPayer() {
         Money amount = new Money(Sek.SEK, 100.0);
         Money[] receivedAmount = new Money[1];
@@ -53,7 +53,7 @@ class PaymentTest {
     }
 
     @Test
-    @DisplayName("Betalningen avvisar en saknad betalare")
+    @DisplayName("Constructor Rejects Null Payer")
     void constructorRejectsNullPayer() {
         Money amount = new Money(Sek.SEK, 100.0);
 
@@ -64,7 +64,7 @@ class PaymentTest {
     }
 
     @Test
-    @DisplayName("Betalningen avvisar ett saknat belopp")
+    @DisplayName("Constructor Rejects Null Amount")
     void constructorRejectsNullAmount() {
         Payer payer = paymentAmount -> true;
 
@@ -75,7 +75,7 @@ class PaymentTest {
     }
 
     @Test
-    @DisplayName("Betalningen anropar betalaren exakt en gång")
+    @DisplayName("Pay Calls Payer Exactly Once")
     void payCallsPayerExactlyOnce() {
         Money amount = new Money(Sek.SEK, 100.0);
         int[] callCount = new int[1];
@@ -93,7 +93,7 @@ class PaymentTest {
     }
 
     @Test
-    @DisplayName("Betalningen avvisar ett negativt belopp")
+    @DisplayName("Constructor Rejects Negative Amount")
     void constructorRejectsNegativeAmount() {
         Money amount = new Money(Sek.SEK, -100.0);
         Payer payer = paymentAmount -> true;
@@ -105,7 +105,7 @@ class PaymentTest {
     }
 
     @Test
-    @DisplayName("Betalningen tillåter beloppet noll")
+    @DisplayName("Constructor Allows Zero Amount")
     void constructorAllowsZeroAmount() {
         Money amount = new Money(Sek.SEK, 0.0);
         Payer payer = paymentAmount -> true;
@@ -113,13 +113,13 @@ class PaymentTest {
         assertDoesNotThrow(() -> new Payment(amount, payer));
     }
 
-    @ParameterizedTest(name = "Belopp: {0}")
+    @ParameterizedTest(name = "Amount: {0}")
     @ValueSource(doubles = {
             Double.NaN,
             Double.POSITIVE_INFINITY,
             Double.NEGATIVE_INFINITY
     })
-    @DisplayName("Betalningen avvisar belopp som inte är ändliga")
+    @DisplayName("Constructor Rejects Non Finite Amount")
     void constructorRejectsNonFiniteAmount(double value) {
         Money amount = new Money(Sek.SEK, value);
         Payer payer = paymentAmount -> true;

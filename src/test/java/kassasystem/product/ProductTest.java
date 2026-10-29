@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ProductTest {
 
     @Test
-    @DisplayName("Rejects a null product name")
+    @DisplayName("Rejects Null Name")
     void rejectsNullName() {
         Money price = new Money(Sek.SEK, 12.50);
         ProductCategory category = new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -24,7 +24,7 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("Rejects a null price")
+    @DisplayName("Rejects Null Price")
     void rejectsNullPrice() {
         ProductCategory category = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         EAN ean = new EAN("4006381333931");
@@ -36,7 +36,7 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("Rejects a product without a category")
+    @DisplayName("Rejects Null Category")
     void rejectsNullCategory() {
         EAN ean = new EAN("4006381333931");
 
@@ -52,7 +52,7 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("Rejects a null EAN")
+    @DisplayName("Rejects Null EAN")
     void rejectsNullEAN() {
         Money price = new Money(Sek.SEK, 12.50);
         ProductCategory category = new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -64,7 +64,7 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("Returns the product details supplied to the constructor")
+    @DisplayName("Returns Product Details")
     void returnsProductDetails() {
         Money price = new Money(Sek.SEK, 12.50);
         ProductCategory category =
@@ -80,7 +80,7 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("Returns the product name from toString")
+    @DisplayName("To String Returns Product Name")
     void toStringReturnsProductName() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -95,7 +95,7 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("Generates an EAN when none is supplied")
+    @DisplayName("Generates EAN When Not Provided")
     void generatesEANWhenNotProvided() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -111,7 +111,7 @@ class ProductTest {
     }
 
     @Test
-    @DisplayName("Rejects a blank product name")
+    @DisplayName("Rejects Blank Name")
     void rejectsBlankName() {
         Money price = new Money(Sek.SEK, 12.50);
         ProductCategory category =

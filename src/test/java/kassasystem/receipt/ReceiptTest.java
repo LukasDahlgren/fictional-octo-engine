@@ -70,7 +70,7 @@ class ReceiptTest{
         MutableProduct product = new MutableProduct();
         BasketItem row = new BasketItem(product, 2);
         basket.addItem(row);
-        Receipt receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 5), "Rabatt");
+        Receipt receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 5), "Discount");
         String originalText = receipt.toText();
 
         product.currentName = "Changed name";
@@ -103,8 +103,8 @@ class ReceiptTest{
         assertEquals(total, receipt.getTotalPrice());
         assertEquals(new Money(Sek.SEK, 12.50), receipt.getSubtotal());
         assertEquals(12.40, receipt.getDiscountAmount().getAmount(), 0.000001);
-        assertEquals("Rabatt", receipt.getDiscountLabel());
-        assertTrue(receipt.toText().contains("Rabatt: -12.40 SEK\nTotalt: 0.10 SEK\n"));
+        assertEquals("Discount", receipt.getDiscountLabel());
+        assertTrue(receipt.toText().contains("Discount: -12.40 SEK\nTotal: 0.10 SEK\n"));
     }
 
     @ParameterizedTest
@@ -163,17 +163,17 @@ class ReceiptTest{
         Receipt receipt = new Receipt(basket, fixedClock(),
                 new Money(Sek.SEK, 4.50), "Medlemsrabatt (10%)");
 
-        String expected = "Kvitto\n"
-                + "Datum: 2026-01-15 11:30\n"
-                + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
+        String expected = "Receipt\n"
+                + "Date: 2026-01-15 11:30\n"
+                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
                 + "Milk" + " ".repeat(21) + "2" + " ".repeat(6) + "12.50"
                 + " ".repeat(6) + "25.00\n"
                 + "Bread" + " ".repeat(20) + "1" + " ".repeat(6) + "20.00"
                 + " ".repeat(6) + "20.00\n"
-                + "Delsumma: 45.00 SEK\n"
+                + "Subtotal: 45.00 SEK\n"
                 + "Medlemsrabatt (10%): -4.50 SEK\n"
-                + "Totalt: 40.50 SEK\n"
-                + "Varav moms:\n"
+                + "Total: 40.50 SEK\n"
+                + "VAT included:\n"
                 + "6 %: 2.29 SEK\n";
 
         assertEquals(expected, receipt.toText());
@@ -207,8 +207,8 @@ class ReceiptTest{
 
         assertEquals(new Money(Sek.SEK, 0), receipt.getTotalPrice());
         assertTrue(receipt.toText().endsWith(
-                "Kampanjrabatt (100%): -12.50 SEK\nTotalt: 0.00 SEK\n"
-                + "Varav moms:\n6 %: 0.00 SEK\n"));
+                "Kampanjrabatt (100%): -12.50 SEK\nTotal: 0.00 SEK\n"
+                + "VAT included:\n6 %: 0.00 SEK\n"));
     }
 
     @Test
@@ -330,15 +330,15 @@ class ReceiptTest{
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
-        String expected = "Kvitto\n"
-                + "Datum: 2026-01-15 11:30\n"
-                + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
+        String expected = "Receipt\n"
+                + "Date: 2026-01-15 11:30\n"
+                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
                 + "Milk" + " ".repeat(21) + "2" + " ".repeat(6) + "12.50"
                 + " ".repeat(6) + "25.00\n"
                 + "Bread" + " ".repeat(20) + "1" + " ".repeat(6) + "20.00"
                 + " ".repeat(6) + "20.00\n"
-                + "Totalt: 45.00 SEK\n"
-                + "Varav moms:\n"
+                + "Total: 45.00 SEK\n"
+                + "VAT included:\n"
                 + "6 %: 2.55 SEK\n";
 
         String text = receipt.toText();
@@ -361,7 +361,7 @@ class ReceiptTest{
 
         String text = receipt.toText();
 
-        assertTrue(text.endsWith("Varav moms:\n" + expectedVat + "\n"));
+        assertTrue(text.endsWith("VAT included:\n" + expectedVat + "\n"));
         assertEquals(price, receipt.getTotalPrice().getAmount(), 0.000001);
     }
 
@@ -376,7 +376,7 @@ class ReceiptTest{
 
         String text = receipt.toText();
 
-        assertTrue(text.endsWith("Varav moms:\n6 %: 12.00 SEK\n25 %: 25.00 SEK\n"));
+        assertTrue(text.endsWith("VAT included:\n6 %: 12.00 SEK\n25 %: 25.00 SEK\n"));
     }
 
     @ParameterizedTest
@@ -390,13 +390,13 @@ class ReceiptTest{
         if (supplyFinalTotal) {
             receipt = new Receipt(basket, new Money(Sek.SEK, 184.80), fixedClock());
         } else {
-            receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 46.20), "Rabatt");
+            receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 46.20), "Discount");
         }
 
         String text = receipt.toText();
 
-        assertTrue(text.contains("Totalt: 184.80 SEK\n"));
-        assertTrue(text.endsWith("Varav moms:\n6 %: 4.80 SEK\n25 %: 20.00 SEK\n"));
+        assertTrue(text.contains("Total: 184.80 SEK\n"));
+        assertTrue(text.endsWith("VAT included:\n6 %: 4.80 SEK\n25 %: 20.00 SEK\n"));
     }
 
     @ParameterizedTest
@@ -408,7 +408,7 @@ class ReceiptTest{
 
         String text = receipt.toText();
 
-        assertTrue(text.endsWith("Varav moms:\n6 %: 0.00 SEK\n"));
+        assertTrue(text.endsWith("VAT included:\n6 %: 0.00 SEK\n"));
     }
 
     @Test
@@ -433,7 +433,7 @@ class ReceiptTest{
 
         product.currentCategory = other;
 
-        assertTrue(receipt.toText().endsWith("Varav moms:\n6 %: 6.00 SEK\n"));
+        assertTrue(receipt.toText().endsWith("VAT included:\n6 %: 6.00 SEK\n"));
     }
 
     @Test
@@ -457,9 +457,9 @@ class ReceiptTest{
 
         assertAll(
                 "Kvittot visar hur totalpriset har beräknats",
-                () -> assertTrue(text.contains("Delsumma: 100.00 SEK\n")),
-                () -> assertTrue(text.contains("Rabatt: -20.00 SEK\n")),
-                () -> assertTrue(text.contains("Totalt: 80.00 SEK\n"))
+                () -> assertTrue(text.contains("Subtotal: 100.00 SEK\n")),
+                () -> assertTrue(text.contains("Discount: -20.00 SEK\n")),
+                () -> assertTrue(text.contains("Total: 80.00 SEK\n"))
         );
     }
 
@@ -481,7 +481,7 @@ class ReceiptTest{
         assertAll("Receipt formats amounts with decimal points",
                 () -> assertTrue(text.contains("12.50")),
                 () -> assertTrue(text.contains("25.00")),
-                () -> assertTrue(text.contains("Totalt: 25.00 SEK\n"))
+                () -> assertTrue(text.contains("Total: 25.00 SEK\n"))
         );
     }
 
@@ -517,10 +517,10 @@ class ReceiptTest{
     @DisplayName("Ett tomt kvitto visar datum och nollsumma i SEK")
     void toTextFormatsEmptyReceipt() {
         Receipt receipt = new Receipt(new Basket(), fixedClock());
-        String expected = "Kvitto\n"
-                + "Datum: 2026-01-15 11:30\n"
-                + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
-                + "Totalt: 0.00 SEK\n";
+        String expected = "Receipt\n"
+                + "Date: 2026-01-15 11:30\n"
+                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
+                + "Total: 0.00 SEK\n";
 
         String text = receipt.toText();
 

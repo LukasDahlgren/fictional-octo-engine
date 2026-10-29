@@ -60,8 +60,7 @@ public class BasketItem{
    }
 
    public Money getTotalPrice(){
-      double total = product.getPrice().getAmount() * quantity;
-       return new Money(product.getPrice().getCurrency(), total);
+      return product.getPrice().multiply(quantity);
    }
 
 }

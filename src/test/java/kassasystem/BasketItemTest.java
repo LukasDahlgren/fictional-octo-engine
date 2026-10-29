@@ -27,16 +27,16 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("Konstruktorn sparar varan")
+    @DisplayName("Constructor Sets Product")
     void constructorSetsProduct() {
         BasketItem item = new BasketItem(product, 2);
 
         assertSame(product, item.getProduct());
     }
 
-    @ParameterizedTest(name = "{0} stycken")
+    @ParameterizedTest(name = "{0} items")
     @ValueSource(ints = {1, 2, 5, Integer.MAX_VALUE})
-    @DisplayName("Konstruktorn sparar antalet")
+    @DisplayName("Constructor Sets Quantity")
     void constructorSetsQuantity(int quantity) {
         BasketItem item = new BasketItem(product, quantity);
 
@@ -44,20 +44,20 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("Konstruktorn avvisar en saknad vara")
+    @DisplayName("Constructor Rejects Null Product")
     void constructorRejectsNullProduct() {
         assertThrows(IllegalArgumentException.class, () -> new BasketItem(null, 1));
     }
 
-    @ParameterizedTest(name = "{0} stycken")
+    @ParameterizedTest(name = "{0} items")
     @ValueSource(ints = {0, -1, -5, Integer.MIN_VALUE})
-    @DisplayName("Konstruktorn avvisar antal under ett")
+    @DisplayName("Constructor Rejects Invalid Quantity")
     void constructorRejectsInvalidQuantity(int quantity) {
         assertThrows(IllegalArgumentException.class, () -> new BasketItem(product, quantity));
     }
 
     @Test
-    @DisplayName("Antalet ökas med ett")
+    @DisplayName("Increase Quantity Adds One")
     void increaseQuantityAddsOne() {
         BasketItem item = new BasketItem(product, 2);
 
@@ -66,9 +66,9 @@ class BasketItemTest {
         assertEquals(3, item.getQuantity());
     }
 
-    @ParameterizedTest(name = "Öka med {0}")
+    @ParameterizedTest(name = "Increase by {0}")
     @ValueSource(ints = {1, 2, 5})
-    @DisplayName("Antalet ökas med det angivna värdet")
+    @DisplayName("Increase Quantity Adds Amount")
     void increaseQuantityAddsAmount(int amount) {
         BasketItem item = new BasketItem(product, 2);
 
@@ -77,9 +77,9 @@ class BasketItemTest {
         assertEquals(2 + amount, item.getQuantity());
     }
 
-    @ParameterizedTest(name = "Öka med {0}")
+    @ParameterizedTest(name = "Increase by {0}")
     @ValueSource(ints = {0, -1, Integer.MIN_VALUE})
-    @DisplayName("Ökning under ett avvisas utan att ändra antalet")
+    @DisplayName("Increase Quantity Rejects Invalid Amount")
     void increaseQuantityRejectsInvalidAmount(int amount) {
         BasketItem item = new BasketItem(product, 2);
 
@@ -88,7 +88,7 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("För stort antal avvisas utan att ändra antalet")
+    @DisplayName("Increase Quantity Rejects Overflow")
     void increaseQuantityRejectsOverflow() {
         BasketItem item = new BasketItem(product, Integer.MAX_VALUE);
 
@@ -96,9 +96,9 @@ class BasketItemTest {
         assertEquals(Integer.MAX_VALUE, item.getQuantity());
     }
 
-    @ParameterizedTest(name = "{0} stycken före minskningen")
+    @ParameterizedTest(name = "{0} items before decrease")
     @ValueSource(ints = {2, 3, Integer.MAX_VALUE})
-    @DisplayName("Antalet minskas med ett")
+    @DisplayName("Decrease Quantity Removes One")
     void decreaseQuantityRemovesOne(int quantity) {
         BasketItem item = new BasketItem(product, quantity);
 
@@ -108,7 +108,7 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("Minskning vid antal ett avvisas utan att ändra antalet")
+    @DisplayName("Decrease Quantity Rejects Last Unit Without Changing Quantity")
     void decreaseQuantityRejectsLastUnit() {
         BasketItem item = new BasketItem(product, 1);
 
@@ -118,7 +118,7 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("Radens pris är styckpriset gånger antalet med samma valuta")
+    @DisplayName("Get Total Price Multiplies Price By Quantity")
     void getTotalPriceMultipliesPriceByQuantity() {
         BasketItem item = new BasketItem(product, 3);
 
@@ -131,7 +131,7 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("Antalet kan ökas precis till största tillåtna heltalet")
+    @DisplayName("Increase Quantity Accepts Maximum Result")
     void increaseQuantityAcceptsMaximumResult() {
         BasketItem item = new BasketItem(product, Integer.MAX_VALUE - 2);
 
@@ -141,7 +141,7 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("En angiven ökning som ger overflow avvisas utan att ändra raden")
+    @DisplayName("Increase Quantity With Amount Rejects Overflow")
     void increaseQuantityWithAmountRejectsOverflow() {
         BasketItem item = new BasketItem(product, 2);
 
@@ -153,9 +153,9 @@ class BasketItemTest {
         );
     }
 
-    @ParameterizedTest(name = "Styckpris {0}, antal {1}, total {2}")
+    @ParameterizedTest(name = "Unit price {0}, quantity {1}, total {2}")
     @CsvSource({"0, 3, 0", "0.10, 3, 0.30", "12.50, 1, 12.50"})
-    @DisplayName("Nollpris, decimalpris och en enda enhet ger rätt radpris")
+    @DisplayName("Get Total Price Handles Price And Quantity Classes")
     void getTotalPriceHandlesPriceAndQuantityClasses(double price, int quantity, double expected) {
         Product pricedProduct = new Product("Product", new Money(Sek.SEK, price), food);
         BasketItem item = new BasketItem(pricedProduct, quantity);
@@ -169,7 +169,7 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("Radpriset uppdateras när antalet ökas")
+    @DisplayName("Get Total Price Updates After Quantity Increase")
     void getTotalPriceUpdatesAfterQuantityIncrease() {
         BasketItem item = new BasketItem(product, 1);
 
@@ -180,7 +180,7 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("Radpriset uppdateras när antalet minskas")
+    @DisplayName("Get Total Price Updates After Quantity Decrease")
     void getTotalPriceUpdatesAfterQuantityDecrease() {
         BasketItem item = new BasketItem(product, 3);
 

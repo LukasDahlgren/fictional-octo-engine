@@ -28,7 +28,7 @@ class DiscountCalculatorTest {
     void setUp() {
         originalPrice = new Money(Sek.SEK, 100.0);
         customerWithoutMembership =
-                new Customer("C001", "Testkund");
+                new Customer("C001", "Test Customer");
 
         Membership membership = new Membership(
                 LocalDate.of(2026, 1, 1),
@@ -36,7 +36,7 @@ class DiscountCalculatorTest {
         );
 
         customerWithMembership =
-                new Customer("C002", "Medlem", membership);
+                new Customer("C002", "Member", membership);
 
         calculator = new DiscountCalculator();
         purchaseDate = LocalDate.of(2026, 10, 15);
@@ -51,7 +51,7 @@ class DiscountCalculatorTest {
     }
 
     @Test
-    @DisplayName("Kund utan medlemskap och erbjudande betalar ordinarie pris")
+    @DisplayName("Customer Without Membership Or Offer Pays Original Price")
     void customerWithoutMembershipOrOfferPaysOriginalPrice() {
         Money finalPrice = calculator.calculatePrice(
                 originalPrice,
@@ -67,7 +67,7 @@ class DiscountCalculatorTest {
     }
 
     @Test
-    @DisplayName("Kund med aktivt medlemskap får tio procent rabatt")
+    @DisplayName("Customer With Active Membership Receives Ten Percent Discount")
     void customerWithActiveMembershipReceivesTenPercentDiscount() {
         Money finalPrice = calculator.calculatePrice(
                 originalPrice,
@@ -83,7 +83,7 @@ class DiscountCalculatorTest {
     }
 
     @Test
-    @DisplayName("Aktivt erbjudande ger rabatt till kund utan medlemskap")
+    @DisplayName("Active Offer Discount Is Applied To Non Member")
     void activeOfferDiscountIsAppliedToNonMember() {
         Money finalPrice = calculator.calculatePrice(
                 originalPrice,
@@ -100,7 +100,7 @@ class DiscountCalculatorTest {
     }
 
     @Test
-    @DisplayName("Medlemsrabatten väljs när den är större än erbjudandet")
+    @DisplayName("Membership Discount Is Selected When It Is Greater")
     void membershipDiscountIsSelectedWhenItIsGreater() {
         DiscountOffer fivePercentOffer = new DiscountOffer(
                 5.0,
@@ -119,7 +119,7 @@ class DiscountCalculatorTest {
     }
 
     @Test
-    @DisplayName("Erbjudandet väljs när det är större än medlemsrabatten")
+    @DisplayName("Offer Discount Is Selected When It Is Greater")
     void offerDiscountIsSelectedWhenItIsGreater() {
         Money finalPrice = calculator.calculatePrice(
                 originalPrice,
@@ -132,7 +132,7 @@ class DiscountCalculatorTest {
     }
 
     @Test
-    @DisplayName("Utgånget erbjudande ger ingen rabatt")
+    @DisplayName("Expired Offer Does Not Give Discount")
     void expiredOfferDoesNotGiveDiscount() {
         LocalDate dayAfterOffer = LocalDate.of(2026, 11, 1);
 

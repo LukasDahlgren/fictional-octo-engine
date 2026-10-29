@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ProductCategoryTest {
 
     @Test
-    @DisplayName("Rejects a null VAT category")
+    @DisplayName("Rejects Null VAT Category")
     void rejectsNullVATCategory() {
         assertThrows(
                 IllegalArgumentException.class,
@@ -27,7 +27,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Rejects adding a product assigned to a different category")
+    @DisplayName("Rejects Product Assigned To Another Category")
     void rejectsProductAssignedToAnotherCategory() {
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         ProductCategory drinks = new ProductCategory("Drinks", VATCategory.TWENTY_FIVE_PERCENT);
@@ -43,7 +43,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Rejects a null category name")
+    @DisplayName("Rejects Null Name")
     void rejectsNullName() {
         assertThrows(
                 IllegalArgumentException.class,
@@ -52,7 +52,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Rejects a blank category name")
+    @DisplayName("Rejects Blank Name")
     void rejectsBlankName() {
         assertThrows(
                 IllegalArgumentException.class,
@@ -61,7 +61,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Returns the category name and VAT rate")
+    @DisplayName("Returns Name And Vat Rate")
     void returnsNameAndVatRate() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -71,7 +71,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Adds a product assigned to this category")
+    @DisplayName("Adds Product Assigned To This Category")
     void addsProductAssignedToThisCategory() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -83,7 +83,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Does not add the same product twice")
+    @DisplayName("Does Not Add Duplicate Product")
     void doesNotAddDuplicateProduct() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -96,7 +96,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Rejects adding a null product")
+    @DisplayName("Rejects Null Product")
     void rejectsNullProduct() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -108,7 +108,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Removes a product from the category")
+    @DisplayName("Removes Product")
     void removesProduct() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -122,7 +122,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Returns category products through its iterator")
+    @DisplayName("Iterator Returns Products")
     void iteratorReturnsProducts() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -136,7 +136,7 @@ public class ProductCategoryTest {
     }
 
     @Test
-    @DisplayName("Does not allow removing a product through the iterator")
+    @DisplayName("Iterator Does Not Allow Removing Products")
     void iteratorDoesNotAllowRemovingProducts() {
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);

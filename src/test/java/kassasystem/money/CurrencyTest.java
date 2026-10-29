@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class CurrencyTest {
 
     @Test
-    @DisplayName("Nollbeloppet har värdet noll och rätt valuta")
+    @DisplayName("Get Zero Money Returns Zero With Correct Currency")
     void getZeroMoneyReturnsZeroWithCorrectCurrency() {
         Currency currency = Sek.SEK;
 
@@ -21,13 +21,13 @@ class CurrencyTest {
         assertSame(currency, result.getCurrency());
     }
 
-    @ParameterizedTest(name = "{0} jämfört med {1}")
+    @ParameterizedTest(name = "{0} compared with {1}")
     @CsvSource({
             "EUR, SEK, -1",
             "SEK, EUR, 1",
             "SEK, SEK, 0"
     })
-    @DisplayName("Valutor sorteras alfabetiskt efter namn")
+    @DisplayName("Compare To Orders Currencies By Name")
     void compareToOrdersCurrenciesByName(
             String firstName,
             String secondName,

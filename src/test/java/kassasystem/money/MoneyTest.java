@@ -122,7 +122,7 @@ class MoneyTest {
     }
 
     @Test
-    @DisplayName("Pengar i olika valutor kan inte adderas")
+    @DisplayName("Add Rejects Different Currencies")
     void addRejectsDifferentCurrencies() {
         Money first = new Money(Sek.SEK, 100.0);
         Money second = new Money(Eur.EUR, 50.0);
@@ -139,7 +139,7 @@ class MoneyTest {
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {"100 SEK"})
-    @DisplayName("Pengar är inte lika med null eller ett annat objektslag")
+    @DisplayName("Equals Returns False For Null Or Other Type")
     void equalsReturnsFalseForNullOrOtherType(String other) {
         Money money = new Money(Sek.SEK, 100.0);
 
@@ -147,12 +147,85 @@ class MoneyTest {
     }
 
     @Test
-    @DisplayName("Lika pengabelopp har samma hashkod")
+    @DisplayName("Equal Money Objects Have Same Hash Code")
     void equalMoneyObjectsHaveSameHashCode() {
         Money first = new Money(Sek.SEK, 100.0);
         Money second = new Money(Sek.SEK, 100.0);
 
         assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+    }
+
+    @Test
+    @DisplayName("Add Handles Non-Finite Amounts")
+    void addHandlesNonFiniteAmounts() {
+        Money nonFinite = new Money(Sek.SEK, Double.NaN);
+        Money finite = new Money(Sek.SEK, 2.0);
+
+        Money nonFiniteFirst = nonFinite.add(finite);
+        Money nonFiniteSecond = finite.add(nonFinite);
+
+        assertTrue(Double.isNaN(nonFiniteFirst.getAmount()));
+        assertTrue(Double.isNaN(nonFiniteSecond.getAmount()));
+    }
+
+    @Test
+    @DisplayName("Subtract Handles Non-Finite Amounts")
+    void subtractHandlesNonFiniteAmounts() {
+        Money nonFinite = new Money(Sek.SEK, Double.NaN);
+        Money finite = new Money(Sek.SEK, 2.0);
+
+        Money nonFiniteFirst = nonFinite.subtract(finite);
+        Money nonFiniteSecond = finite.subtract(nonFinite);
+
+        assertTrue(Double.isNaN(nonFiniteFirst.getAmount()));
+        assertTrue(Double.isNaN(nonFiniteSecond.getAmount()));
+    }
+
+    @Test
+    @DisplayName("Multiply Handles Non-Finite Amounts")
+    void multiplyHandlesNonFiniteAmounts() {
+        Money infinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+
+        Money result = infinite.multiply(2);
+
+        assertEquals(Double.POSITIVE_INFINITY, result.getAmount());
+    }
+
+    @Test
+    @DisplayName("Comparisons Handle Non-Finite Amounts")
+    void comparisonsHandleNonFiniteAmounts() {
+        Money infinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+        Money finite = new Money(Sek.SEK, 2.0);
+
+        assertTrue(infinite.isGreaterThan(finite));
+        assertFalse(finite.isGreaterThan(infinite));
+        assertFalse(infinite.isLessThan(finite));
+        assertTrue(finite.isLessThan(infinite));
+    }
+
+    @Test
+    @DisplayName("Equals Handles Non-Finite Amounts And Different Currencies")
+    void equalsHandlesNonFiniteAmountsAndDifferentCurrencies() {
+        Money firstInfinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+        Money secondInfinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+        Money notANumber = new Money(Sek.SEK, Double.NaN);
+        Money finite = new Money(Sek.SEK, 2.0);
+        Money otherCurrency = new Money(Eur.EUR, Double.POSITIVE_INFINITY);
+
+        assertEquals(firstInfinite, secondInfinite);
+        assertFalse(firstInfinite.equals(notANumber));
+        assertFalse(firstInfinite.equals(finite));
+        assertFalse(firstInfinite.equals(otherCurrency));
+        assertFalse(finite.equals(firstInfinite));
+    }
+
+    @Test
+    @DisplayName("Equal Non-Finite Money Objects Have The Same Hash Code")
+    void equalNonFiniteMoneyObjectsHaveTheSameHashCode() {
+        Money first = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+        Money second = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+
         assertEquals(first.hashCode(), second.hashCode());
     }
 

@@ -68,7 +68,7 @@ class GiftCardTest {
     }
 
     @Test
-    @DisplayName("Presentkortet avvisar NaN utan att ändra saldot")
+    @DisplayName("Use Rejects NaN And Preserves Balance")
     void useRejectsNaNAndPreservesBalance() {
         Money initialBalance = new Money(Sek.SEK, 100.0);
         GiftCard giftCard = new GiftCard(initialBalance);
@@ -82,7 +82,7 @@ class GiftCardTest {
         assertEquals(initialBalance, giftCard.getBalance());
     }
     @Test
-    @DisplayName("Presentkortet avvisar annan valuta utan att ändra saldot")
+    @DisplayName("Use Rejects Different Currency And Preserves Balance")
     void useRejectsDifferentCurrencyAndPreservesBalance() {
         Money initialBalance = new Money(Sek.SEK, 100.0);
         GiftCard giftCard = new GiftCard(initialBalance);
@@ -96,7 +96,7 @@ class GiftCardTest {
         assertEquals(initialBalance, giftCard.getBalance());
     }
     @Test
-    @DisplayName("Presentkortet avvisar ett negativt startsaldo")
+    @DisplayName("Constructor Rejects Negative Initial Balance")
     void constructorRejectsNegativeInitialBalance() {
         Money initialBalance = new Money(Sek.SEK, -100.0);
 

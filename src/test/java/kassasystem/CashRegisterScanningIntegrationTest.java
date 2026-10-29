@@ -23,7 +23,7 @@ class CashRegisterScanningIntegrationTest {
     private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
     @Test
-    @DisplayName("Två scanningar via den riktiga produktkatalogen ger en varurad med antal två och rätt totalpris")
+    @DisplayName("Scan Product Twice With Real Catalog Groups Product In Basket")
     void scanProductTwiceWithRealCatalogGroupsProductInBasket() {
         EAN ean = new EAN("0123456789012");
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);

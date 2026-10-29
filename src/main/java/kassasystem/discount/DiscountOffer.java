@@ -15,7 +15,7 @@ public class DiscountOffer {
     ) {
         if (discountPercentage < 0.0 || discountPercentage > 100.0) {
             throw new IllegalArgumentException(
-                    "Rabattprocenten måste vara mellan 0 och 100"
+                    "Discount percentage must be between 0 and 100"
             );
         }
 
