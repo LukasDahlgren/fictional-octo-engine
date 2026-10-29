@@ -102,4 +102,13 @@ class DiscountOfferTest {
                 boundaryOffer.getDiscountPercentage()
         );
     }
+
+    @Test
+    @DisplayName("Discount Offer Rejects A Null Percentage")
+    void discountOfferRejectsNullPercentage() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DiscountOffer(null, startDate, endDate)
+        );
+    }
 }

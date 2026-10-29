@@ -181,4 +181,13 @@ class MoneyTest {
     private void assertAmountEquals(String expected, Money actual) {
         assertEquals(0, new BigDecimal(expected).compareTo(actual.getAmount()));
     }
+
+    @Test
+    @DisplayName("Money With Different Currencies Is Not Equal")
+    void moneyWithDifferentCurrenciesIsNotEqual() {
+        Money sekAmount = new Money(Sek.SEK, new BigDecimal("100.00"));
+        Money euroAmount = new Money(Eur.EUR, new BigDecimal("100.00"));
+
+        assertNotEquals(sekAmount, euroAmount);
+    }
 }
