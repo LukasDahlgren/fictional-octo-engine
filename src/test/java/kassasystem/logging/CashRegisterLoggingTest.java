@@ -41,7 +41,7 @@ class CashRegisterLoggingTest {
         Clock clock = Clock.systemUTC();
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CashRegister(null, clock));
+                () -> new CashRegister(null, true));
 
         assertEquals("Transaction logger must not be null", exception.getMessage());
     }
@@ -53,7 +53,7 @@ class CashRegisterLoggingTest {
         TransactionLogger logger = new TransactionLogger(logFile);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CashRegister(logger, null));
+                () -> new CashRegister(logger,null, true));
 
         assertEquals("Clock must not be null", exception.getMessage());
     }
@@ -64,7 +64,7 @@ class CashRegisterLoggingTest {
         Path logFile = tempDir.resolve("transactions.txt");
         TransactionLogger logger = new TransactionLogger(logFile);
         CashRegister cashRegister =
-                new CashRegister(logger, Clock.systemUTC());
+                new CashRegister(logger, Clock.systemUTC(), true);
 
         ProductCategory food =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -87,7 +87,7 @@ class CashRegisterLoggingTest {
         String previousLog = "Previous transaction\n";
         Files.writeString(logFile, previousLog);
         TransactionLogger logger = new TransactionLogger(logFile);
-        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC());
+        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), true);
         Purchase purchase = startInactivePurchase(cashRegister, status);
         String logBeforeRejectedCheckout = Files.readString(logFile);
 
@@ -110,9 +110,9 @@ class CashRegisterLoggingTest {
         String previousLog = "Previous transaction\n";
         Files.writeString(logFile, previousLog);
         TransactionLogger logger = new TransactionLogger(logFile);
-        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC());
+        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), true);
         Customer customer = new Customer("C001", "Test Customer");
-        CashRegister previousRegister = new CashRegister();
+        CashRegister previousRegister = new CashRegister(true);
         Purchase previousPurchase = previousRegister.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
@@ -143,9 +143,9 @@ class CashRegisterLoggingTest {
         String previousLog = "Previous transaction\n";
         Files.writeString(logFile, previousLog);
         TransactionLogger logger = new TransactionLogger(logFile);
-        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC());
+        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), true);
         Customer customer = new Customer("C001", "Test Customer");
-        CashRegister previousRegister = new CashRegister();
+        CashRegister previousRegister = new CashRegister(true);
         Purchase previousPurchase = previousRegister.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
@@ -173,7 +173,7 @@ class CashRegisterLoggingTest {
     @DisplayName("Logging Failure Leaves Purchase Editable For Retry")
     void loggingFailureLeavesPurchaseEditableForRetry() {
         TransactionLogger logger = new TransactionLogger(tempDir);
-        CashRegister register = new CashRegister(logger, Clock.systemUTC());
+        CashRegister register = new CashRegister(logger, Clock.systemUTC(), true);
         Customer customer = new Customer("C001", "Test Customer");
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);

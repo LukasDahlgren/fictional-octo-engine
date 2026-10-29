@@ -30,7 +30,7 @@ class CustomerTest {
     @Test
     @DisplayName("Customer Stores Completed Purchase")
     void customerStoresCompletedPurchase() {
-        CashRegister register = new CashRegister();
+        CashRegister register = new CashRegister(true);
         Purchase purchase = register.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
