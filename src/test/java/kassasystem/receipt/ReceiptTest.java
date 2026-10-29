@@ -46,7 +46,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot behåller namn, pris, antal och text när produkt och korg ändras")
+    @DisplayName("Receipt Copies Values From Mutable Product And Basket")
     void receiptCopiesValuesFromMutableProductAndBasket() {
         // Product currently has no setters, but subclasses can expose changing values.
         class MutableProduct extends Product {
@@ -93,7 +93,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot bevarar exakt det slutbelopp som checkout skickar in")
+    @DisplayName("Constructor Preserves Supplied Total")
     void constructorPreservesSuppliedTotal() {
         basket.addProduct(milk);
         Money total = new Money(Sek.SEK, 0.10);
@@ -109,7 +109,7 @@ class ReceiptTest{
 
     @ParameterizedTest
     @ValueSource(doubles = { -1, 12.51, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
-    @DisplayName("Kvittot avvisar ogiltiga slutbelopp från checkout")
+    @DisplayName("Constructor Rejects Invalid Supplied Total")
     void constructorRejectsInvalidSuppliedTotal(double amount) {
         basket.addProduct(milk);
         Money total = new Money(Sek.SEK, amount);
@@ -119,7 +119,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot avvisar en saknad korg när slutbelopp anges")
+    @DisplayName("Constructor Rejects Null Basket With Supplied Total")
     void constructorRejectsNullBasketWithSuppliedTotal() {
         Money total = new Money(Sek.SEK, 0);
         Clock clock = fixedClock();
@@ -131,14 +131,14 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot avvisar ett saknat slutbelopp från checkout")
+    @DisplayName("Constructor Rejects Null Supplied Total")
     void constructorRejectsNullSuppliedTotal() {
         assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(basket, null, fixedClock()));
     }
 
     @Test
-    @DisplayName("Kvittot avvisar ett slutbelopp i annan valuta än SEK")
+    @DisplayName("Constructor Rejects Non-SEK Supplied Total")
     void constructorRejectsNonSekSuppliedTotal() {
         Money total = new Money(new Currency("EUR", "€"), 0);
 
@@ -147,7 +147,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot avvisar ett slutbelopp utan valuta")
+    @DisplayName("Constructor Rejects Supplied Total Without Currency")
     void constructorRejectsSuppliedTotalWithoutCurrency() {
         Money total = new Money(null, 0);
 
@@ -156,22 +156,22 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot visar delsumman, angiven rabatt och slutpriset med ursprungliga varupriser")
+    @DisplayName("To Text Shows Supplied Discount")
     void toTextShowsSuppliedDiscount() {
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock(),
-                new Money(Sek.SEK, 4.50), "Medlemsrabatt (10%)");
+                new Money(Sek.SEK, 4.50), "Membership discount (10%)");
 
         String expected = "Receipt\n"
                 + "Date: 2026-01-15 11:30\n"
-                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
+                + String.format(Locale.ROOT, "%-20s %5s %10s %10s\n", "Product", "Quantity", "Unit price", "Line total")
                 + "Milk" + " ".repeat(21) + "2" + " ".repeat(6) + "12.50"
                 + " ".repeat(6) + "25.00\n"
                 + "Bread" + " ".repeat(20) + "1" + " ".repeat(6) + "20.00"
                 + " ".repeat(6) + "20.00\n"
                 + "Subtotal: 45.00 SEK\n"
-                + "Medlemsrabatt (10%): -4.50 SEK\n"
+                + "Membership discount (10%): -4.50 SEK\n"
                 + "Total: 40.50 SEK\n"
                 + "VAT included:\n"
                 + "6 %: 2.29 SEK\n";
@@ -180,18 +180,18 @@ class ReceiptTest{
         assertAll("Receipt stores the checkout amounts",
                 () -> assertEquals(new Money(Sek.SEK, 45), receipt.getSubtotal()),
                 () -> assertEquals(new Money(Sek.SEK, 4.50), receipt.getDiscountAmount()),
-                () -> assertEquals("Medlemsrabatt (10%)", receipt.getDiscountLabel()),
+                () -> assertEquals("Membership discount (10%)", receipt.getDiscountLabel()),
                 () -> assertEquals(new Money(Sek.SEK, 40.50), receipt.getTotalPrice())
         );
     }
 
     @Test
-    @DisplayName("Nollrabatt behåller kvittots vanliga format")
+    @DisplayName("Zero Discount Keeps Original Format")
     void zeroDiscountKeepsOriginalFormat() {
         basket.addProduct(milk);
         Receipt original = new Receipt(basket, fixedClock());
         Receipt withZeroDiscount = new Receipt(basket, fixedClock(),
-                new Money(Sek.SEK, 0), "Kampanjrabatt");
+                new Money(Sek.SEK, 0), "Promotional discount");
 
         assertEquals(original.toText(), withZeroDiscount.toText());
         assertEquals(original.getSubtotal(), original.getTotalPrice());
@@ -199,24 +199,24 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Rabatt på hela delsumman ger noll i slutpris")
+    @DisplayName("Full Discount Returns Zero Total")
     void fullDiscountReturnsZeroTotal() {
         basket.addProduct(milk);
         Receipt receipt = new Receipt(basket, fixedClock(),
-                new Money(Sek.SEK, 12.50), "Kampanjrabatt (100%)");
+                new Money(Sek.SEK, 12.50), "Promotional discount (100%)");
 
         assertEquals(new Money(Sek.SEK, 0), receipt.getTotalPrice());
         assertTrue(receipt.toText().endsWith(
-                "Kampanjrabatt (100%): -12.50 SEK\nTotal: 0.00 SEK\n"
+                "Promotional discount (100%): -12.50 SEK\nTotal: 0.00 SEK\n"
                 + "VAT included:\n6 %: 0.00 SEK\n"));
     }
 
     @Test
-    @DisplayName("Rabatterat kvitto behåller belopp och text när korgen ändras")
+    @DisplayName("Discounted Receipt Keeps Snapshot")
     void discountedReceiptKeepsSnapshot() {
         basket.addProduct(milk);
         Receipt receipt = new Receipt(basket, fixedClock(),
-                new Money(Sek.SEK, 2.50), "Kampanjrabatt");
+                new Money(Sek.SEK, 2.50), "Promotional discount");
         String originalText = receipt.toText();
 
         basket.removeProduct(milk);
@@ -229,45 +229,45 @@ class ReceiptTest{
 
     @ParameterizedTest
     @ValueSource(doubles = { -1, 12.51, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
-    @DisplayName("Kvittot avvisar negativa, för stora och icke ändliga rabatter")
+    @DisplayName("Constructor Rejects Invalid Discount Amount")
     void constructorRejectsInvalidDiscountAmount(double amount) {
         basket.addProduct(milk);
         Money discount = new Money(Sek.SEK, amount);
 
         assertThrows(IllegalArgumentException.class,
-                () -> new Receipt(basket, fixedClock(), discount, "Kampanjrabatt"));
+                () -> new Receipt(basket, fixedClock(), discount, "Promotional discount"));
     }
 
     @Test
-    @DisplayName("Kvittot avvisar en saknad rabatt")
+    @DisplayName("Constructor Rejects Null Discount")
     void constructorRejectsNullDiscount() {
         assertThrows(IllegalArgumentException.class,
-                () -> new Receipt(basket, fixedClock(), null, "Kampanjrabatt"));
+                () -> new Receipt(basket, fixedClock(), null, "Promotional discount"));
     }
 
     @Test
-    @DisplayName("Kvittot avvisar en rabatt i annan valuta än SEK")
+    @DisplayName("Constructor Rejects Non-SEK Discount")
     void constructorRejectsNonSekDiscount() {
         basket.addProduct(milk);
         Money discount = new Money(new Currency("EUR", "€"), 1);
 
         assertThrows(IllegalArgumentException.class,
-                () -> new Receipt(basket, fixedClock(), discount, "Kampanjrabatt"));
+                () -> new Receipt(basket, fixedClock(), discount, "Promotional discount"));
     }
 
     @Test
-    @DisplayName("Kvittot avvisar en rabatt utan valuta")
+    @DisplayName("Constructor Rejects Discount Without Currency")
     void constructorRejectsDiscountWithoutCurrency() {
         Money discount = new Money(null, 0);
 
         assertThrows(IllegalArgumentException.class,
-                () -> new Receipt(basket, fixedClock(), discount, "Kampanjrabatt"));
+                () -> new Receipt(basket, fixedClock(), discount, "Promotional discount"));
     }
 
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = { " ", "Rabatt\nTotalt", "Rabatt\rTotalt" })
-    @DisplayName("En positiv rabatt kräver en beskrivning på en rad")
+    @ValueSource(strings = { " ", "Discount\nTotal", "Discount\rTotal" })
+    @DisplayName("Constructor Rejects Invalid Discount Label")
     void constructorRejectsInvalidDiscountLabel(String label) {
         basket.addProduct(milk);
 
@@ -276,7 +276,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Totalpriset behåller köpets summa när antalet i korgen ändras")
+    @DisplayName("Get Total Price Keeps Snapshot After Quantity Change")
     void getTotalPriceKeepsSnapshotAfterQuantityChange() {
         Product cheapMilk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
         Product cheapBread = new Product("Bread", new Money(Sek.SEK, 3), food);
@@ -294,7 +294,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Totalpriset behåller köpets summa när en rad tas bort ur korgen")
+    @DisplayName("Get Total Price Keeps Snapshot After Row Removal")
     void getTotalPriceKeepsSnapshotAfterRowRemoval() {
         Product cheapMilk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
         Product cheapBread = new Product("Bread", new Money(Sek.SEK, 3), food);
@@ -312,7 +312,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("En tom korg ger ett kvitto med noll i totalpris")
+    @DisplayName("Get Total Price Returns Zero For Empty Basket")
     void getTotalPriceReturnsZeroForEmptyBasket() {
         Receipt receipt = new Receipt(new Basket(), fixedClock());
 
@@ -325,14 +325,14 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot visar köptid, varor i kolumner och totalpris")
+    @DisplayName("To Text Formats Purchase Snapshot")
     void toTextFormatsPurchaseSnapshot() {
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
         String expected = "Receipt\n"
                 + "Date: 2026-01-15 11:30\n"
-                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
+                + String.format(Locale.ROOT, "%-20s %5s %10s %10s\n", "Product", "Quantity", "Unit price", "Line total")
                 + "Milk" + " ".repeat(21) + "2" + " ".repeat(6) + "12.50"
                 + " ".repeat(6) + "25.00\n"
                 + "Bread" + " ".repeat(20) + "1" + " ".repeat(6) + "20.00"
@@ -352,10 +352,10 @@ class ReceiptTest{
             "TWELVE_PERCENT, 112, '12 %: 12.00 SEK'",
             "TWENTY_FIVE_PERCENT, 125, '25 %: 25.00 SEK'"
     })
-    @DisplayName("Kvittot visar den moms som ingår i priset för varje momssats")
+    @DisplayName("Receipt Shows VAT Included In Price For Each Rate")
     void toTextShowsVatIncludedInPrice(VATCategory vatCategory, double price, String expectedVat) {
-        ProductCategory category = new ProductCategory("Testkategori", vatCategory);
-        Product product = new Product("Testprodukt", new Money(Sek.SEK, price), category);
+        ProductCategory category = new ProductCategory("Test category", vatCategory);
+        Product product = new Product("Test product", new Money(Sek.SEK, price), category);
         basket.addProduct(product);
         Receipt receipt = new Receipt(basket, fixedClock());
 
@@ -366,12 +366,12 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot summerar rader och antal per momssats i stigande ordning")
+    @DisplayName("Receipt Groups VAT By Rate In Ascending Order")
     void toTextGroupsVatByRate() {
-        ProductCategory other = new ProductCategory("Övrigt", VATCategory.TWENTY_FIVE_PERCENT);
-        basket.addProduct(new Product("Övrig vara", new Money(Sek.SEK, 125), other));
-        basket.addItem(new BasketItem(new Product("Mat", new Money(Sek.SEK, 53), food), 2));
-        basket.addProduct(new Product("Annan mat", new Money(Sek.SEK, 106), food));
+        ProductCategory other = new ProductCategory("Other", VATCategory.TWENTY_FIVE_PERCENT);
+        basket.addProduct(new Product("Other product", new Money(Sek.SEK, 125), other));
+        basket.addItem(new BasketItem(new Product("Food", new Money(Sek.SEK, 53), food), 2));
+        basket.addProduct(new Product("Other food", new Money(Sek.SEK, 106), food));
         Receipt receipt = new Receipt(basket, fixedClock());
 
         String text = receipt.toText();
@@ -381,11 +381,11 @@ class ReceiptTest{
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @DisplayName("Kvittot fördelar rabatten över momssatserna för båda rabattkonstruktorerna")
+    @DisplayName("Receipt Applies Discounts Across VAT Rates")
     void toTextCalculatesVatAfterDiscount(boolean supplyFinalTotal) {
-        ProductCategory other = new ProductCategory("Övrigt", VATCategory.TWENTY_FIVE_PERCENT);
-        basket.addProduct(new Product("Mat", new Money(Sek.SEK, 106), food));
-        basket.addProduct(new Product("Övrig vara", new Money(Sek.SEK, 125), other));
+        ProductCategory other = new ProductCategory("Other", VATCategory.TWENTY_FIVE_PERCENT);
+        basket.addProduct(new Product("Food", new Money(Sek.SEK, 106), food));
+        basket.addProduct(new Product("Other product", new Money(Sek.SEK, 125), other));
         Receipt receipt;
         if (supplyFinalTotal) {
             receipt = new Receipt(basket, new Money(Sek.SEK, 184.80), fixedClock());
@@ -401,9 +401,9 @@ class ReceiptTest{
 
     @ParameterizedTest
     @ValueSource(doubles = { 0, 106 })
-    @DisplayName("Ett nollbelopp ger noll moms även vid full rabatt eller gratisvaror")
+    @DisplayName("Zero Total Shows Zero VAT")
     void toTextShowsZeroVatWhenTotalIsZero(double price) {
-        basket.addProduct(new Product("Testprodukt", new Money(Sek.SEK, price), food));
+        basket.addProduct(new Product("Test product", new Money(Sek.SEK, price), food));
         Receipt receipt = new Receipt(basket, new Money(Sek.SEK, 0), fixedClock());
 
         String text = receipt.toText();
@@ -412,14 +412,14 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot behåller momssatsen när produktens kategori ändras")
+    @DisplayName("Receipt Keeps VAT Rate After Product Category Changes")
     void toTextKeepsVatSnapshotAfterCategoryChange() {
-        ProductCategory other = new ProductCategory("Övrigt", VATCategory.TWENTY_FIVE_PERCENT);
+        ProductCategory other = new ProductCategory("Other", VATCategory.TWENTY_FIVE_PERCENT);
         class MutableProduct extends Product {
             private ProductCategory currentCategory = food;
 
             MutableProduct() {
-                super("Testprodukt", new Money(Sek.SEK, 106), food);
+                super("Test product", new Money(Sek.SEK, 106), food);
             }
 
             @Override
@@ -437,10 +437,10 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot visar delsumma, rabatt och totalpris")
+    @DisplayName("To Text Shows Applied Discount")
     void toTextShowsAppliedDiscount() {
         Product product = new Product(
-                "Testprodukt",
+                "Test product",
                 new Money(Sek.SEK, 100.0),
                 food
         );
@@ -456,7 +456,7 @@ class ReceiptTest{
         String text = receipt.toText();
 
         assertAll(
-                "Kvittot visar hur totalpriset har beräknats",
+                "Receipt output shows how the total price was calculated",
                 () -> assertTrue(text.contains("Subtotal: 100.00 SEK\n")),
                 () -> assertTrue(text.contains("Discount: -20.00 SEK\n")),
                 () -> assertTrue(text.contains("Total: 80.00 SEK\n"))
@@ -464,7 +464,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittots belopp använder decimalpunkt även med svenskt språk")
+    @DisplayName("To Text Uses Decimal Point Regardless Of Locale")
     void toTextUsesDecimalPointRegardlessOfLocale() {
         basket.addItem(new BasketItem(milk, 2));
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -486,7 +486,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittotexten ändras inte när antalet i korgen ändras")
+    @DisplayName("To Text Keeps Snapshot After Quantity Change")
     void toTextKeepsSnapshotAfterQuantityChange() {
         basket.addProduct(milk);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -500,7 +500,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittotexten ändras inte när en rad tas bort ur korgen")
+    @DisplayName("To Text Keeps Snapshot After Row Removal")
     void toTextKeepsSnapshotAfterRowRemoval() {
         basket.addProduct(milk);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -514,12 +514,12 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Ett tomt kvitto visar datum och nollsumma i SEK")
+    @DisplayName("To Text Formats Empty Receipt")
     void toTextFormatsEmptyReceipt() {
         Receipt receipt = new Receipt(new Basket(), fixedClock());
         String expected = "Receipt\n"
                 + "Date: 2026-01-15 11:30\n"
-                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
+                + String.format(Locale.ROOT, "%-20s %5s %10s %10s\n", "Product", "Quantity", "Unit price", "Line total")
                 + "Total: 0.00 SEK\n";
 
         String text = receipt.toText();
@@ -528,7 +528,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot avvisar en korg med annan valuta än SEK")
+    @DisplayName("Constructor Rejects Non-SEK Basket")
     void constructorRejectsNonSekBasket() {
         Basket basket = new Basket(new Currency("EUR", "€"));
         Clock clock = fixedClock();
@@ -538,7 +538,7 @@ class ReceiptTest{
 
     @ParameterizedTest
     @ValueSource(doubles = { -1, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
-    @DisplayName("Kvittot avvisar negativa och icke ändliga delsummor")
+    @DisplayName("Constructor Rejects Invalid Subtotal")
     void constructorRejectsInvalidSubtotal(double amount) {
         Basket invalidBasket = new Basket() {
             @Override
@@ -555,7 +555,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Långa varunamn skrivs ut utan att förkortas")
+    @DisplayName("To Text Preserves Long Product Names")
     void toTextPreservesLongProductNames() {
         String longName = "Extra long product name that fits on the receipt";
         basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food));
@@ -567,7 +567,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Beloppen ligger i samma kolumner efter ett långt varunamn")
+    @DisplayName("To Text Aligns Prices After Long Product Name")
     void toTextAlignsPricesAfterLongProductName() {
         String longName = "Extra long product name that fits on the receipt";
         basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food));
@@ -595,7 +595,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittoraderna behåller köpets antal när korgen ändras")
+    @DisplayName("Get Items Keeps Snapshot After Quantity Change")
     void getItemsKeepsSnapshotAfterQuantityChange() {
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
@@ -613,7 +613,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittoraderna behåller en vara som tas bort ur korgen")
+    @DisplayName("Get Items Keeps Snapshot After Row Removal")
     void getItemsKeepsSnapshotAfterRowRemoval() {
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
@@ -631,7 +631,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittots lista med rader kan inte ändras utifrån")
+    @DisplayName("Get Items Returns Unmodifiable List")
     void getItemsReturnsUnmodifiableList() {
         basket.addItem(new BasketItem(milk, 2));
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -644,7 +644,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Ett kvitto från en tom korg returnerar en tom lista")
+    @DisplayName("Get Items Returns Empty List For Empty Basket")
     void getItemsReturnsEmptyListForEmptyBasket() {
         Receipt receipt = new Receipt(basket, fixedClock());
 
@@ -654,7 +654,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Kvittot sparar köpets tid från den angivna klockan och tidszonen")
+    @DisplayName("Constructor Captures Timestamp In Clock Time Zone")
     void constructorCapturesTimestampInClockTimeZone() {
         Clock clock = fixedClock();
         LocalDateTime expectedTimestamp = LocalDateTime.of(2026, 1, 15, 11, 30);
@@ -665,7 +665,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Konstruktorn avvisar en saknad korg")
+    @DisplayName("Constructor Rejects Null Basket")
     void constructorRejectsNullBasket() {
         Basket basket = null;
         Clock clock = fixedClock();
@@ -675,7 +675,7 @@ class ReceiptTest{
     }
 
     @Test
-    @DisplayName("Konstruktorn avvisar en saknad klocka")
+    @DisplayName("Constructor Rejects Null Clock")
     void constructorRejectsNullClock() {
         Clock clock = null;
 
