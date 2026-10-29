@@ -112,6 +112,18 @@ class CashRegisterScanningTest {
     }
 
     @Test
+    @DisplayName("En null-scanner avvisas utan att ändra det pågående köpet eller varukorgen")
+    void scanProductRejectsNullScannerAndPreservesPurchase() {
+        Purchase purchase = register.startPurchase();
+        Basket basket = purchase.getBasket();
+        basket.addProduct(milk);
+
+        assertThrows(IllegalArgumentException.class, () -> register.scanProduct(null));
+
+        assertPurchasePreserved(purchase, basket, Purchase.Status.ACTIVE);
+    }
+
+    @Test
     @DisplayName("Utan ett pågående köp avvisas scanning innan kodläsaren används")
     void scanProductRejectsMissingCurrentPurchaseWithoutReadingCode() {
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");

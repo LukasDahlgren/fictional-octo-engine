@@ -67,6 +67,9 @@ public class CashRegister{
    }
 
    public ScanResult scanProduct(BarcodeScanner scanner){
+      if(scanner == null){
+         throw new IllegalArgumentException("Scanner must not be null");
+      }
       if(currentPurchase == null){
          throw new IllegalStateException("Utan ett pågående köp kan en vara inte scannas");
       }
