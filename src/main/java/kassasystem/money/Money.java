@@ -61,6 +61,9 @@ public class Money{
    }
 
    public Money multiply(int factor) {
+      if (factor < 0) {
+         throw new IllegalArgumentException("Factor must not be negative");
+      }
       if (amount == null) {
          return new Money(currency, nonFiniteAmount * factor);
       }
