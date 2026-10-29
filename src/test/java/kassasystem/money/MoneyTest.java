@@ -156,5 +156,78 @@ class MoneyTest {
         assertEquals(first.hashCode(), second.hashCode());
     }
 
+    @Test
+    @DisplayName("Add Handles Non-Finite Amounts")
+    void addHandlesNonFiniteAmounts() {
+        Money nonFinite = new Money(Sek.SEK, Double.NaN);
+        Money finite = new Money(Sek.SEK, 2.0);
+
+        Money nonFiniteFirst = nonFinite.add(finite);
+        Money nonFiniteSecond = finite.add(nonFinite);
+
+        assertTrue(Double.isNaN(nonFiniteFirst.getAmount()));
+        assertTrue(Double.isNaN(nonFiniteSecond.getAmount()));
+    }
+
+    @Test
+    @DisplayName("Subtract Handles Non-Finite Amounts")
+    void subtractHandlesNonFiniteAmounts() {
+        Money nonFinite = new Money(Sek.SEK, Double.NaN);
+        Money finite = new Money(Sek.SEK, 2.0);
+
+        Money nonFiniteFirst = nonFinite.subtract(finite);
+        Money nonFiniteSecond = finite.subtract(nonFinite);
+
+        assertTrue(Double.isNaN(nonFiniteFirst.getAmount()));
+        assertTrue(Double.isNaN(nonFiniteSecond.getAmount()));
+    }
+
+    @Test
+    @DisplayName("Multiply Handles Non-Finite Amounts")
+    void multiplyHandlesNonFiniteAmounts() {
+        Money infinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+
+        Money result = infinite.multiply(2);
+
+        assertEquals(Double.POSITIVE_INFINITY, result.getAmount());
+    }
+
+    @Test
+    @DisplayName("Comparisons Handle Non-Finite Amounts")
+    void comparisonsHandleNonFiniteAmounts() {
+        Money infinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+        Money finite = new Money(Sek.SEK, 2.0);
+
+        assertTrue(infinite.isGreaterThan(finite));
+        assertFalse(finite.isGreaterThan(infinite));
+        assertFalse(infinite.isLessThan(finite));
+        assertTrue(finite.isLessThan(infinite));
+    }
+
+    @Test
+    @DisplayName("Equals Handles Non-Finite Amounts And Different Currencies")
+    void equalsHandlesNonFiniteAmountsAndDifferentCurrencies() {
+        Money firstInfinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+        Money secondInfinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+        Money notANumber = new Money(Sek.SEK, Double.NaN);
+        Money finite = new Money(Sek.SEK, 2.0);
+        Money otherCurrency = new Money(Eur.EUR, Double.POSITIVE_INFINITY);
+
+        assertEquals(firstInfinite, secondInfinite);
+        assertFalse(firstInfinite.equals(notANumber));
+        assertFalse(firstInfinite.equals(finite));
+        assertFalse(firstInfinite.equals(otherCurrency));
+        assertFalse(finite.equals(firstInfinite));
+    }
+
+    @Test
+    @DisplayName("Equal Non-Finite Money Objects Have The Same Hash Code")
+    void equalNonFiniteMoneyObjectsHaveTheSameHashCode() {
+        Money first = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+        Money second = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
+
+        assertEquals(first.hashCode(), second.hashCode());
+    }
+
 }
 
