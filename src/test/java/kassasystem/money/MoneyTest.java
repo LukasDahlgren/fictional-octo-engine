@@ -146,5 +146,15 @@ class MoneyTest {
         assertFalse(money.equals(other));
     }
 
+    @Test
+    @DisplayName("Lika pengabelopp har samma hashkod")
+    void equalMoneyObjectsHaveSameHashCode() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Sek.SEK, 100.0);
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
+    }
+
 }
 
