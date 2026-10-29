@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 import kassasystem.customer.Customer;
 import kassasystem.customer.Membership;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -77,7 +79,8 @@ class CashRegisterTest {
         Clock clock = Clock.fixed(Instant.parse("2026-10-20T10:15:30Z"),
                 ZoneId.of("Europe/Stockholm"));
         register = new CashRegister(clock, true);
-        register.startPurchase();
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(milk);
 
         Receipt receipt = register.completePurchase();
 
@@ -208,6 +211,48 @@ class CashRegisterTest {
     }
 
     @Test
+    @DisplayName("Kassan avvisar en tom varukorg och behåller köpet aktivt")
+    void completePurchaseRejectsEmptyBasket() {
+        Purchase purchase = register.startPurchase();
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> register.completePurchase());
+
+        assertAll("Rejected checkout preserves the empty active purchase",
+                () -> assertEquals("Cannot complete a purchase with no products in the basket", exception.getMessage()),
+                () -> assertCurrentActiveEmptyPurchase(purchase)
+        );
+    }
+
+    @ParameterizedTest(name = "Med erbjudande: {0}")
+    @ValueSource(booleans = {false, true})
+    @DisplayName("Kundcheckout avvisar en tom varukorg och behåller tidigare köphistorik")
+    void completeCustomerPurchaseRejectsEmptyBasket(boolean withOffer) {
+        Customer customer = new Customer("C001", "Testkund");
+        Purchase previousPurchase = register.startPurchase();
+        previousPurchase.getBasket().addProduct(milk);
+        register.completePurchase(customer);
+        Purchase purchase = register.startPurchase();
+        DiscountOffer offer = new DiscountOffer(20,
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+        IllegalStateException exception;
+        if (withOffer) {
+            exception = assertThrows(IllegalStateException.class,
+                    () -> register.completePurchase(customer, offer));
+        } else {
+            exception = assertThrows(IllegalStateException.class,
+                    () -> register.completePurchase(customer));
+        }
+
+        assertEquals("Cannot complete a purchase with no products in the basket", exception.getMessage());
+        assertAll("Rejected checkout preserves the empty active purchase and existing history",
+                () -> assertCurrentActiveEmptyPurchase(purchase),
+                () -> assertEquals(List.of(previousPurchase), customer.getPurchaseHistory())
+        );
+    }
+
+    @Test
     @DisplayName("Kassan kan inte slutföra ett redan avbrutet köp")
     void completePurchaseRejectsPreviouslyCancelledPurchase() {
         Purchase purchase = register.startPurchase();
@@ -291,6 +336,7 @@ class CashRegisterTest {
     @DisplayName("Kassan kan inte avbryta ett redan slutfört köp")
     void cancelPurchaseRejectsPreviouslyCompletedPurchase() {
         Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(milk);
         register.completePurchase();
 
         assertThrows(IllegalStateException.class, () -> register.cancelPurchase());

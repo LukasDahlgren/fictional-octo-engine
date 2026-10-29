@@ -1,7 +1,7 @@
 
 package kassasystem.payment;
 
-public class FakePayer {
+public class FakePayer{
     private final boolean paymentSucceeds;
 
     public FakePayer(boolean paymentSucceeds) {

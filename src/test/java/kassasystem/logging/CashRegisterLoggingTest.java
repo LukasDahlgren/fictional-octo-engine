@@ -15,13 +15,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -41,7 +44,7 @@ class CashRegisterLoggingTest {
         Clock clock = Clock.systemUTC();
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CashRegister(null, true));
+                () -> new CashRegister(null, clock, true));
 
         assertEquals("Transaction logger must not be null", exception.getMessage());
     }
@@ -77,6 +80,46 @@ class CashRegisterLoggingTest {
         Receipt receipt = cashRegister.completePurchase();
 
         assertEquals(receipt.toText(), Files.readString(logFile));
+    }
+
+    @ParameterizedTest(name = "Med erbjudande: {0}")
+    @ValueSource(booleans = {false, true})
+    @DisplayName("Misslyckad kundbetalning behåller köp, logg och tidigare köphistorik")
+    void failedCustomerPaymentPreservesPurchaseLogAndHistory(boolean withOffer) throws IOException {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-16T10:00:00Z"), ZoneOffset.UTC);
+        Path logFile = tempDir.resolve("transactions.txt");
+        TransactionLogger logger = new TransactionLogger(logFile);
+        Customer customer = new Customer("C001", "Testkund");
+        ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        CashRegister previousRegister = new CashRegister(logger, clock, true);
+        Purchase previousPurchase = previousRegister.startPurchase();
+        previousPurchase.getBasket().addProduct(milk);
+        previousRegister.completePurchase(customer);
+        String previousLog = Files.readString(logFile);
+        CashRegister register = new CashRegister(logger, clock, false);
+        Purchase purchase = register.startPurchase();
+        purchase.getBasket().addProduct(milk);
+        DiscountOffer offer = new DiscountOffer(20,
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+        IllegalStateException exception;
+        if (withOffer) {
+            exception = assertThrows(IllegalStateException.class,
+                    () -> register.completePurchase(customer, offer));
+        } else {
+            exception = assertThrows(IllegalStateException.class,
+                    () -> register.completePurchase(customer));
+        }
+
+        assertEquals("Payment failed", exception.getMessage());
+        assertAll("Rejected payment preserves the purchase, log and history",
+                () -> assertSame(purchase, register.getCurrentPurchase()),
+                () -> assertEquals(Purchase.Status.ACTIVE, purchase.getStatus()),
+                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice()),
+                () -> assertEquals(previousLog, Files.readString(logFile)),
+                () -> assertEquals(List.of(previousPurchase), customer.getPurchaseHistory())
+        );
     }
 
     @ParameterizedTest(name = "{0}")
