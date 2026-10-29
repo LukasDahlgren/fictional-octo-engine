@@ -9,16 +9,16 @@ public class CurrencyConversion {
 
     public CurrencyConversion(double sekPerEur, double conversionFee) {
         if (!Double.isFinite(sekPerEur)) {
-            throw new IllegalArgumentException("Valutakursen måste vara ändlig");
+            throw new IllegalArgumentException("Exchange rate must be finite");
         }
         if (sekPerEur <= 0) {
-            throw new IllegalArgumentException("Valutakursen måste vara över 0");
+            throw new IllegalArgumentException("Exchange rate must be greater than zero");
         }
         if (!Double.isFinite(conversionFee)) {
-            throw new IllegalArgumentException("Växlingsavgiften måste vara ändlig");
+            throw new IllegalArgumentException("Conversion fee must be finite");
         }
         if (conversionFee <= 0) {
-            throw new IllegalArgumentException("Växlingsavgiften får inte vara noll");
+            throw new IllegalArgumentException("Conversion fee must be greater than zero");
         }
         this.sekPerEur = sekPerEur;
         this.conversionFee = conversionFee;
@@ -26,9 +26,9 @@ public class CurrencyConversion {
     }
 
     public Money convertToSek(Money amount) {
-        Objects.requireNonNull(amount, "Beloppet amount får inte vara null");
+        Objects.requireNonNull(amount, "Amount must not be null");
         if (!Double.isFinite(amount.getAmount())) {
-            throw new IllegalArgumentException("Beloppet måste vara ändligt");
+            throw new IllegalArgumentException("Amount must be finite");
         }
 
         if (amount.getCurrency() == Sek.SEK) {
@@ -47,6 +47,6 @@ public class CurrencyConversion {
             return new Money(Sek.SEK, roundedAmount);
         }
 
-        throw new IllegalArgumentException("Valutan finns inte");
+        throw new IllegalArgumentException("Unsupported currency");
     }
 }

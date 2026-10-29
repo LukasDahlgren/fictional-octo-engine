@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class ProductCatalogTest {
 
     @Test
-    @DisplayName("Finds a product by its EAN")
+    @DisplayName("Finds Product By EAN")
     void findsProductByEAN() {
         EAN ean = new EAN("4006381333931");
         Product product = new Product(
@@ -31,7 +31,7 @@ public class ProductCatalogTest {
     }
 
     @Test
-    @DisplayName("Rejects a different product with an EAN already in use")
+    @DisplayName("Rejects Duplicate EAN")
     void rejectsDuplicateEAN() {
         EAN ean = new EAN("4006381333931");
 
@@ -56,7 +56,7 @@ public class ProductCatalogTest {
     }
 
     @Test
-    @DisplayName("Rejects adding a null product")
+    @DisplayName("Rejects Null Product")
     void rejectsNullProduct() {
         ProductCatalog catalog = new ProductCatalog();
 
@@ -64,7 +64,7 @@ public class ProductCatalogTest {
     }
 
     @Test
-    @DisplayName("Rejects searching with a null EAN")
+    @DisplayName("Rejects Null EAN")
     void rejectsNullEAN() {
         ProductCatalog catalog = new ProductCatalog();
 
@@ -72,7 +72,7 @@ public class ProductCatalogTest {
     }
 
     @Test
-    @DisplayName("Allows adding the same product more than once")
+    @DisplayName("Allows Adding Same Product Again")
     void allowsAddingSameProductAgain() {
         EAN ean = new EAN("4006381333931");
         Product product = new Product(

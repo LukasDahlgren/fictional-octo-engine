@@ -1,4 +1,4 @@
-package kassasystem.basket;
+package kassasystem;
 
 import kassasystem.money.Currency;
 import kassasystem.money.Money;
@@ -53,11 +53,11 @@ public class Basket{
    }
 
    public Money getTotalPrice(){
-      double total = 0;
+      Money total = currency.getZeroMoney();
       for(BasketItem item : items){
-         total += item.getTotalPrice().getAmount();
+         total = total.add(item.getTotalPrice());
       }
-      return new Money(currency, total);
+      return total;
    }
 
    public int getTotalQuantity(){
@@ -103,7 +103,7 @@ public class Basket{
    }
 
    // Closing a purchase also locks rows held by callers before checkout.
-   public void freeze(){
+   void freeze(){
       for (BasketItem item : items) {
          item.freeze();
       }

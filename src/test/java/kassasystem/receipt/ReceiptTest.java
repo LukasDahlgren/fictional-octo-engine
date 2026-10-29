@@ -1,7 +1,7 @@
 package kassasystem.receipt;
 
-import kassasystem.basket.Basket;
-import kassasystem.basket.BasketItem;
+import kassasystem.Basket;
+import kassasystem.BasketItem;
 import kassasystem.money.Currency;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -29,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class RecieptTest {
+class ReceiptTest{
 
     private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
@@ -69,7 +70,7 @@ class RecieptTest {
         MutableProduct product = new MutableProduct();
         BasketItem row = new BasketItem(product, 2);
         basket.addItem(row);
-        Receipt receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 5), "Rabatt");
+        Receipt receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 5), "Discount");
         String originalText = receipt.toText();
 
         product.currentName = "Changed name";
@@ -102,8 +103,8 @@ class RecieptTest {
         assertEquals(total, receipt.getTotalPrice());
         assertEquals(new Money(Sek.SEK, 12.50), receipt.getSubtotal());
         assertEquals(12.40, receipt.getDiscountAmount().getAmount(), 0.000001);
-        assertEquals("Rabatt", receipt.getDiscountLabel());
-        assertTrue(receipt.toText().endsWith("Rabatt: -12.40 SEK\nTotalt: 0.10 SEK\n"));
+        assertEquals("Discount", receipt.getDiscountLabel());
+        assertTrue(receipt.toText().contains("Discount: -12.40 SEK\nTotal: 0.10 SEK\n"));
     }
 
     @ParameterizedTest
@@ -162,16 +163,18 @@ class RecieptTest {
         Receipt receipt = new Receipt(basket, fixedClock(),
                 new Money(Sek.SEK, 4.50), "Medlemsrabatt (10%)");
 
-        String expected = "Kvitto\n"
-                + "Datum: 2026-01-15 11:30\n"
-                + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
+        String expected = "Receipt\n"
+                + "Date: 2026-01-15 11:30\n"
+                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
                 + "Milk" + " ".repeat(21) + "2" + " ".repeat(6) + "12.50"
                 + " ".repeat(6) + "25.00\n"
                 + "Bread" + " ".repeat(20) + "1" + " ".repeat(6) + "20.00"
                 + " ".repeat(6) + "20.00\n"
-                + "Delsumma: 45.00 SEK\n"
+                + "Subtotal: 45.00 SEK\n"
                 + "Medlemsrabatt (10%): -4.50 SEK\n"
-                + "Totalt: 40.50 SEK\n";
+                + "Total: 40.50 SEK\n"
+                + "VAT included:\n"
+                + "6 %: 2.29 SEK\n";
 
         assertEquals(expected, receipt.toText());
         assertAll("Receipt stores the checkout amounts",
@@ -204,7 +207,8 @@ class RecieptTest {
 
         assertEquals(new Money(Sek.SEK, 0), receipt.getTotalPrice());
         assertTrue(receipt.toText().endsWith(
-                "Kampanjrabatt (100%): -12.50 SEK\nTotalt: 0.00 SEK\n"));
+                "Kampanjrabatt (100%): -12.50 SEK\nTotal: 0.00 SEK\n"
+                + "VAT included:\n6 %: 0.00 SEK\n"));
     }
 
     @Test
@@ -326,18 +330,110 @@ class RecieptTest {
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock());
-        String expected = "Kvitto\n"
-                + "Datum: 2026-01-15 11:30\n"
-                + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
+        String expected = "Receipt\n"
+                + "Date: 2026-01-15 11:30\n"
+                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
                 + "Milk" + " ".repeat(21) + "2" + " ".repeat(6) + "12.50"
                 + " ".repeat(6) + "25.00\n"
                 + "Bread" + " ".repeat(20) + "1" + " ".repeat(6) + "20.00"
                 + " ".repeat(6) + "20.00\n"
-                + "Totalt: 45.00 SEK\n";
+                + "Total: 45.00 SEK\n"
+                + "VAT included:\n"
+                + "6 %: 2.55 SEK\n";
 
         String text = receipt.toText();
 
         assertEquals(expected, text);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "SIX_PERCENT, 106, '6 %: 6.00 SEK'",
+            "TWELVE_PERCENT, 112, '12 %: 12.00 SEK'",
+            "TWENTY_FIVE_PERCENT, 125, '25 %: 25.00 SEK'"
+    })
+    @DisplayName("Kvittot visar den moms som ingår i priset för varje momssats")
+    void toTextShowsVatIncludedInPrice(VATCategory vatCategory, double price, String expectedVat) {
+        ProductCategory category = new ProductCategory("Testkategori", vatCategory);
+        Product product = new Product("Testprodukt", new Money(Sek.SEK, price), category);
+        basket.addProduct(product);
+        Receipt receipt = new Receipt(basket, fixedClock());
+
+        String text = receipt.toText();
+
+        assertTrue(text.endsWith("VAT included:\n" + expectedVat + "\n"));
+        assertEquals(price, receipt.getTotalPrice().getAmount(), 0.000001);
+    }
+
+    @Test
+    @DisplayName("Kvittot summerar rader och antal per momssats i stigande ordning")
+    void toTextGroupsVatByRate() {
+        ProductCategory other = new ProductCategory("Övrigt", VATCategory.TWENTY_FIVE_PERCENT);
+        basket.addProduct(new Product("Övrig vara", new Money(Sek.SEK, 125), other));
+        basket.addItem(new BasketItem(new Product("Mat", new Money(Sek.SEK, 53), food), 2));
+        basket.addProduct(new Product("Annan mat", new Money(Sek.SEK, 106), food));
+        Receipt receipt = new Receipt(basket, fixedClock());
+
+        String text = receipt.toText();
+
+        assertTrue(text.endsWith("VAT included:\n6 %: 12.00 SEK\n25 %: 25.00 SEK\n"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @DisplayName("Kvittot fördelar rabatten över momssatserna för båda rabattkonstruktorerna")
+    void toTextCalculatesVatAfterDiscount(boolean supplyFinalTotal) {
+        ProductCategory other = new ProductCategory("Övrigt", VATCategory.TWENTY_FIVE_PERCENT);
+        basket.addProduct(new Product("Mat", new Money(Sek.SEK, 106), food));
+        basket.addProduct(new Product("Övrig vara", new Money(Sek.SEK, 125), other));
+        Receipt receipt;
+        if (supplyFinalTotal) {
+            receipt = new Receipt(basket, new Money(Sek.SEK, 184.80), fixedClock());
+        } else {
+            receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 46.20), "Discount");
+        }
+
+        String text = receipt.toText();
+
+        assertTrue(text.contains("Total: 184.80 SEK\n"));
+        assertTrue(text.endsWith("VAT included:\n6 %: 4.80 SEK\n25 %: 20.00 SEK\n"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = { 0, 106 })
+    @DisplayName("Ett nollbelopp ger noll moms även vid full rabatt eller gratisvaror")
+    void toTextShowsZeroVatWhenTotalIsZero(double price) {
+        basket.addProduct(new Product("Testprodukt", new Money(Sek.SEK, price), food));
+        Receipt receipt = new Receipt(basket, new Money(Sek.SEK, 0), fixedClock());
+
+        String text = receipt.toText();
+
+        assertTrue(text.endsWith("VAT included:\n6 %: 0.00 SEK\n"));
+    }
+
+    @Test
+    @DisplayName("Kvittot behåller momssatsen när produktens kategori ändras")
+    void toTextKeepsVatSnapshotAfterCategoryChange() {
+        ProductCategory other = new ProductCategory("Övrigt", VATCategory.TWENTY_FIVE_PERCENT);
+        class MutableProduct extends Product {
+            private ProductCategory currentCategory = food;
+
+            MutableProduct() {
+                super("Testprodukt", new Money(Sek.SEK, 106), food);
+            }
+
+            @Override
+            public ProductCategory getCategory() {
+                return currentCategory;
+            }
+        }
+        MutableProduct product = new MutableProduct();
+        basket.addProduct(product);
+        Receipt receipt = new Receipt(basket, fixedClock());
+
+        product.currentCategory = other;
+
+        assertTrue(receipt.toText().endsWith("VAT included:\n6 %: 6.00 SEK\n"));
     }
 
     @Test
@@ -361,9 +457,9 @@ class RecieptTest {
 
         assertAll(
                 "Kvittot visar hur totalpriset har beräknats",
-                () -> assertTrue(text.contains("Delsumma: 100.00 SEK\n")),
-                () -> assertTrue(text.contains("Rabatt: -20.00 SEK\n")),
-                () -> assertTrue(text.contains("Totalt: 80.00 SEK\n"))
+                () -> assertTrue(text.contains("Subtotal: 100.00 SEK\n")),
+                () -> assertTrue(text.contains("Discount: -20.00 SEK\n")),
+                () -> assertTrue(text.contains("Total: 80.00 SEK\n"))
         );
     }
 
@@ -385,7 +481,7 @@ class RecieptTest {
         assertAll("Receipt formats amounts with decimal points",
                 () -> assertTrue(text.contains("12.50")),
                 () -> assertTrue(text.contains("25.00")),
-                () -> assertTrue(text.contains("Totalt: 25.00 SEK\n"))
+                () -> assertTrue(text.contains("Total: 25.00 SEK\n"))
         );
     }
 
@@ -421,10 +517,10 @@ class RecieptTest {
     @DisplayName("Ett tomt kvitto visar datum och nollsumma i SEK")
     void toTextFormatsEmptyReceipt() {
         Receipt receipt = new Receipt(new Basket(), fixedClock());
-        String expected = "Kvitto\n"
-                + "Datum: 2026-01-15 11:30\n"
-                + "Vara" + " ".repeat(17) + "Antal  Styckpris      Summa\n"
-                + "Totalt: 0.00 SEK\n";
+        String expected = "Receipt\n"
+                + "Date: 2026-01-15 11:30\n"
+                + "Product" + " ".repeat(14) + "Quantity Unit price Line total\n"
+                + "Total: 0.00 SEK\n";
 
         String text = receipt.toText();
 

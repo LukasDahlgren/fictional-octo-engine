@@ -20,7 +20,7 @@ class BarcodeScannerTest {
     private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
     @Test
-    @DisplayName("Konstruktorn avvisar en saknad kodläsare")
+    @DisplayName("Constructor Rejects Missing Code Reader")
     void constructorRejectsMissingCodeReader() {
         ProductCatalog productCatalog = new FixedProductCatalog(null);
 
@@ -29,7 +29,7 @@ class BarcodeScannerTest {
     }
 
     @Test
-    @DisplayName("Konstruktorn avvisar en saknad produktkatalog")
+    @DisplayName("Constructor Rejects Missing Product Catalog")
     void constructorRejectsMissingProductCatalog() {
         FixedCodeReader codeReader = new FixedCodeReader("4006381333931");
 
@@ -38,7 +38,7 @@ class BarcodeScannerTest {
     }
 
     @Test
-    @DisplayName("En oläsbar kod ger FAILED_READ utan att söka efter en vara")
+    @DisplayName("Scan Returns Failed Read When No Code Is Read")
     void scanReturnsFailedReadWhenNoCodeIsRead() {
         FixedCodeReader codeReader = new FixedCodeReader(null);
         ProductCatalog productCatalog = new ProductCatalog() {
@@ -58,12 +58,12 @@ class BarcodeScannerTest {
         );
     }
 
-    @ParameterizedTest(name = "Ogiltig kod: [{0}]")
+    @ParameterizedTest(name = "Invalid code: [{0}]")
     @ValueSource(strings = {
             "", " ", "\t", "\n", "123", "40063813339310",
             "40063813339A1", "4006381333932", "４００６３８１３３３９３１"
     })
-    @DisplayName("Ogiltiga EAN-koder ger INVALID_CODE utan att söka efter en vara")
+    @DisplayName("Scan Returns Invalid Code Without Product Lookup")
     void scanReturnsInvalidCodeWithoutProductLookup(String code) {
         FixedCodeReader codeReader = new FixedCodeReader(code);
         FixedProductCatalog productCatalog = new FixedProductCatalog(null);
@@ -80,7 +80,7 @@ class BarcodeScannerTest {
     }
 
     @Test
-    @DisplayName("SC-02: En okänd kod ger UNKNOWN_PRODUCT utan vara")
+    @DisplayName("Scan Returns Unknown Product When Lookup Finds No Product")
     void scanReturnsUnknownProductWhenLookupFindsNoProduct() {
         FixedCodeReader codeReader = new FixedCodeReader("4006381333931");
         FixedProductCatalog productCatalog = new FixedProductCatalog(null);
@@ -98,7 +98,7 @@ class BarcodeScannerTest {
     }
 
     @Test
-    @DisplayName("SC-01: En matchande kod ger FOUND och exakt samma vara")
+    @DisplayName("Scan Returns Found With Matching Product")
     void scanReturnsFoundWithMatchingProduct() {
         EAN ean = new EAN("0123456789012");
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
@@ -118,7 +118,7 @@ class BarcodeScannerTest {
     }
 
     @Test
-    @DisplayName("Ett fel från kodläsaren skickas vidare utan att söka efter en vara")
+    @DisplayName("Scan Propagates Code Reader Failure Without Product Lookup")
     void scanPropagatesCodeReaderFailureWithoutProductLookup() {
         IllegalArgumentException failure = new IllegalArgumentException("Reader failed");
         BarcodeScanner.CodeReader codeReader = new BarcodeScanner.CodeReader() {
@@ -140,7 +140,7 @@ class BarcodeScannerTest {
     }
 
     @Test
-    @DisplayName("Ett fel från varukatalogen skickas vidare")
+    @DisplayName("Scan Propagates Product Catalog Failure")
     void scanPropagatesProductCatalogFailure() {
         FixedCodeReader codeReader = new FixedCodeReader("4006381333931");
         IllegalArgumentException failure = new IllegalArgumentException("Catalog failed");

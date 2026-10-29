@@ -1,6 +1,6 @@
 package kassasystem.logging;
 
-import kassasystem.basket.Basket;
+import kassasystem.Basket;
 import kassasystem.receipt.Receipt;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
     Path tempDir;
 
     @Test
-     @DisplayName("Writes a receipt to the transaction log file")
+     @DisplayName("Write Receipt To Log File")
      void writeReceiptToLogFile() throws IOException {
         Path logFile = tempDir.resolve("transaction.txt");
         Receipt receipt = new Receipt(new Basket(), Clock.systemUTC());
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
     }
 
     @Test
-     @DisplayName("Rejects a null receipt")
+     @DisplayName("Rejects Null Receipt")
      void rejectsNullReceipt() {
         TransactionLogger logger =
                 new TransactionLogger(tempDir.resolve("transactions.txt"));
@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
     }
 
      @Test
-     @DisplayName("Rejects a null log file path")
+     @DisplayName("Rejects Null Log File Path")
      void rejectsNullLogFilePath() {
          assertThrows(
                  IllegalArgumentException.class,

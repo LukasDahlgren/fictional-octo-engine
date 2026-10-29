@@ -1,4 +1,4 @@
-package kassasystem.basket;
+package kassasystem;
 
 import kassasystem.money.Currency;
 import kassasystem.money.Money;
@@ -32,13 +32,13 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En ny korg är tom och har noll i antal och pris i SEK")
+    @DisplayName("Constructor Creates Empty SEK Basket")
     void constructorCreatesEmptySekBasket() {
         assertEmptyBasket();
     }
 
     @Test
-    @DisplayName("Konstruktorn använder angiven valuta")
+    @DisplayName("Constructor Uses Currency")
     void constructorUsesCurrency() {
         Currency euro = new Currency("EUR", "€");
         Basket euroBasket = new Basket(euro);
@@ -47,13 +47,13 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Konstruktorn avvisar en saknad valuta")
+    @DisplayName("Constructor Rejects Null Currency")
     void constructorRejectsNullCurrency() {
         assertThrows(IllegalArgumentException.class, () -> new Basket(null));
     }
 
     @Test
-    @DisplayName("En rad läggs till i korgen")
+    @DisplayName("Add Item Adds Row")
     void addItemAddsRow() {
         BasketItem item = new BasketItem(milk, 2);
 
@@ -63,7 +63,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Korgen är inte tom efter att en rad lagts till")
+    @DisplayName("Is Empty Returns False After Adding Row")
     void isEmptyReturnsFalseAfterAddingRow() {
         BasketItem item = new BasketItem(milk, 2);
 
@@ -73,7 +73,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Olika produktobjekt med samma EAN grupperas på en rad")
+    @DisplayName("Add Item Merges Products With Same EAN")
     void addItemMergesProductsWithSameEan() {
         Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
                 new EAN(milk.getEan().getCode()));
@@ -87,7 +87,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En saknad rad avvisas")
+    @DisplayName("Add Item Rejects Null")
     void addItemRejectsNull() {
         basket.addProduct(bread);
 
@@ -100,7 +100,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En annan valuta avvisas")
+    @DisplayName("Add Item Rejects Different Currency")
     void addItemRejectsDifferentCurrency() {
         Currency euro = new Currency("EUR", "€");
         Product product = new Product("Milk", new Money(euro, 2), food);
@@ -116,7 +116,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En vara utan valuta avvisas")
+    @DisplayName("Add Item Rejects Missing Currency")
     void addItemRejectsMissingCurrency() {
         Product product = new Product("Milk", new Money(null, 2), food);
         BasketItem item = new BasketItem(product, 1);
@@ -131,7 +131,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att lägga till en vara två gånger ger två enheter på en rad")
+    @DisplayName("Add Product Adds One Unit At A Time")
     void addProductAddsOneUnitAtATime() {
         basket.addProduct(milk);
 
@@ -145,7 +145,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att lägga till en saknad vara avvisas")
+    @DisplayName("Add Product Rejects Null")
     void addProductRejectsNull() {
         basket.addProduct(bread);
 
@@ -158,7 +158,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En rad kan inte tas bort via den returnerade listan")
+    @DisplayName("Get Items Rejects External Removal")
     void getItemsRejectsExternalRemoval() {
         BasketItem item = new BasketItem(milk, 1);
         basket.addItem(item);
@@ -169,7 +169,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En rad kan inte läggas till via den returnerade listan")
+    @DisplayName("Get Items Rejects External Addition")
     void getItemsRejectsExternalAddition() {
         BasketItem item = new BasketItem(milk, 1);
         basket.addItem(item);
@@ -180,7 +180,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Den returnerade listan kan inte tömmas")
+    @DisplayName("Get Items Rejects External Clear")
     void getItemsRejectsExternalClear() {
         BasketItem item = new BasketItem(milk, 1);
         basket.addItem(item);
@@ -191,7 +191,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Totalpriset summerar alla rader och behåller valutan")
+    @DisplayName("Get Total Price Sums Rows")
     void getTotalPriceSumsRows() {
         basket.addItem(new BasketItem(milk, 2));
         basket.addItem(new BasketItem(bread, 3));
@@ -205,7 +205,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Totala antalet summerar enheterna på alla rader")
+    @DisplayName("Get Total Quantity Sums Units")
     void getTotalQuantitySumsUnits() {
         basket.addItem(new BasketItem(milk, 2));
         basket.addItem(new BasketItem(bread, 3));
@@ -216,7 +216,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att ta bort en rad tar bort alla dess enheter")
+    @DisplayName("Remove Item Removes Whole Row")
     void removeItemRemovesWholeRow() {
         BasketItem item = new BasketItem(milk, 3);
         basket.addItem(item);
@@ -232,7 +232,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att ta bort en saknad rad returnerar false")
+    @DisplayName("Remove Item Returns False For Missing Row")
     void removeItemReturnsFalseForMissingRow() {
         BasketItem item = new BasketItem(milk, 1);
 
@@ -242,7 +242,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Ett annat produktobjekt med samma EAN minskar antalet med ett")
+    @DisplayName("Remove Product With Same EAN Removes One Unit")
     void removeProductWithSameEanRemovesOneUnit() {
         Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
                 new EAN(milk.getEan().getCode()));
@@ -257,7 +257,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Ett annat produktobjekt med samma EAN tar bort sista enheten")
+    @DisplayName("Remove Product With Same EAN Removes Last Unit")
     void removeProductWithSameEanRemovesLastUnit() {
         Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
                 new EAN(milk.getEan().getCode()));
@@ -272,7 +272,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att ta bort en saknad vara lämnar korgen oförändrad")
+    @DisplayName("Remove Product Returns False For Missing Product")
     void removeProductReturnsFalseForMissingProduct() {
         basket.addProduct(bread);
 
@@ -286,7 +286,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Flera angivna rader tas bort medan övriga finns kvar")
+    @DisplayName("Remove All Removes Selected Rows")
     void removeAllRemovesSelectedRows() {
         BasketItem milkItem = new BasketItem(milk, 2);
         BasketItem breadItem = new BasketItem(bread, 3);
@@ -305,7 +305,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att ta bort saknade rader returnerar false")
+    @DisplayName("Remove All Returns False For Missing Rows")
     void removeAllReturnsFalseForMissingRows() {
         basket.addProduct(bread);
         BasketItem missingItem = new BasketItem(milk, 1);
@@ -319,7 +319,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En vara utan valuta avvisas utan att ändra korgen")
+    @DisplayName("Add Product Rejects Missing Currency")
     void addProductRejectsMissingCurrency() {
         Basket expectedBasket = new Basket();
         expectedBasket.addItem(new BasketItem(bread, 1));
@@ -331,7 +331,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En vara med annan valuta avvisas utan att ändra korgen")
+    @DisplayName("Add Product Rejects Different Currency")
     void addProductRejectsDifferentCurrency() {
         Basket expectedBasket = new Basket();
         expectedBasket.addItem(new BasketItem(bread, 1));
@@ -344,7 +344,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En vara grupperas även när den ligger efter en annan rad")
+    @DisplayName("Add Item Merges Product In Later Row")
     void addItemMergesProductInLaterRow() {
         BasketItem breadItem = new BasketItem(bread, 1);
         BasketItem milkItem = new BasketItem(milk, 2);
@@ -363,7 +363,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Olika varuobjekt med samma namn och pris grupperas inte")
+    @DisplayName("Add Item Keeps Distinct Product Objects Separate")
     void addItemKeepsDistinctProductObjectsSeparate() {
         Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         BasketItem first = new BasketItem(milk, 2);
@@ -381,7 +381,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Overflow vid gruppering avvisas utan att ändra korgen")
+    @DisplayName("Add Item Rejects Merged Quantity Overflow")
     void addItemRejectsMergedQuantityOverflow() {
         BasketItem item = new BasketItem(milk, Integer.MAX_VALUE);
         basket.addItem(item);
@@ -394,7 +394,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En ny rad med samma vara är inte den befintliga raden vid borttagning")
+    @DisplayName("Remove Item Does Not Remove Different Row With Same Product")
     void removeItemDoesNotRemoveDifferentRowWithSameProduct() {
         BasketItem storedItem = new BasketItem(milk, 2);
         BasketItem otherItem = new BasketItem(milk, 2);
@@ -411,7 +411,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En saknad rad lämnar en fylld korg oförändrad")
+    @DisplayName("Remove Null Item Leaves Basket Unchanged")
     void removeNullItemLeavesBasketUnchanged() {
         BasketItem item = new BasketItem(milk, 2);
         basket.addItem(item);
@@ -427,7 +427,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En saknad vara lämnar en fylld korg oförändrad")
+    @DisplayName("Remove Null Product Leaves Basket Unchanged")
     void removeNullProductLeavesBasketUnchanged() {
         BasketItem item = new BasketItem(milk, 2);
         basket.addItem(item);
@@ -443,7 +443,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Borttagning av en enhet på en senare rad uppdaterar totalsummorna")
+    @DisplayName("Remove Product Decreases Quantity In Later Row")
     void removeProductDecreasesQuantityInLaterRow() {
         BasketItem breadItem = new BasketItem(bread, 1);
         BasketItem milkItem = new BasketItem(milk, 2);
@@ -462,7 +462,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Borttagning av sista enheten på en senare rad tar bort raden")
+    @DisplayName("Remove Product Removes Last Unit In Later Row")
     void removeProductRemovesLastUnitInLaterRow() {
         BasketItem breadItem = new BasketItem(bread, 1);
         basket.addItem(breadItem);
@@ -479,7 +479,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En vara med samma namn men annan identitet tas inte bort")
+    @DisplayName("Remove Product Does Not Match By Name")
     void removeProductDoesNotMatchByName() {
         basket.addProduct(milk);
         Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
@@ -494,7 +494,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En blandning av befintliga och saknade rader tar bara bort befintliga rader")
+    @DisplayName("Remove All Handles Existing And Missing Rows")
     void removeAllHandlesExistingAndMissingRows() {
         BasketItem milkItem = new BasketItem(milk, 2);
         BasketItem breadItem = new BasketItem(bread, 1);
@@ -513,7 +513,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En rad som anges flera gånger tas bara bort en gång")
+    @DisplayName("Remove All Handles Duplicate Rows")
     void removeAllHandlesDuplicateRows() {
         BasketItem milkItem = new BasketItem(milk, 2);
         BasketItem breadItem = new BasketItem(bread, 1);
@@ -531,7 +531,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En tom lista med rader ändrar inte en fylld korg")
+    @DisplayName("Remove All Handles Empty List")
     void removeAllHandlesEmptyList() {
         BasketItem item = new BasketItem(milk, 2);
         basket.addItem(item);
@@ -546,7 +546,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("När alla rader tas bort blir korgen tom och totalsummorna noll")
+    @DisplayName("Remove All Empties Basket")
     void removeAllEmptiesBasket() {
         BasketItem milkItem = new BasketItem(milk, 2);
         BasketItem breadItem = new BasketItem(bread, 1);
@@ -560,7 +560,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Att ta bort sista raden återställer korgens totalsummor")
+    @DisplayName("Remove Item Empties Basket")
     void removeItemEmptiesBasket() {
         BasketItem item = new BasketItem(milk, 2);
         basket.addItem(item);
@@ -572,7 +572,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Borttagning av en vara från en tom korg returnerar false")
+    @DisplayName("Remove Product From Empty Basket Returns False")
     void removeProductFromEmptyBasketReturnsFalse() {
         boolean removed = basket.removeProduct(milk);
 
@@ -584,7 +584,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Borttagning av angivna rader från en tom korg returnerar false")
+    @DisplayName("Remove All From Empty Basket Returns False")
     void removeAllFromEmptyBasketReturnsFalse() {
         BasketItem missingItem = new BasketItem(milk, 1);
 
@@ -598,7 +598,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En tom lista med rader i en tom korg returnerar false")
+    @DisplayName("Remove All With Empty List From Empty Basket Returns False")
     void removeAllWithEmptyListFromEmptyBasketReturnsFalse() {
         boolean removed = basket.removeAll(List.of());
 
@@ -610,7 +610,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En vara kan inte tas bort igen efter att alla rader tagits bort")
+    @DisplayName("Remove Product Returns False After Removing All Rows")
     void removeProductReturnsFalseAfterRemovingAllRows() {
         BasketItem milkItem = new BasketItem(milk, 2);
         BasketItem breadItem = new BasketItem(bread, 1);
@@ -624,7 +624,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En borttagen rad kan inte tas bort igen")
+    @DisplayName("Remove Item Returns False For Previously Removed Row")
     void removeItemReturnsFalseForPreviouslyRemovedRow() {
         BasketItem item = new BasketItem(milk, 2);
         basket.addItem(item);
@@ -636,7 +636,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Summan av flera raders antal kan vara precis största heltalet")
+    @DisplayName("Get Total Quantity Accepts Maximum Total")
     void getTotalQuantityAcceptsMaximumTotal() {
         basket.addItem(new BasketItem(milk, Integer.MAX_VALUE - 1));
         basket.addProduct(bread);
@@ -647,7 +647,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Overflow i korgens totalantal rapporteras utan att ändra raderna")
+    @DisplayName("Get Total Quantity Rejects Overflow")
     void getTotalQuantityRejectsOverflow() {
         BasketItem milkItem = new BasketItem(milk, Integer.MAX_VALUE);
         BasketItem breadItem = new BasketItem(bread, 1);
@@ -663,7 +663,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("Totalantalet kan läsas efter att en rad tagits bort från en korg med overflow")
+    @DisplayName("Get Total Quantity Recovers After Removing Overflowing Row")
     void getTotalQuantityRecoversAfterRemovingOverflowingRow() {
         basket.addItem(new BasketItem(milk, Integer.MAX_VALUE));
         BasketItem breadItem = new BasketItem(bread, 1);
@@ -676,7 +676,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En saknad lista med rader avvisas i en tom korg")
+    @DisplayName("Remove All Rejects Null List In Empty Basket")
     void removeAllRejectsNullListInEmptyBasket() {
         assertThrows(IllegalArgumentException.class, () -> basket.removeAll(null));
 
@@ -684,7 +684,7 @@ class BasketTest {
     }
 
     @Test
-    @DisplayName("En saknad lista med rader avvisas utan att ändra en fylld korg")
+    @DisplayName("Remove All Rejects Null List In Populated Basket")
     void removeAllRejectsNullListInPopulatedBasket() {
         Basket expectedBasket = new Basket();
         expectedBasket.addItem(new BasketItem(milk, 2));

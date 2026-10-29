@@ -3,14 +3,18 @@ package kassasystem.receipt;
 import kassasystem.money.Currency;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
-import kassasystem.product.Product;
 
 public final class ReceiptLine {
    private final String productName;
    private final int quantity;
    private final Money unitPrice;
+   private final double vatRate;
 
    public ReceiptLine(String productName, int quantity, Money unitPrice) {
+      this(productName, quantity, unitPrice, 0);
+   }
+
+   public ReceiptLine(String productName, int quantity, Money unitPrice, double vatRate) {
       if (productName == null || productName.isBlank()) {
          throw new IllegalArgumentException("Product name must not be blank");
       }
@@ -31,9 +35,13 @@ public final class ReceiptLine {
       if (amount < 0) {
          throw new IllegalArgumentException("Unit price must not be negative");
       }
+      if (!Double.isFinite(vatRate) || vatRate < 0 || vatRate > 1) {
+         throw new IllegalArgumentException("VAT rate must be between zero and one");
+      }
       this.productName = productName;
       this.quantity = quantity;
       this.unitPrice = new Money(currency, amount);
+      this.vatRate = vatRate;
    }
 
    public String getProductName() {
@@ -48,11 +56,15 @@ public final class ReceiptLine {
       return unitPrice;
    }
 
+   public double getVatRate() {
+      return vatRate;
+   }
+
    public Money getTotalPrice() {
-      double total = unitPrice.getAmount() * quantity;
-      if (!Double.isFinite(total)) {
+      Money total = unitPrice.multiply(quantity);
+      if (!Double.isFinite(total.getAmount())) {
          throw new ArithmeticException("Total price overflow");
       }
-      return new Money(unitPrice.getCurrency(), total);
+      return total;
    }
 }

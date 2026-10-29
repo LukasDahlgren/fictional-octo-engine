@@ -26,7 +26,7 @@ class ScanResultTest {
     }
 
     @Test
-    @DisplayName("SR-01: FOUND sparar status och exakt samma vara")
+    @DisplayName("Constructor Stores Found Status And Product")
     void constructorStoresFoundStatusAndProduct() {
         ScanResult result = new ScanResult(ScanResult.Status.FOUND, milk);
 
@@ -37,7 +37,7 @@ class ScanResultTest {
     }
 
     @Test
-    @DisplayName("SR-02: FOUND utan vara avvisas")
+    @DisplayName("Constructor Rejects Found Without Product")
     void constructorRejectsFoundWithoutProduct() {
         assertThrows(IllegalArgumentException.class,
                 () -> new ScanResult(ScanResult.Status.FOUND, null));
@@ -46,7 +46,7 @@ class ScanResultTest {
     @ParameterizedTest(name = "Status: {0}")
     @EnumSource(value = ScanResult.Status.class,
             names = {"FAILED_READ", "INVALID_CODE", "UNKNOWN_PRODUCT"})
-    @DisplayName("SR-03: Ett misslyckat resultat sparar status och saknar vara")
+    @DisplayName("Constructor Stores Failure Status Without Product")
     void constructorStoresFailureStatusWithoutProduct(ScanResult.Status status) {
         ScanResult result = new ScanResult(status, null);
 
@@ -59,21 +59,21 @@ class ScanResultTest {
     @ParameterizedTest(name = "Status: {0}")
     @EnumSource(value = ScanResult.Status.class,
             names = {"FAILED_READ", "INVALID_CODE", "UNKNOWN_PRODUCT"})
-    @DisplayName("SR-04: Ett misslyckat resultat med en vara avvisas")
+    @DisplayName("Constructor Rejects Failure With Product")
     void constructorRejectsFailureWithProduct(ScanResult.Status status) {
         assertThrows(IllegalArgumentException.class,
                 () -> new ScanResult(status, milk));
     }
 
     @Test
-    @DisplayName("SR-05: Saknad status avvisas utan vara")
+    @DisplayName("Constructor Rejects Missing Status Without Product")
     void constructorRejectsMissingStatusWithoutProduct() {
         assertThrows(IllegalArgumentException.class,
                 () -> new ScanResult(null, null));
     }
 
     @Test
-    @DisplayName("SR-05: Saknad status avvisas med vara")
+    @DisplayName("Constructor Rejects Missing Status With Product")
     void constructorRejectsMissingStatusWithProduct() {
         assertThrows(IllegalArgumentException.class,
                 () -> new ScanResult(null, milk));

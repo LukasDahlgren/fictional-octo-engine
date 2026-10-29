@@ -1,4 +1,4 @@
-package kassasystem.basket;
+package kassasystem;
 
 import kassasystem.money.Money;
 import kassasystem.product.Product;
@@ -42,8 +42,9 @@ public class BasketItem{
 
    public void decreaseQuantity(){
       ensureMutable();
+      // En rad måste ha minst en vara. Basket.removeProduct() tar bort raden vid antal 1.
       if (quantity == 1) {
-         return;
+         throw new IllegalStateException("Cannot decrease quantity below 1");
       }
       quantity--;
    }
@@ -59,8 +60,7 @@ public class BasketItem{
    }
 
    public Money getTotalPrice(){
-      double total = product.getPrice().getAmount() * quantity;
-       return new Money(product.getPrice().getCurrency(), total);
+      return product.getPrice().multiply(quantity);
    }
 
 }

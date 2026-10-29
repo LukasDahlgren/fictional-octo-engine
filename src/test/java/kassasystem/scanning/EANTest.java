@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EANTest {
 
     @Test
-    @DisplayName("Accepts valid EAN-13 codes with zero and nonzero check digits")
+    @DisplayName("Accepts Valid Codes With Different Check Digits")
     public void acceptsValidCodesWithDifferentCheckDigits() {
         EAN codeWithNonZeroCheckDigit = new EAN ("4006381333931");
         EAN codeWithZeroCheckDigit = new EAN("0000000000000");
@@ -18,61 +18,61 @@ public class EANTest {
     }
 
     @Test
-    @DisplayName("Rejects a null code")
+    @DisplayName("Rejects Null Code")
     public void rejectsNullCode() {
         assertThrows(IllegalArgumentException.class, () -> new EAN(null));
     }
 
     @Test
-    @DisplayName("Rejects and empty code")
+    @DisplayName("Rejects Empty Code")
     public void rejectsEmptyCode() {
         assertThrows(IllegalArgumentException.class, () -> new EAN(""));
     }
 
     @Test
-    @DisplayName("Rejects a code shorter than 13 digits")
+    @DisplayName("Rejects Short Code")
     public void rejectsShortCode() {
         assertThrows(IllegalArgumentException.class, () -> new EAN("400638133393"));
     }
 
     @Test
-    @DisplayName("Rejects a code longer than 13 digits")
+    @DisplayName("Rejects Long Code")
     public void rejectsLongCode() {
         assertThrows(IllegalArgumentException.class, () -> new EAN("40063813339310"));
     }
 
     @Test
-    @DisplayName("Rejects a code containing a letter")
+    @DisplayName("Rejects Letter In Code")
     public void rejectsLetterInCode() {
         assertThrows(IllegalArgumentException.class, () -> new EAN("40063813339A1"));
     }
 
     @Test
-    @DisplayName("Rejects a code containing punctuation")
+    @DisplayName("Rejects Punctuation In Code")
     public void rejectsPunctuationInCode() {
         assertThrows(IllegalArgumentException.class, () -> new EAN("40063813339-1"));
     }
 
     @Test
-    @DisplayName("Rejects a code containing whitespace")
+    @DisplayName("Rejects Whitespace In Code")
     public void rejectsWhitespaceInCode() {
         assertThrows(IllegalArgumentException.class, () -> new EAN("4006381333 931"));
     }
 
     @Test
-    @DisplayName("Rejects Unicode numerals instead of ASCII digits")
+    @DisplayName("Rejects Unicode Numerals")
     public void rejectsUnicodeNumerals() {
         assertThrows(IllegalArgumentException.class, () -> new EAN("４００６３８１３３３９３１"));
     }
 
     @Test
-    @DisplayName("Rejects 13 digits with an incorrect check digit")
+    @DisplayName("Rejects Incorrect Check Digit")
     public void rejectsIncorrectCheckDigit() {
         assertThrows(IllegalArgumentException.class, () -> new EAN("4006381333932"));
     }
 
     @Test
-    @DisplayName("EANs with the same code are equal and have the same hash code")
+    @DisplayName("EANs With Same Code Are Equal")
     public void eansWithSameCodeAreEqual() {
         EAN firstEAN = new EAN("4006381333931");
         EAN secondEAN = new EAN("4006381333931");
@@ -82,7 +82,7 @@ public class EANTest {
     }
 
     @Test
-    @DisplayName("Returns the EAN code as a string")
+    @DisplayName("To String Returns Code")
     public void toStringReturnsCode() {
         EAN ean = new EAN("4006381333931");
 
@@ -90,7 +90,7 @@ public class EANTest {
     }
 
     @Test
-    @DisplayName("An EAN is equal to itself")
+    @DisplayName("Equals Returns True For Same Instance")
     void equalsReturnsTrueForSameInstance() {
         EAN ean = new EAN("4006381333931");
 
@@ -98,7 +98,7 @@ public class EANTest {
     }
 
     @Test
-    @DisplayName("Different EAN objects with the same code are equal")
+    @DisplayName("Equals Returns True For Same Code")
     void equalsReturnsTrueForSameCode() {
         EAN first = new EAN("4006381333931");
         EAN second = new EAN("4006381333931");
@@ -107,7 +107,7 @@ public class EANTest {
     }
 
     @Test
-    @DisplayName("An EAN is not equal to an object of another type")
+    @DisplayName("Equals Returns False For Different Type")
     void equalsReturnsFalseForDifferentType() {
         EAN ean = new EAN("4006381333931");
 
@@ -115,7 +115,7 @@ public class EANTest {
     }
 
     @Test
-    @DisplayName("An EAN is not equal to null")
+    @DisplayName("Equals Returns False For Null")
     void equalsReturnsFalseForNull() {
         EAN ean = new EAN("4006381333931");
 
