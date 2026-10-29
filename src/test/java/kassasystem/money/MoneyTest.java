@@ -2,6 +2,10 @@ package kassasystem.money;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class MoneyTest {
@@ -130,6 +134,16 @@ class MoneyTest {
 
         assertEquals(new Money(Sek.SEK, 100.0), first);
         assertEquals(new Money(Eur.EUR, 50.0), second);
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"100 SEK"})
+    @DisplayName("Pengar är inte lika med null eller ett annat objektslag")
+    void equalsReturnsFalseForNullOrOtherType(String other) {
+        Money money = new Money(Sek.SEK, 100.0);
+
+        assertFalse(money.equals(other));
     }
 
 }
