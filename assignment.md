@@ -1,4 +1,4 @@
-9# Kassasystem
+# Kassasystem
 
 Denna uppgift är lämplig för grupper på tre till fem personer, den är betydligt renare än den föregå-
 ende, men kan upplevas som lite tråkigare eftersom den är mer styrd av hur denna typ av system
