@@ -1,5 +1,6 @@
 package kassasystem;
 
+import kassasystem.payment.FakePayer;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -43,7 +44,7 @@ class CashRegisterTest {
 
     @BeforeEach
     void setUp() {
-        register = new CashRegister(Clock.systemUTC(), true);
+        register = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
         bread = new Product("Bread", new Money(Sek.SEK, 20.00), food);
     }
@@ -51,14 +52,14 @@ class CashRegisterTest {
     @Test
     @DisplayName("Kassan avvisar en saknad klocka")
     void constructorRejectsNullClock() {
-        assertThrows(IllegalArgumentException.class, () -> new CashRegister((Clock) null, true));
+        assertThrows(IllegalArgumentException.class, () -> new CashRegister((Clock) null, new FakePayer(true)));
     }
 
 
     @Test
     @DisplayName("Misslyckad betalning behåller köpet aktivt och skapar inget kvitto")
     void completePurchaseKeepsPurchaseActiveWhenPaymentFails() {
-        register = new CashRegister(Clock.systemUTC(), false);
+        register = new CashRegister(Clock.systemUTC(), new FakePayer(false));
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
 
@@ -78,7 +79,7 @@ class CashRegisterTest {
     void completePurchaseUsesSuppliedClockForReceiptTimestamp() {
         Clock clock = Clock.fixed(Instant.parse("2026-10-20T10:15:30Z"),
                 ZoneId.of("Europe/Stockholm"));
-        register = new CashRegister(clock, true);
+        register = new CashRegister(clock, new FakePayer(true));
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
 
@@ -371,7 +372,7 @@ class CashRegisterTest {
                 Instant.parse("2026-10-16T10:00:00Z"),
                 ZoneId.of("UTC")
         );
-        register = new CashRegister(clock, true);
+        register = new CashRegister(clock, new FakePayer(true));
 
         Membership membership = new Membership(
                 LocalDate.of(2026, 1, 1),
@@ -399,7 +400,7 @@ class CashRegisterTest {
                 Instant.parse("2026-10-16T10:00:00Z"),
                 ZoneId.of("UTC")
         );
-        register = new CashRegister(clock, true);
+        register = new CashRegister(clock, new FakePayer(true));
 
         Membership membership = new Membership(
                 LocalDate.of(2026, 1, 1),

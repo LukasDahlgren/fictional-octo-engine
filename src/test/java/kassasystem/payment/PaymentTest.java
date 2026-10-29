@@ -12,6 +12,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PaymentTest {
 
+    @ParameterizedTest(name = "Godkänd betalning: {0}")
+    @ValueSource(booleans = {false, true})
+    @DisplayName("Payment använder resultatet från FakePayer genom Payer-gränssnittet")
+    void payUsesConfiguredFakePayer(boolean paymentSucceeds) {
+        Money amount = new Money(Sek.SEK, 100.0);
+        Payer payer = new FakePayer(paymentSucceeds);
+        Payment payment = new Payment(amount, payer);
+
+        boolean result = payment.pay();
+
+        assertEquals(paymentSucceeds, result);
+    }
+
     @Test
     @DisplayName("Pay Returns True When Payer Approves")
     void payReturnsTrueWhenPayerApproves() {

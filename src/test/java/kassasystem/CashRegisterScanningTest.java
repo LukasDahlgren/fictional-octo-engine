@@ -1,5 +1,6 @@
 package kassasystem;
 
+import kassasystem.payment.FakePayer;
 
 import java.time.Clock;
 import kassasystem.money.Money;
@@ -35,7 +36,7 @@ class CashRegisterScanningTest {
 
     @BeforeEach
     void setUp() {
-        register = new CashRegister(Clock.systemUTC(), true);
+        register = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         EAN ean = new EAN("0123456789012");
         milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         productCatalog = new FixedProductCatalog(milk);

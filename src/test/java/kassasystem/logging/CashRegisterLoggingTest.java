@@ -1,5 +1,6 @@
 package kassasystem.logging;
 
+import kassasystem.payment.FakePayer;
 import kassasystem.CashRegister;
 import kassasystem.Purchase;
 import kassasystem.customer.Customer;
@@ -44,7 +45,7 @@ class CashRegisterLoggingTest {
         Clock clock = Clock.systemUTC();
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CashRegister(null, clock, true));
+                () -> new CashRegister(null, clock, new FakePayer(true)));
 
         assertEquals("Transaction logger must not be null", exception.getMessage());
     }
@@ -56,7 +57,7 @@ class CashRegisterLoggingTest {
         TransactionLogger logger = new TransactionLogger(logFile);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new CashRegister(logger,null, true));
+                () -> new CashRegister(logger,null, new FakePayer(true)));
 
         assertEquals("Clock must not be null", exception.getMessage());
     }
@@ -67,7 +68,7 @@ class CashRegisterLoggingTest {
         Path logFile = tempDir.resolve("transactions.txt");
         TransactionLogger logger = new TransactionLogger(logFile);
         CashRegister cashRegister =
-                new CashRegister(logger, Clock.systemUTC(), true);
+                new CashRegister(logger, Clock.systemUTC(), new FakePayer(true));
 
         ProductCategory food =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
@@ -92,12 +93,12 @@ class CashRegisterLoggingTest {
         Customer customer = new Customer("C001", "Testkund");
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        CashRegister previousRegister = new CashRegister(logger, clock, true);
+        CashRegister previousRegister = new CashRegister(logger, clock, new FakePayer(true));
         Purchase previousPurchase = previousRegister.startPurchase();
         previousPurchase.getBasket().addProduct(milk);
         previousRegister.completePurchase(customer);
         String previousLog = Files.readString(logFile);
-        CashRegister register = new CashRegister(logger, clock, false);
+        CashRegister register = new CashRegister(logger, clock, new FakePayer(false));
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
         DiscountOffer offer = new DiscountOffer(20,
@@ -130,7 +131,7 @@ class CashRegisterLoggingTest {
         String previousLog = "Previous transaction\n";
         Files.writeString(logFile, previousLog);
         TransactionLogger logger = new TransactionLogger(logFile);
-        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), true);
+        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), new FakePayer(true));
         Purchase purchase = startInactivePurchase(cashRegister, status);
         String logBeforeRejectedCheckout = Files.readString(logFile);
 
@@ -153,9 +154,9 @@ class CashRegisterLoggingTest {
         String previousLog = "Previous transaction\n";
         Files.writeString(logFile, previousLog);
         TransactionLogger logger = new TransactionLogger(logFile);
-        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), true);
+        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), new FakePayer(true));
         Customer customer = new Customer("C001", "Test Customer");
-        CashRegister previousRegister = new CashRegister(true);
+        CashRegister previousRegister = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         Purchase previousPurchase = previousRegister.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
@@ -186,9 +187,9 @@ class CashRegisterLoggingTest {
         String previousLog = "Previous transaction\n";
         Files.writeString(logFile, previousLog);
         TransactionLogger logger = new TransactionLogger(logFile);
-        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), true);
+        CashRegister cashRegister = new CashRegister(logger, Clock.systemUTC(), new FakePayer(true));
         Customer customer = new Customer("C001", "Test Customer");
-        CashRegister previousRegister = new CashRegister(true);
+        CashRegister previousRegister = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         Purchase previousPurchase = previousRegister.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
@@ -213,10 +214,12 @@ class CashRegisterLoggingTest {
     }
 
     @Test
-    @DisplayName("Logging Failure Leaves Purchase Editable For Retry")
-    void loggingFailureLeavesPurchaseEditableForRetry() {
-        TransactionLogger logger = new TransactionLogger(tempDir);
-        CashRegister register = new CashRegister(logger, Clock.systemUTC(), true);
+    @DisplayName("Ett loggfel behåller det betalda köpet i historiken och tillåter nästa köp")
+    void loggingFailureDoesNotPreventNextPurchase() throws IOException {
+        Path logFile = tempDir.resolve("transactions.txt");
+        Files.createDirectory(logFile);
+        TransactionLogger logger = new TransactionLogger(logFile);
+        CashRegister register = new CashRegister(logger, Clock.systemUTC(), new FakePayer(true));
         Customer customer = new Customer("C001", "Test Customer");
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
@@ -225,14 +228,22 @@ class CashRegisterLoggingTest {
 
         assertThrows(UncheckedIOException.class, () -> register.completePurchase(customer));
 
-        assertSame(purchase, register.getCurrentPurchase());
-        assertEquals(Purchase.Status.ACTIVE, purchase.getStatus());
-        assertEquals(List.of(), customer.getPurchaseHistory());
-        purchase.getBasket().getItems().get(0).increaseQuantity();
-        purchase.getBasket().addProduct(milk);
-        assertEquals(3, purchase.getBasket().getTotalQuantity());
-        register.cancelPurchase();
+        assertEquals(Purchase.Status.COMPLETED, purchase.getStatus());
         assertNull(register.getCurrentPurchase());
+        assertEquals(List.of(purchase), customer.getPurchaseHistory());
+
+        Files.delete(logFile);
+        Purchase nextPurchase = register.startPurchase();
+        nextPurchase.getBasket().addProduct(milk);
+
+        Receipt nextReceipt = register.completePurchase(customer);
+
+        assertAll("Next purchase completes and logs normally",
+                () -> assertEquals(Purchase.Status.COMPLETED, nextPurchase.getStatus()),
+                () -> assertNull(register.getCurrentPurchase()),
+                () -> assertEquals(List.of(purchase, nextPurchase), customer.getPurchaseHistory()),
+                () -> assertEquals(nextReceipt.toText(), Files.readString(logFile))
+        );
     }
 
     private Purchase startInactivePurchase(CashRegister cashRegister, Purchase.Status status) {

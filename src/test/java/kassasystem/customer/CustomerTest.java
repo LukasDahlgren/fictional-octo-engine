@@ -1,5 +1,6 @@
 package kassasystem.customer;
 
+import kassasystem.payment.FakePayer;
 import kassasystem.Purchase;
 import kassasystem.CashRegister;
 import kassasystem.money.Money;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,7 +32,7 @@ class CustomerTest {
     @Test
     @DisplayName("Customer Stores Completed Purchase")
     void customerStoresCompletedPurchase() {
-        CashRegister register = new CashRegister(true);
+        CashRegister register = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         Purchase purchase = register.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);

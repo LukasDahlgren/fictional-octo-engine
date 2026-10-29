@@ -2,7 +2,6 @@ package kassasystem;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import kassasystem.payment.FakePayer;
 import kassasystem.payment.Payer;
 import kassasystem.payment.Payment;
 import kassasystem.scanning.BarcodeScanner;
@@ -26,23 +25,22 @@ public class CashRegister {
 
     private final TransactionLogger transactionLogger;
 
-    public CashRegister(boolean paymentSucceeds) {
-        this(Clock.systemUTC(), paymentSucceeds);
-    }
-
-    public CashRegister(Clock clock, boolean paymentSucceeds) {
+    public CashRegister(Clock clock, Payer payer) {
         if (clock == null) {
             throw new IllegalArgumentException("Clock must not be null");
         }
+        if (payer == null) {
+            throw new IllegalArgumentException("Payer must not be null");
+        }
         this.clock = clock;
         this.transactionLogger = null;
-        this.payer = new FakePayer(paymentSucceeds);
+        this.payer = payer;
     }
 
     public CashRegister(
             TransactionLogger transactionLogger,
             Clock clock,
-            boolean paymentSucceeds
+            Payer payer
     ) {
         if (transactionLogger == null) {
             throw new IllegalArgumentException("Transaction logger must not be null");
@@ -50,10 +48,12 @@ public class CashRegister {
         if (clock == null) {
             throw new IllegalArgumentException("Clock must not be null");
         }
-
+        if (payer == null) {
+            throw new IllegalArgumentException("Payer must not be null");
+        }
         this.transactionLogger = transactionLogger;
         this.clock = clock;
-        this.payer = new FakePayer(paymentSucceeds);
+        this.payer = payer;
     }
 
 
@@ -98,7 +98,7 @@ public class CashRegister {
 
         Money totalPrice = currentPurchase.getBasket().getTotalPrice();
 
-        return finishPurchase(totalPrice);
+        return finishPurchase(totalPrice, null);
     }
 
     public Receipt completePurchase(Customer customer) {
@@ -126,12 +126,7 @@ public class CashRegister {
                 offer
         );
 
-        Purchase completedPurchase = currentPurchase;
-        Receipt receipt = finishPurchase(discountedPrice);
-
-        customer.addPurchase(completedPurchase);
-
-        return receipt;
+        return finishPurchase(discountedPrice, customer);
     }
 
     private void ensureActivePurchase() {
@@ -152,7 +147,7 @@ public class CashRegister {
         }
     }
 
-    private Receipt finishPurchase(Money totalPrice) {
+    private Receipt finishPurchase(Money totalPrice, Customer customer) {
         Receipt receipt = new Receipt(
                 currentPurchase.getBasket(),
                 totalPrice,
@@ -164,19 +159,24 @@ public class CashRegister {
             throw new IllegalStateException("Payment failed");
         }
 
+        // A log failure cannot undo successful payment.
+        Purchase completedPurchase = currentPurchase;
+        completedPurchase.complete();
+        currentPurchase = null;
+        if (customer != null) {
+            customer.addPurchase(completedPurchase);
+        }
+
         if (transactionLogger != null) {
             try {
                 transactionLogger.log(receipt);
             } catch (IOException exception) {
                 throw new UncheckedIOException(
-                        "Could not log completed purchase",
+                        "Purchase completed and paid, but transaction could not be logged",
                         exception
                 );
             }
         }
-
-        currentPurchase.complete();
-        currentPurchase = null;
 
         return receipt;
     }

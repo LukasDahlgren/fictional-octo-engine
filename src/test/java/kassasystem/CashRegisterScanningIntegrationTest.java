@@ -1,5 +1,6 @@
 package kassasystem;
 
+import kassasystem.payment.FakePayer;
 
 import java.time.Clock;
 import kassasystem.money.Money;
@@ -33,7 +34,7 @@ class CashRegisterScanningIntegrationTest {
         productCatalog.add(milk);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
-        CashRegister register = new CashRegister(Clock.systemUTC(), true);
+        CashRegister register = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         Purchase purchase = register.startPurchase();
 
         ScanResult firstResult = register.scanProduct(scanner);
