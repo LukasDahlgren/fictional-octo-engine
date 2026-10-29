@@ -95,5 +95,15 @@ class GiftCardTest {
 
         assertEquals(initialBalance, giftCard.getBalance());
     }
+    @Test
+    @DisplayName("Presentkortet avvisar ett negativt startsaldo")
+    void constructorRejectsNegativeInitialBalance() {
+        Money initialBalance = new Money(Sek.SEK, -100.0);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new GiftCard(initialBalance)
+        );
+    }
 }
 
