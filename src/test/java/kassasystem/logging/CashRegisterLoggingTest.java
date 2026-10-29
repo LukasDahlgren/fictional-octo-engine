@@ -1,5 +1,7 @@
 package kassasystem.logging;
 
+import java.math.BigDecimal;
+
 import kassasystem.payment.FakePayer;
 import kassasystem.CashRegister;
 import kassasystem.Purchase;
@@ -73,7 +75,7 @@ class CashRegisterLoggingTest {
         ProductCategory food =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product milk =
-                new Product("Milk", new Money(Sek.SEK, 12.50), food);
+                new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
 
         Purchase purchase = cashRegister.startPurchase();
         purchase.getBasket().addProduct(milk);
@@ -92,7 +94,7 @@ class CashRegisterLoggingTest {
         TransactionLogger logger = new TransactionLogger(logFile);
         Customer customer = new Customer("C001", "Test customer");
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
         CashRegister previousRegister = new CashRegister(logger, clock, new FakePayer(true));
         Purchase previousPurchase = previousRegister.startPurchase();
         previousPurchase.getBasket().addProduct(milk);
@@ -101,7 +103,7 @@ class CashRegisterLoggingTest {
         CashRegister register = new CashRegister(logger, clock, new FakePayer(false));
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
-        DiscountOffer offer = new DiscountOffer(20,
+        DiscountOffer offer = new DiscountOffer(new BigDecimal("20"),
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
 
         IllegalStateException exception;
@@ -117,7 +119,7 @@ class CashRegisterLoggingTest {
         assertAll("Rejected payment preserves the purchase, log and history",
                 () -> assertSame(purchase, register.getCurrentPurchase()),
                 () -> assertEquals(Purchase.Status.ACTIVE, purchase.getStatus()),
-                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice()),
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("12.50")), purchase.getBasket().getTotalPrice()),
                 () -> assertEquals(previousLog, Files.readString(logFile)),
                 () -> assertEquals(List.of(previousPurchase), customer.getPurchaseHistory())
         );
@@ -140,7 +142,7 @@ class CashRegisterLoggingTest {
         assertAll("Rejected checkout preserves the purchase and log",
                 () -> assertNull(cashRegister.getCurrentPurchase()),
                 () -> assertEquals(status, purchase.getStatus()),
-                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice()),
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("12.50")), purchase.getBasket().getTotalPrice()),
                 () -> assertEquals(logBeforeRejectedCheckout, Files.readString(logFile))
         );
     }
@@ -159,7 +161,7 @@ class CashRegisterLoggingTest {
         CashRegister previousRegister = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         Purchase previousPurchase = previousRegister.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
         previousPurchase.getBasket().addProduct(milk);
         previousRegister.completePurchase();
         customer.addPurchase(previousPurchase);
@@ -172,7 +174,7 @@ class CashRegisterLoggingTest {
         assertAll("Rejected checkout preserves the purchase, log and existing history",
                 () -> assertNull(cashRegister.getCurrentPurchase()),
                 () -> assertEquals(status, purchase.getStatus()),
-                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice()),
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("12.50")), purchase.getBasket().getTotalPrice()),
                 () -> assertEquals(logBeforeRejectedCheckout, Files.readString(logFile)),
                 () -> assertEquals(List.of(previousPurchase), customer.getPurchaseHistory())
         );
@@ -192,13 +194,13 @@ class CashRegisterLoggingTest {
         CashRegister previousRegister = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         Purchase previousPurchase = previousRegister.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
         previousPurchase.getBasket().addProduct(milk);
         previousRegister.completePurchase();
         customer.addPurchase(previousPurchase);
         Purchase purchase = startInactivePurchase(cashRegister, status);
         String logBeforeRejectedCheckout = Files.readString(logFile);
-        DiscountOffer offer = new DiscountOffer(20,
+        DiscountOffer offer = new DiscountOffer(new BigDecimal("20"),
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
 
         assertThrows(IllegalStateException.class,
@@ -207,7 +209,7 @@ class CashRegisterLoggingTest {
         assertAll("Rejected checkout preserves the purchase, log and existing history",
                 () -> assertNull(cashRegister.getCurrentPurchase()),
                 () -> assertEquals(status, purchase.getStatus()),
-                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice()),
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("12.50")), purchase.getBasket().getTotalPrice()),
                 () -> assertEquals(logBeforeRejectedCheckout, Files.readString(logFile)),
                 () -> assertEquals(List.of(previousPurchase), customer.getPurchaseHistory())
         );
@@ -222,7 +224,7 @@ class CashRegisterLoggingTest {
         CashRegister register = new CashRegister(logger, Clock.systemUTC(), new FakePayer(true));
         Customer customer = new Customer("C001", "Test Customer");
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
         Purchase purchase = register.startPurchase();
         purchase.getBasket().addProduct(milk);
 
@@ -248,7 +250,7 @@ class CashRegisterLoggingTest {
 
     private Purchase startInactivePurchase(CashRegister cashRegister, Purchase.Status status) {
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
         Purchase purchase = cashRegister.startPurchase();
         purchase.getBasket().addProduct(milk);
         if (status == Purchase.Status.CANCELLED) {

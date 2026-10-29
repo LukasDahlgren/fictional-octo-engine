@@ -1,5 +1,7 @@
 package kassasystem.discount;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,7 @@ class DiscountOfferTest {
     void setUp() {
         startDate = LocalDate.of(2026, 10, 1);
         endDate = LocalDate.of(2026, 10, 31);
-        offer = new DiscountOffer(20.0, startDate, endDate);
+        offer = new DiscountOffer(new BigDecimal("20.0"), startDate, endDate);
     }
 
     @Test
@@ -65,14 +67,14 @@ class DiscountOfferTest {
     @Test
     @DisplayName("Offer Has Discount Percentage")
     void offerHasDiscountPercentage() {
-        assertEquals(20.0, offer.getDiscountPercentage());
+        assertEquals(new BigDecimal("20.0"), offer.getDiscountPercentage());
     }
 
     @ParameterizedTest(name = "{0} procent")
-    @ValueSource(doubles = {-1.0, 101.0})
+    @ValueSource(strings = {"-1.0", "101.0"})
     @DisplayName("Discount Percentage Outside Valid Range Is Rejected")
     void discountPercentageOutsideValidRangeIsRejected(
-            double discountPercentage
+            BigDecimal discountPercentage
     ) {
         assertThrows(
                 IllegalArgumentException.class,
@@ -84,10 +86,10 @@ class DiscountOfferTest {
         );
     }
     @ParameterizedTest(name = "{0} procent")
-    @ValueSource(doubles = {0.0, 100.0})
+    @ValueSource(strings = {"0.0", "100.0"})
     @DisplayName("Discount Percentage On Boundaries Is Accepted")
     void discountPercentageOnBoundariesIsAccepted(
-            double discountPercentage
+            BigDecimal discountPercentage
     ) {
         DiscountOffer boundaryOffer = new DiscountOffer(
                 discountPercentage,

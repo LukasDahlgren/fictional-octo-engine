@@ -6,6 +6,8 @@ import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,7 +27,7 @@ public class Receipt {
    private final List<ReceiptLine> items;
 
    public Receipt(Basket basket, Clock clock) {
-      this(basket, clock, new Money(Sek.SEK, 0), null);
+      this(basket, clock, new Money(Sek.SEK, BigDecimal.ZERO), null);
    }
 
    // The checkout supplies the calculated discount; the receipt only records it.
@@ -51,8 +53,8 @@ public class Receipt {
       if (subtotal.getCurrency().compareTo(Sek.SEK) != 0) {
          throw new IllegalArgumentException("Receipt must use SEK");
       }
-      if (!Double.isFinite(subtotal.getAmount()) || subtotal.getAmount() < 0) {
-         throw new IllegalArgumentException("Subtotal must be finite and non-negative");
+      if (subtotal.getAmount().compareTo(BigDecimal.ZERO) < 0) {
+         throw new IllegalArgumentException("Subtotal must be non-negative");
       }
       if (discountAmount == null) {
          throw new IllegalArgumentException("Discount amount cannot be null");
@@ -61,11 +63,13 @@ public class Receipt {
               || discountAmount.getCurrency().compareTo(Sek.SEK) != 0) {
          throw new IllegalArgumentException("Discount must use SEK");
       }
-      double discount = discountAmount.getAmount();
-      if (!Double.isFinite(discount) || discount < 0 || discount > subtotal.getAmount()) {
+      BigDecimal discount = discountAmount.getAmount();
+      if (discount.compareTo(BigDecimal.ZERO) < 0
+              || discount.compareTo(subtotal.getAmount()) > 0) {
          throw new IllegalArgumentException("Discount must be between zero and the subtotal");
       }
-      if (discount > 0 && (discountLabel == null || discountLabel.isBlank()
+      if (discount.compareTo(BigDecimal.ZERO) > 0
+              && (discountLabel == null || discountLabel.isBlank()
               || discountLabel.contains("\n") || discountLabel.contains("\r"))) {
          throw new IllegalArgumentException("Discount label must be a non-blank single line");
       }
@@ -74,13 +78,13 @@ public class Receipt {
       if (suppliedTotal == null) {
          this.totalPrice = subtotal.subtract(this.discountAmount);
       } else {
-         this.totalPrice = new Money(Sek.SEK, suppliedTotal.getAmount());
+         this.totalPrice = suppliedTotal;
       }
       this.timestamp = LocalDateTime.now(clock);
       this.items = new ArrayList<>();
       for (BasketItem item : basket.getItems()) {
          Product product = item.getProduct();
-         double vatRate = product.getCategory().getVat();
+      BigDecimal vatRate = product.getCategory().getVat();
          ReceiptLine line = new ReceiptLine(product.getName(), item.getQuantity(),
                  product.getPrice(), vatRate);
          items.add(line);
@@ -99,11 +103,12 @@ public class Receipt {
          throw new IllegalArgumentException("Receipt must use SEK");
       }
       Money subtotal = basket.getTotalPrice();
-      double total = totalPrice.getAmount();
-      if (!Double.isFinite(total) || total < 0 || total > subtotal.getAmount()) {
+      BigDecimal total = totalPrice.getAmount();
+      if (total.compareTo(BigDecimal.ZERO) < 0
+              || total.compareTo(subtotal.getAmount()) > 0) {
          throw new IllegalArgumentException("Total price must be between zero and the subtotal");
       }
-      return new Money(Sek.SEK, subtotal.getAmount() - total);
+      return new Money(Sek.SEK, subtotal.getAmount().subtract(total));
    }
 
    public List<ReceiptLine> getItems() {
@@ -130,20 +135,23 @@ public class Receipt {
       return timestamp;
    }
 
-   private Map<Double, Double> calculateVatByRate() {
-      Map<Double, Double> vatByRate = new TreeMap<>();
-      double discountMultiplier = 0;
-      if (subtotal.getAmount() > 0) {
-         discountMultiplier = totalPrice.getAmount() / subtotal.getAmount();
+   private Map<BigDecimal, BigDecimal> calculateVatByRate() {
+      Map<BigDecimal, BigDecimal> vatByRate = new TreeMap<>();
+      BigDecimal discountMultiplier = BigDecimal.ZERO;
+      if (subtotal.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+         discountMultiplier = totalPrice.getAmount()
+                 .divide(subtotal.getAmount(), MathContext.DECIMAL128);
       }
 
       for (ReceiptLine item : items) {
-         double vatRate = item.getVatRate();
-         double discountedLineTotal = item.getTotalPrice().getAmount() * discountMultiplier;
+         BigDecimal vatRate = item.getVatRate();
+         BigDecimal discountedLineTotal = item.getTotalPrice().getAmount()
+                 .multiply(discountMultiplier);
          // Product prices include VAT. Apply the purchase discount before extracting VAT.
-         double vatAmount = discountedLineTotal * vatRate / (1 + vatRate);
-         double previousAmount = vatByRate.getOrDefault(vatRate, 0.0);
-         vatByRate.put(vatRate, previousAmount + vatAmount);
+         BigDecimal vatAmount = discountedLineTotal.multiply(vatRate)
+                 .divide(BigDecimal.ONE.add(vatRate), MathContext.DECIMAL128);
+         BigDecimal previousAmount = vatByRate.getOrDefault(vatRate, BigDecimal.ZERO);
+         vatByRate.put(vatRate, previousAmount.add(vatAmount));
       }
       return vatByRate;
    }
@@ -172,18 +180,18 @@ public class Receipt {
          text.append(row);
       }
 
-      if (discountAmount.getAmount() > 0) {
+      if (discountAmount.getAmount().compareTo(BigDecimal.ZERO) > 0) {
          text.append(String.format(Locale.ROOT, "Subtotal: %.2f SEK\n", subtotal.getAmount()));
          text.append(String.format(Locale.ROOT, "%s: -%.2f SEK\n",
                  discountLabel, discountAmount.getAmount()));
       }
       String total = String.format(Locale.ROOT, "Total: %.2f SEK\n", totalPrice.getAmount());
       text.append(total);
-      Map<Double, Double> vatByRate = calculateVatByRate();
+      Map<BigDecimal, BigDecimal> vatByRate = calculateVatByRate();
       if (!vatByRate.isEmpty()) {
          text.append("VAT included:\n");
-         for (Map.Entry<Double, Double> entry : vatByRate.entrySet()) {
-            double vatPercent = entry.getKey() * 100;
+         for (Map.Entry<BigDecimal, BigDecimal> entry : vatByRate.entrySet()) {
+            BigDecimal vatPercent = entry.getKey().multiply(new BigDecimal("100"));
             text.append(String.format(Locale.ROOT, "%.0f %%: %.2f SEK\n",
                     vatPercent, entry.getValue()));
          }

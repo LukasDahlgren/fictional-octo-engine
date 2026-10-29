@@ -1,6 +1,8 @@
 
 package kassasystem.money;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,82 +13,79 @@ class GiftCardTest {
     @Test
     void shouldCreateGiftCardWithCorrectBalance() {
         GiftCard giftCard = new GiftCard(
-                new Money(Sek.SEK, 500.0)
+                new Money(Sek.SEK, new BigDecimal("500.0"))
         );
 
-        assertEquals(500.0, giftCard.getBalance().getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("500.0").compareTo(giftCard.getBalance().getAmount()));
     }
 
     @Test
     void shouldReduceBalanceWhenAmountIsUsed() {
         GiftCard giftCard = new GiftCard(
-                new Money(Sek.SEK, 500.0)
+                new Money(Sek.SEK, new BigDecimal("500.0"))
         );
 
-        giftCard.use(new Money(Sek.SEK, 150.0));
+        giftCard.use(new Money(Sek.SEK, new BigDecimal("150.0")));
 
-        assertEquals(350.0, giftCard.getBalance().getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("350.0").compareTo(giftCard.getBalance().getAmount()));
     }
 
     @Test
     void shouldAllowUsingTheEntireBalance() {
         GiftCard giftCard = new GiftCard(
-                new Money(Sek.SEK, 200.0)
+                new Money(Sek.SEK, new BigDecimal("200.0"))
         );
 
-        giftCard.use(new Money(Sek.SEK, 200.0));
+        giftCard.use(new Money(Sek.SEK, new BigDecimal("200.0")));
 
-        assertEquals(0.0, giftCard.getBalance().getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("0.0").compareTo(giftCard.getBalance().getAmount()));
     }
 
     @Test
     void shouldRejectUsingMoreThanTheBalance() {
         GiftCard giftCard = new GiftCard(
-                new Money(Sek.SEK, 100.0)
+                new Money(Sek.SEK, new BigDecimal("100.0"))
         );
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> giftCard.use(new Money(Sek.SEK, 150.0))
+                () -> giftCard.use(new Money(Sek.SEK, new BigDecimal("150.0")))
         );
 
-        assertEquals(100.0, giftCard.getBalance().getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("100.0").compareTo(giftCard.getBalance().getAmount()));
     }
 
     @Test
     void shouldRejectUsingNegativeAmount() {
         GiftCard giftCard = new GiftCard(
-                new Money(Sek.SEK, 100.0)
+                new Money(Sek.SEK, new BigDecimal("100.0"))
         );
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> giftCard.use(new Money(Sek.SEK, -20.0))
+                () -> giftCard.use(new Money(Sek.SEK, new BigDecimal("-20.0")))
         );
 
-        assertEquals(100.0, giftCard.getBalance().getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("100.0").compareTo(giftCard.getBalance().getAmount()));
     }
 
     @Test
-    @DisplayName("Use Rejects NaN And Preserves Balance")
-    void useRejectsNaNAndPreservesBalance() {
-        Money initialBalance = new Money(Sek.SEK, 100.0);
-        GiftCard giftCard = new GiftCard(initialBalance);
-        Money invalidAmount = new Money(Sek.SEK, Double.NaN);
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> giftCard.use(invalidAmount)
+    @DisplayName("Use Preserves Exact Decimal Balance")
+    void usePreservesExactDecimalBalance() {
+        GiftCard giftCard = new GiftCard(
+                new Money(Sek.SEK, new BigDecimal("0.10"))
         );
 
-        assertEquals(initialBalance, giftCard.getBalance());
+        giftCard.use(new Money(Sek.SEK, new BigDecimal("0.03")));
+
+        assertEquals(new BigDecimal("0.07"), giftCard.getBalance().getAmount());
     }
     @Test
     @DisplayName("Use Rejects Different Currency And Preserves Balance")
     void useRejectsDifferentCurrencyAndPreservesBalance() {
-        Money initialBalance = new Money(Sek.SEK, 100.0);
+        Money initialBalance = new Money(Sek.SEK, new BigDecimal("100.0"));
         GiftCard giftCard = new GiftCard(initialBalance);
-        Money euroAmount = new Money(Eur.EUR, 10.0);
+        Money euroAmount = new Money(Eur.EUR, new BigDecimal("10.0"));
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -98,7 +97,7 @@ class GiftCardTest {
     @Test
     @DisplayName("Constructor Rejects Negative Initial Balance")
     void constructorRejectsNegativeInitialBalance() {
-        Money initialBalance = new Money(Sek.SEK, -100.0);
+        Money initialBalance = new Money(Sek.SEK, new BigDecimal("-100.0"));
 
         assertThrows(
                 IllegalArgumentException.class,

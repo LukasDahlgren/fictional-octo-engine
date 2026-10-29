@@ -1,5 +1,7 @@
 package kassasystem.scanning;
 
+import java.math.BigDecimal;
+
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -19,7 +21,7 @@ public class ProductCatalogTest {
         EAN ean = new EAN("4006381333931");
         Product product = new Product(
                 "Milk",
-                new Money(Sek.SEK, 12.50),
+                new Money(Sek.SEK, new BigDecimal("12.50")),
                 new ProductCategory("Food", VATCategory.SIX_PERCENT),
                 ean
         );
@@ -37,13 +39,13 @@ public class ProductCatalogTest {
 
         Product firstProduct = new Product(
                 "Milk",
-                new Money(Sek.SEK, 12.50),
+                new Money(Sek.SEK, new BigDecimal("12.50")),
                 new ProductCategory("Food", VATCategory.SIX_PERCENT),
                 ean
         );
         Product secondProduct = new Product(
                 "Bread",
-                new Money(Sek.SEK, 20.00),
+                new Money(Sek.SEK, new BigDecimal("20.00")),
                 new ProductCategory("Food", VATCategory.SIX_PERCENT),
                 ean
         );
@@ -77,7 +79,7 @@ public class ProductCatalogTest {
         EAN ean = new EAN("4006381333931");
         Product product = new Product(
                 "Milk",
-                new Money(Sek.SEK, 12.50),
+                new Money(Sek.SEK, new BigDecimal("12.50")),
                 new ProductCategory("Food", VATCategory.SIX_PERCENT),
                 ean
         );

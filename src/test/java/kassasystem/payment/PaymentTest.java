@@ -1,5 +1,7 @@
 package kassasystem.payment;
 
+import java.math.BigDecimal;
+
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,7 @@ class PaymentTest {
     @ValueSource(booleans = {false, true})
     @DisplayName("Payment Uses The FakePayer Result Through The Payer Interface")
     void payUsesConfiguredFakePayer(boolean paymentSucceeds) {
-        Money amount = new Money(Sek.SEK, 100.0);
+        Money amount = new Money(Sek.SEK, new BigDecimal("100.0"));
         Payer payer = new FakePayer(paymentSucceeds);
         Payment payment = new Payment(amount, payer);
 
@@ -28,7 +30,7 @@ class PaymentTest {
     @Test
     @DisplayName("Pay Returns True When Payer Approves")
     void payReturnsTrueWhenPayerApproves() {
-        Money amount = new Money(Sek.SEK, 100.0);
+        Money amount = new Money(Sek.SEK, new BigDecimal("100.0"));
         Payer payer = paymentAmount -> true;
         Payment payment = new Payment(amount, payer);
 
@@ -39,7 +41,7 @@ class PaymentTest {
     @Test
     @DisplayName("Pay Returns False When Payer Rejects")
     void payReturnsFalseWhenPayerRejects() {
-        Money amount = new Money(Sek.SEK, 100.0);
+        Money amount = new Money(Sek.SEK, new BigDecimal("100.0"));
         Payer payer = paymentAmount -> false;
         Payment payment = new Payment(amount, payer);
 
@@ -50,7 +52,7 @@ class PaymentTest {
     @Test
     @DisplayName("Pay Passes Amount To Payer")
     void payPassesAmountToPayer() {
-        Money amount = new Money(Sek.SEK, 100.0);
+        Money amount = new Money(Sek.SEK, new BigDecimal("100.0"));
         Money[] receivedAmount = new Money[1];
 
         Payer payer = paymentAmount -> {
@@ -68,7 +70,7 @@ class PaymentTest {
     @Test
     @DisplayName("Constructor Rejects Null Payer")
     void constructorRejectsNullPayer() {
-        Money amount = new Money(Sek.SEK, 100.0);
+        Money amount = new Money(Sek.SEK, new BigDecimal("100.0"));
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -90,7 +92,7 @@ class PaymentTest {
     @Test
     @DisplayName("Pay Calls Payer Exactly Once")
     void payCallsPayerExactlyOnce() {
-        Money amount = new Money(Sek.SEK, 100.0);
+        Money amount = new Money(Sek.SEK, new BigDecimal("100.0"));
         int[] callCount = new int[1];
 
         Payer payer = paymentAmount -> {
@@ -108,7 +110,7 @@ class PaymentTest {
     @Test
     @DisplayName("Constructor Rejects Negative Amount")
     void constructorRejectsNegativeAmount() {
-        Money amount = new Money(Sek.SEK, -100.0);
+        Money amount = new Money(Sek.SEK, new BigDecimal("-100.0"));
         Payer payer = paymentAmount -> true;
 
         assertThrows(
@@ -120,27 +122,10 @@ class PaymentTest {
     @Test
     @DisplayName("Constructor Allows Zero Amount")
     void constructorAllowsZeroAmount() {
-        Money amount = new Money(Sek.SEK, 0.0);
+        Money amount = new Money(Sek.SEK, new BigDecimal("0.0"));
         Payer payer = paymentAmount -> true;
 
         assertDoesNotThrow(() -> new Payment(amount, payer));
-    }
-
-    @ParameterizedTest(name = "Amount: {0}")
-    @ValueSource(doubles = {
-            Double.NaN,
-            Double.POSITIVE_INFINITY,
-            Double.NEGATIVE_INFINITY
-    })
-    @DisplayName("Constructor Rejects Non Finite Amount")
-    void constructorRejectsNonFiniteAmount(double value) {
-        Money amount = new Money(Sek.SEK, value);
-        Payer payer = paymentAmount -> true;
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> new Payment(amount, payer)
-        );
     }
 
 }

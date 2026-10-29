@@ -1,5 +1,7 @@
 package kassasystem.money;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,109 +15,114 @@ class MoneyTest {
     private final Currency sek = Sek.SEK;
 
     @Test
-    void shouldCreateMoneyWithCorrectAmount() {
-        Money money = new Money(sek, 100.0);
+    @DisplayName("Constructor Stores BigDecimal Amount And Currency")
+    void constructorStoresAmountAndCurrency() {
+        BigDecimal amount = new BigDecimal("100.25");
 
-        assertEquals(100.0, money.getAmount(), 0.001);
+        Money money = new Money(sek, amount);
+
+        assertEquals(amount, money.getAmount());
+        assertSame(sek, money.getCurrency());
     }
 
     @Test
-    void shouldCreateMoneyWithCorrectCurrency() {
-        Money money = new Money(sek, 100.0);
+    @DisplayName("Constructor Preserves Decimal Precision")
+    void constructorPreservesDecimalPrecision() {
+        Money money = new Money(sek, new BigDecimal("0.10"));
 
-        assertEquals(sek, money.getCurrency());
+        Money result = money.multiply(3);
+
+        assertAmountEquals("0.30", result);
+    }
+
+    @Test
+    @DisplayName("Constructor Rejects Null Amount")
+    void constructorRejectsNullAmount() {
+        assertThrows(NullPointerException.class, () -> new Money(sek, null));
     }
 
     @Test
     void shouldHandleZeroAmount() {
-        Money money = new Money(sek, 0.0);
+        Money money = new Money(sek, BigDecimal.ZERO);
 
-        assertEquals(0.0, money.getAmount(), 0.001);
+        assertAmountEquals("0", money);
     }
 
-    @Test
-    void shouldHandleDecimalAmount() {
-        Money money = new Money(sek, 99.95);
-
-        assertEquals(99.95, money.getAmount(), 0.001);
-    }
     @Test
     void shouldAddTwoMoneyAmounts() {
-        Money first = new Money(Sek.SEK, 100.0);
-        Money second = new Money(Sek.SEK, 50.0);
+        Money first = new Money(sek, new BigDecimal("100.00"));
+        Money second = new Money(sek, new BigDecimal("50.25"));
 
         Money result = first.add(second);
 
-        assertEquals(150.0, result.getAmount(), 0.001);
-        assertEquals(Sek.SEK, result.getCurrency());
+        assertAmountEquals("150.25", result);
+        assertSame(sek, result.getCurrency());
     }
 
     @Test
     void shouldSubtractTwoMoneyAmounts() {
-        Money first = new Money(Sek.SEK, 100.0);
-        Money second = new Money(Sek.SEK, 30.0);
+        Money first = new Money(sek, new BigDecimal("100.00"));
+        Money second = new Money(sek, new BigDecimal("30.25"));
 
         Money result = first.subtract(second);
 
-        assertEquals(70.0, result.getAmount(), 0.001);
-        assertEquals(Sek.SEK, result.getCurrency());
+        assertAmountEquals("69.75", result);
     }
 
     @Test
     void shouldMultiplyMoneyByAnInteger() {
-        Money money = new Money(Sek.SEK, 25.0);
+        Money money = new Money(sek, new BigDecimal("25.25"));
 
         Money result = money.multiply(3);
 
-        assertEquals(75.0, result.getAmount(), 0.001);
-        assertEquals(Sek.SEK, result.getCurrency());
+        assertAmountEquals("75.75", result);
     }
 
     @Test
     void shouldMultiplyMoneyByZero() {
-        Money money = new Money(Sek.SEK, 25.0);
+        Money money = new Money(sek, new BigDecimal("25.00"));
 
         Money result = money.multiply(0);
 
-        assertEquals(0.0, result.getAmount(), 0.001);
+        assertAmountEquals("0.00", result);
     }
 
     @Test
     void shouldCompareEqualAmounts() {
-        Money first = new Money(Sek.SEK, 100.0);
-        Money second = new Money(Sek.SEK, 100.0);
+        Money first = new Money(sek, new BigDecimal("100.0"));
+        Money second = new Money(sek, new BigDecimal("100.00"));
 
-        assertTrue(first.equals(second));
+        assertEquals(first, second);
     }
 
     @Test
     void shouldCompareDifferentAmountsAsNotEqual() {
-        Money first = new Money(Sek.SEK, 100.0);
-        Money second = new Money(Sek.SEK, 50.0);
+        Money first = new Money(sek, new BigDecimal("100"));
+        Money second = new Money(sek, new BigDecimal("50"));
 
-        assertFalse(first.equals(second));
+        assertNotEquals(first, second);
     }
 
     @Test
     void shouldIdentifyGreaterAmount() {
-        Money first = new Money(Sek.SEK, 100.0);
-        Money second = new Money(Sek.SEK, 50.0);
+        Money first = new Money(sek, new BigDecimal("100"));
+        Money second = new Money(sek, new BigDecimal("50"));
 
         assertTrue(first.isGreaterThan(second));
     }
 
     @Test
     void shouldIdentifySmallerAmount() {
-        Money first = new Money(Sek.SEK, 50.0);
-        Money second = new Money(Sek.SEK, 100.0);
+        Money first = new Money(sek, new BigDecimal("50"));
+        Money second = new Money(sek, new BigDecimal("100"));
 
         assertTrue(first.isLessThan(second));
     }
 
     @Test
     void shouldIdentifyEqualAmountsWhenComparing() {
-        Money first = new Money(Sek.SEK, 100.0);
-        Money second = new Money(Sek.SEK, 100.0);
+        Money first = new Money(sek, new BigDecimal("100.0"));
+        Money second = new Money(sek, new BigDecimal("100.00"));
 
         assertFalse(first.isGreaterThan(second));
         assertFalse(first.isLessThan(second));
@@ -124,16 +131,12 @@ class MoneyTest {
     @Test
     @DisplayName("Add Rejects Different Currencies")
     void addRejectsDifferentCurrencies() {
-        Money first = new Money(Sek.SEK, 100.0);
-        Money second = new Money(Eur.EUR, 50.0);
+        Money first = new Money(Sek.SEK, new BigDecimal("100.00"));
+        Money second = new Money(Eur.EUR, new BigDecimal("50.00"));
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> first.add(second)
-        );
-
-        assertEquals(new Money(Sek.SEK, 100.0), first);
-        assertEquals(new Money(Eur.EUR, 50.0), second);
+        assertThrows(IllegalArgumentException.class, () -> first.add(second));
+        assertAmountEquals("100.00", first);
+        assertAmountEquals("50.00", second);
     }
 
     @ParameterizedTest
@@ -141,7 +144,7 @@ class MoneyTest {
     @ValueSource(strings = {"100 SEK"})
     @DisplayName("Equals Returns False For Null Or Other Type")
     void equalsReturnsFalseForNullOrOtherType(String other) {
-        Money money = new Money(Sek.SEK, 100.0);
+        Money money = new Money(sek, new BigDecimal("100"));
 
         assertFalse(money.equals(other));
     }
@@ -149,85 +152,24 @@ class MoneyTest {
     @Test
     @DisplayName("Equal Money Objects Have Same Hash Code")
     void equalMoneyObjectsHaveSameHashCode() {
-        Money first = new Money(Sek.SEK, 100.0);
-        Money second = new Money(Sek.SEK, 100.0);
+        Money first = new Money(sek, new BigDecimal("100.0"));
+        Money second = new Money(sek, new BigDecimal("100.00"));
 
         assertEquals(first, second);
         assertEquals(first.hashCode(), second.hashCode());
     }
 
     @Test
-    @DisplayName("Add Handles Non-Finite Amounts")
-    void addHandlesNonFiniteAmounts() {
-        Money nonFinite = new Money(Sek.SEK, Double.NaN);
-        Money finite = new Money(Sek.SEK, 2.0);
+    @DisplayName("Money Supports Amounts Beyond Double Range")
+    void supportsLargeAmountsWithoutOverflow() {
+        BigDecimal largeAmount = new BigDecimal("1E+400");
+        Money money = new Money(sek, largeAmount);
 
-        Money nonFiniteFirst = nonFinite.add(finite);
-        Money nonFiniteSecond = finite.add(nonFinite);
-
-        assertTrue(Double.isNaN(nonFiniteFirst.getAmount()));
-        assertTrue(Double.isNaN(nonFiniteSecond.getAmount()));
+        assertEquals(largeAmount, money.getAmount());
+        assertEquals(largeAmount.multiply(BigDecimal.valueOf(2)), money.multiply(2).getAmount());
     }
 
-    @Test
-    @DisplayName("Subtract Handles Non-Finite Amounts")
-    void subtractHandlesNonFiniteAmounts() {
-        Money nonFinite = new Money(Sek.SEK, Double.NaN);
-        Money finite = new Money(Sek.SEK, 2.0);
-
-        Money nonFiniteFirst = nonFinite.subtract(finite);
-        Money nonFiniteSecond = finite.subtract(nonFinite);
-
-        assertTrue(Double.isNaN(nonFiniteFirst.getAmount()));
-        assertTrue(Double.isNaN(nonFiniteSecond.getAmount()));
+    private void assertAmountEquals(String expected, Money actual) {
+        assertEquals(0, new BigDecimal(expected).compareTo(actual.getAmount()));
     }
-
-    @Test
-    @DisplayName("Multiply Handles Non-Finite Amounts")
-    void multiplyHandlesNonFiniteAmounts() {
-        Money infinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
-
-        Money result = infinite.multiply(2);
-
-        assertEquals(Double.POSITIVE_INFINITY, result.getAmount());
-    }
-
-    @Test
-    @DisplayName("Comparisons Handle Non-Finite Amounts")
-    void comparisonsHandleNonFiniteAmounts() {
-        Money infinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
-        Money finite = new Money(Sek.SEK, 2.0);
-
-        assertTrue(infinite.isGreaterThan(finite));
-        assertFalse(finite.isGreaterThan(infinite));
-        assertFalse(infinite.isLessThan(finite));
-        assertTrue(finite.isLessThan(infinite));
-    }
-
-    @Test
-    @DisplayName("Equals Handles Non-Finite Amounts And Different Currencies")
-    void equalsHandlesNonFiniteAmountsAndDifferentCurrencies() {
-        Money firstInfinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
-        Money secondInfinite = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
-        Money notANumber = new Money(Sek.SEK, Double.NaN);
-        Money finite = new Money(Sek.SEK, 2.0);
-        Money otherCurrency = new Money(Eur.EUR, Double.POSITIVE_INFINITY);
-
-        assertEquals(firstInfinite, secondInfinite);
-        assertFalse(firstInfinite.equals(notANumber));
-        assertFalse(firstInfinite.equals(finite));
-        assertFalse(firstInfinite.equals(otherCurrency));
-        assertFalse(finite.equals(firstInfinite));
-    }
-
-    @Test
-    @DisplayName("Equal Non-Finite Money Objects Have The Same Hash Code")
-    void equalNonFiniteMoneyObjectsHaveTheSameHashCode() {
-        Money first = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
-        Money second = new Money(Sek.SEK, Double.POSITIVE_INFINITY);
-
-        assertEquals(first.hashCode(), second.hashCode());
-    }
-
 }
-

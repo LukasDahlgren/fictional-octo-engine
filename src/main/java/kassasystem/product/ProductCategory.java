@@ -1,5 +1,7 @@
 package kassasystem.product;
 
+import java.math.BigDecimal;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -54,7 +56,7 @@ public class ProductCategory implements Iterable<Product> {
         return products.size();
     }
 
-    public double getVat() {
+    public BigDecimal getVat() {
         return vat.getRate();
     }
 

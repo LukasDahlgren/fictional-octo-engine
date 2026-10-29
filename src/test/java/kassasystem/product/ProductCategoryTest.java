@@ -1,5 +1,7 @@
 package kassasystem.product;
 
+import java.math.BigDecimal;
+
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.scanning.EAN;
@@ -34,7 +36,7 @@ public class ProductCategoryTest {
 
         Product milk = new Product(
                 "Milk",
-                new Money(Sek.SEK, 12.50),
+                new Money(Sek.SEK, new BigDecimal("12.50")),
                 food,
                 new EAN("4006381333931")
         );
@@ -67,7 +69,7 @@ public class ProductCategoryTest {
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
         assertEquals("Food", category.getName());
-        assertEquals(0.06, category.getVat(), 0.0001);
+        assertEquals(0, new BigDecimal("0.06").compareTo(category.getVat()));
     }
 
     @Test
@@ -152,7 +154,7 @@ public class ProductCategoryTest {
     private Product createProduct(ProductCategory category, String name) {
         return new Product(
                 name,
-                new Money(Sek.SEK, 12.50),
+                new Money(Sek.SEK, new BigDecimal("12.50")),
                 category,
                 new EAN("4006381333931")
         );

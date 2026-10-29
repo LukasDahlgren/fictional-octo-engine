@@ -1,5 +1,7 @@
 package kassasystem.product;
 
+import java.math.BigDecimal;
+
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.scanning.EAN;
@@ -13,7 +15,7 @@ class ProductTest {
     @Test
     @DisplayName("Rejects Null Name")
     void rejectsNullName() {
-        Money price = new Money(Sek.SEK, 12.50);
+        Money price = new Money(Sek.SEK, new BigDecimal("12.50"));
         ProductCategory category = new ProductCategory("Food", VATCategory.SIX_PERCENT);
         EAN ean = new EAN("4006381333931");
 
@@ -44,7 +46,7 @@ class ProductTest {
                 IllegalArgumentException.class,
                 () -> new Product(
                         "Milk",
-                        new Money(Sek.SEK, 12.50),
+                        new Money(Sek.SEK, new BigDecimal("12.50")),
                         null,
                         ean
                 )
@@ -54,7 +56,7 @@ class ProductTest {
     @Test
     @DisplayName("Rejects Null EAN")
     void rejectsNullEAN() {
-        Money price = new Money(Sek.SEK, 12.50);
+        Money price = new Money(Sek.SEK, new BigDecimal("12.50"));
         ProductCategory category = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
         assertThrows(
@@ -66,7 +68,7 @@ class ProductTest {
     @Test
     @DisplayName("Returns Product Details")
     void returnsProductDetails() {
-        Money price = new Money(Sek.SEK, 12.50);
+        Money price = new Money(Sek.SEK, new BigDecimal("12.50"));
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
         EAN ean = new EAN("4006381333931");
@@ -86,7 +88,7 @@ class ProductTest {
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
         Product product = new Product(
                 "Milk",
-                new Money(Sek.SEK, 12.50),
+                new Money(Sek.SEK, new BigDecimal("12.50")),
                 category,
                 new EAN("4006381333931")
         );
@@ -102,7 +104,7 @@ class ProductTest {
 
         Product product = new Product(
                 "Milk",
-                new Money(Sek.SEK, 12.50),
+                new Money(Sek.SEK, new BigDecimal("12.50")),
                 category
         );
 
@@ -113,7 +115,7 @@ class ProductTest {
     @Test
     @DisplayName("Rejects Blank Name")
     void rejectsBlankName() {
-        Money price = new Money(Sek.SEK, 12.50);
+        Money price = new Money(Sek.SEK, new BigDecimal("12.50"));
         ProductCategory category =
                 new ProductCategory("Food", VATCategory.SIX_PERCENT);
         EAN ean = new EAN("4006381333931");

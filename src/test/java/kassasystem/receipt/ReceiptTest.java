@@ -1,5 +1,7 @@
 package kassasystem.receipt;
 
+import java.math.BigDecimal;
+
 import kassasystem.Basket;
 import kassasystem.BasketItem;
 import kassasystem.money.Currency;
@@ -41,8 +43,8 @@ class ReceiptTest{
     @BeforeEach
     void setUp() {
         basket = new Basket();
-        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        bread = new Product("Bread", new Money(Sek.SEK, 20), food);
+        milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
+        bread = new Product("Bread", new Money(Sek.SEK, new BigDecimal("20")), food);
     }
 
     @Test
@@ -51,10 +53,10 @@ class ReceiptTest{
         // Product currently has no setters, but subclasses can expose changing values.
         class MutableProduct extends Product {
             private String currentName = "Milk";
-            private Money currentPrice = new Money(Sek.SEK, 12.50);
+            private Money currentPrice = new Money(Sek.SEK, new BigDecimal("12.50"));
 
             MutableProduct() {
-                super("Milk", new Money(Sek.SEK, 12.50), food);
+                super("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
             }
 
             @Override
@@ -70,20 +72,21 @@ class ReceiptTest{
         MutableProduct product = new MutableProduct();
         BasketItem row = new BasketItem(product, 2);
         basket.addItem(row);
-        Receipt receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 5), "Discount");
+        Receipt receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, new BigDecimal("5")), "Discount");
         String originalText = receipt.toText();
 
         product.currentName = "Changed name";
-        product.currentPrice = new Money(Sek.SEK, 99);
+        product.currentPrice = new Money(Sek.SEK, new BigDecimal("99"));
         row.increaseQuantity();
         basket.removeItem(row);
         basket.addProduct(bread);
 
         assertEquals(1, receipt.getItems().size());
-        assertReceiptLine(receipt.getItems().get(0), "Milk", 2, 12.50, 25);
-        assertEquals(new Money(Sek.SEK, 25), receipt.getSubtotal());
-        assertEquals(new Money(Sek.SEK, 5), receipt.getDiscountAmount());
-        assertEquals(new Money(Sek.SEK, 20), receipt.getTotalPrice());
+        assertReceiptLine(receipt.getItems().get(0), "Milk", 2,
+                new BigDecimal("12.50"), new BigDecimal("25"));
+        assertEquals(new Money(Sek.SEK, new BigDecimal("25")), receipt.getSubtotal());
+        assertEquals(new Money(Sek.SEK, new BigDecimal("5")), receipt.getDiscountAmount());
+        assertEquals(new Money(Sek.SEK, new BigDecimal("20")), receipt.getTotalPrice());
         assertEquals(originalText, receipt.toText());
     }
 
@@ -96,21 +99,21 @@ class ReceiptTest{
     @DisplayName("Constructor Preserves Supplied Total")
     void constructorPreservesSuppliedTotal() {
         basket.addProduct(milk);
-        Money total = new Money(Sek.SEK, 0.10);
+        Money total = new Money(Sek.SEK, new BigDecimal("0.10"));
 
         Receipt receipt = new Receipt(basket, total, fixedClock());
 
         assertEquals(total, receipt.getTotalPrice());
-        assertEquals(new Money(Sek.SEK, 12.50), receipt.getSubtotal());
-        assertEquals(12.40, receipt.getDiscountAmount().getAmount(), 0.000001);
+        assertEquals(new Money(Sek.SEK, new BigDecimal("12.50")), receipt.getSubtotal());
+        assertEquals(0, new BigDecimal("12.40").compareTo(receipt.getDiscountAmount().getAmount()));
         assertEquals("Discount", receipt.getDiscountLabel());
         assertTrue(receipt.toText().contains("Discount: -12.40 SEK\nTotal: 0.10 SEK\n"));
     }
 
     @ParameterizedTest
-    @ValueSource(doubles = { -1, 12.51, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
+    @ValueSource(strings = {"-1", "12.51"})
     @DisplayName("Constructor Rejects Invalid Supplied Total")
-    void constructorRejectsInvalidSuppliedTotal(double amount) {
+    void constructorRejectsInvalidSuppliedTotal(BigDecimal amount) {
         basket.addProduct(milk);
         Money total = new Money(Sek.SEK, amount);
 
@@ -121,7 +124,7 @@ class ReceiptTest{
     @Test
     @DisplayName("Constructor Rejects Null Basket With Supplied Total")
     void constructorRejectsNullBasketWithSuppliedTotal() {
-        Money total = new Money(Sek.SEK, 0);
+        Money total = new Money(Sek.SEK, new BigDecimal("0"));
         Clock clock = fixedClock();
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -140,7 +143,7 @@ class ReceiptTest{
     @Test
     @DisplayName("Constructor Rejects Non-SEK Supplied Total")
     void constructorRejectsNonSekSuppliedTotal() {
-        Money total = new Money(new Currency("EUR", "€"), 0);
+        Money total = new Money(new Currency("EUR", "€"), new BigDecimal("0"));
 
         assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(basket, total, fixedClock()));
@@ -149,7 +152,7 @@ class ReceiptTest{
     @Test
     @DisplayName("Constructor Rejects Supplied Total Without Currency")
     void constructorRejectsSuppliedTotalWithoutCurrency() {
-        Money total = new Money(null, 0);
+        Money total = new Money(null, new BigDecimal("0"));
 
         assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(basket, total, fixedClock()));
@@ -161,7 +164,7 @@ class ReceiptTest{
         basket.addItem(new BasketItem(milk, 2));
         basket.addProduct(bread);
         Receipt receipt = new Receipt(basket, fixedClock(),
-                new Money(Sek.SEK, 4.50), "Membership discount (10%)");
+                new Money(Sek.SEK, new BigDecimal("4.50")), "Membership discount (10%)");
 
         String expected = "Receipt\n"
                 + "Date: 2026-01-15 11:30\n"
@@ -178,10 +181,10 @@ class ReceiptTest{
 
         assertEquals(expected, receipt.toText());
         assertAll("Receipt stores the checkout amounts",
-                () -> assertEquals(new Money(Sek.SEK, 45), receipt.getSubtotal()),
-                () -> assertEquals(new Money(Sek.SEK, 4.50), receipt.getDiscountAmount()),
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("45")), receipt.getSubtotal()),
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("4.50")), receipt.getDiscountAmount()),
                 () -> assertEquals("Membership discount (10%)", receipt.getDiscountLabel()),
-                () -> assertEquals(new Money(Sek.SEK, 40.50), receipt.getTotalPrice())
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("40.50")), receipt.getTotalPrice())
         );
     }
 
@@ -191,11 +194,11 @@ class ReceiptTest{
         basket.addProduct(milk);
         Receipt original = new Receipt(basket, fixedClock());
         Receipt withZeroDiscount = new Receipt(basket, fixedClock(),
-                new Money(Sek.SEK, 0), "Promotional discount");
+                new Money(Sek.SEK, new BigDecimal("0")), "Promotional discount");
 
         assertEquals(original.toText(), withZeroDiscount.toText());
         assertEquals(original.getSubtotal(), original.getTotalPrice());
-        assertEquals(new Money(Sek.SEK, 0), original.getDiscountAmount());
+        assertEquals(new Money(Sek.SEK, new BigDecimal("0")), original.getDiscountAmount());
     }
 
     @Test
@@ -203,9 +206,9 @@ class ReceiptTest{
     void fullDiscountReturnsZeroTotal() {
         basket.addProduct(milk);
         Receipt receipt = new Receipt(basket, fixedClock(),
-                new Money(Sek.SEK, 12.50), "Promotional discount (100%)");
+                new Money(Sek.SEK, new BigDecimal("12.50")), "Promotional discount (100%)");
 
-        assertEquals(new Money(Sek.SEK, 0), receipt.getTotalPrice());
+        assertEquals(new Money(Sek.SEK, new BigDecimal("0")), receipt.getTotalPrice());
         assertTrue(receipt.toText().endsWith(
                 "Promotional discount (100%): -12.50 SEK\nTotal: 0.00 SEK\n"
                 + "VAT included:\n6 %: 0.00 SEK\n"));
@@ -216,21 +219,21 @@ class ReceiptTest{
     void discountedReceiptKeepsSnapshot() {
         basket.addProduct(milk);
         Receipt receipt = new Receipt(basket, fixedClock(),
-                new Money(Sek.SEK, 2.50), "Promotional discount");
+                new Money(Sek.SEK, new BigDecimal("2.50")), "Promotional discount");
         String originalText = receipt.toText();
 
         basket.removeProduct(milk);
         basket.addProduct(bread);
 
         assertEquals(originalText, receipt.toText());
-        assertEquals(new Money(Sek.SEK, 12.50), receipt.getSubtotal());
-        assertEquals(new Money(Sek.SEK, 10), receipt.getTotalPrice());
+        assertEquals(new Money(Sek.SEK, new BigDecimal("12.50")), receipt.getSubtotal());
+        assertEquals(new Money(Sek.SEK, new BigDecimal("10")), receipt.getTotalPrice());
     }
 
     @ParameterizedTest
-    @ValueSource(doubles = { -1, 12.51, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
+    @ValueSource(strings = {"-1", "12.51"})
     @DisplayName("Constructor Rejects Invalid Discount Amount")
-    void constructorRejectsInvalidDiscountAmount(double amount) {
+    void constructorRejectsInvalidDiscountAmount(BigDecimal amount) {
         basket.addProduct(milk);
         Money discount = new Money(Sek.SEK, amount);
 
@@ -249,7 +252,7 @@ class ReceiptTest{
     @DisplayName("Constructor Rejects Non-SEK Discount")
     void constructorRejectsNonSekDiscount() {
         basket.addProduct(milk);
-        Money discount = new Money(new Currency("EUR", "€"), 1);
+        Money discount = new Money(new Currency("EUR", "€"), new BigDecimal("1"));
 
         assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(basket, fixedClock(), discount, "Promotional discount"));
@@ -258,7 +261,7 @@ class ReceiptTest{
     @Test
     @DisplayName("Constructor Rejects Discount Without Currency")
     void constructorRejectsDiscountWithoutCurrency() {
-        Money discount = new Money(null, 0);
+        Money discount = new Money(null, new BigDecimal("0"));
 
         assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(basket, fixedClock(), discount, "Promotional discount"));
@@ -272,14 +275,14 @@ class ReceiptTest{
         basket.addProduct(milk);
 
         assertThrows(IllegalArgumentException.class,
-                () -> new Receipt(basket, fixedClock(), new Money(Sek.SEK, 1), label));
+                () -> new Receipt(basket, fixedClock(), new Money(Sek.SEK, new BigDecimal("1")), label));
     }
 
     @Test
     @DisplayName("Get Total Price Keeps Snapshot After Quantity Change")
     void getTotalPriceKeepsSnapshotAfterQuantityChange() {
-        Product cheapMilk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
-        Product cheapBread = new Product("Bread", new Money(Sek.SEK, 3), food);
+        Product cheapMilk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("2.50")), food);
+        Product cheapBread = new Product("Bread", new Money(Sek.SEK, new BigDecimal("3")), food);
         basket.addItem(new BasketItem(cheapMilk, 2));
         basket.addProduct(cheapBread);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -288,7 +291,7 @@ class ReceiptTest{
 
         Money total = receipt.getTotalPrice();
         assertAll("Receipt keeps the original total",
-                () -> assertEquals(8, total.getAmount(), 0.001),
+                () -> assertEquals(0, new BigDecimal("8").compareTo(total.getAmount())),
                 () -> assertSame(Sek.SEK, total.getCurrency())
         );
     }
@@ -296,8 +299,8 @@ class ReceiptTest{
     @Test
     @DisplayName("Get Total Price Keeps Snapshot After Row Removal")
     void getTotalPriceKeepsSnapshotAfterRowRemoval() {
-        Product cheapMilk = new Product("Milk", new Money(Sek.SEK, 2.50), food);
-        Product cheapBread = new Product("Bread", new Money(Sek.SEK, 3), food);
+        Product cheapMilk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("2.50")), food);
+        Product cheapBread = new Product("Bread", new Money(Sek.SEK, new BigDecimal("3")), food);
         basket.addItem(new BasketItem(cheapMilk, 2));
         basket.addProduct(cheapBread);
         Receipt receipt = new Receipt(basket, fixedClock());
@@ -306,7 +309,7 @@ class ReceiptTest{
 
         Money total = receipt.getTotalPrice();
         assertAll("Receipt keeps the original total",
-                () -> assertEquals(8, total.getAmount(), 0.001),
+                () -> assertEquals(0, new BigDecimal("8").compareTo(total.getAmount())),
                 () -> assertSame(Sek.SEK, total.getCurrency())
         );
     }
@@ -319,7 +322,7 @@ class ReceiptTest{
         Money total = receipt.getTotalPrice();
 
         assertAll("Empty receipt total",
-                () -> assertEquals(0, total.getAmount(), 0.001),
+                () -> assertEquals(0, new BigDecimal("0").compareTo(total.getAmount())),
                 () -> assertSame(Sek.SEK, total.getCurrency())
         );
     }
@@ -353,7 +356,7 @@ class ReceiptTest{
             "TWENTY_FIVE_PERCENT, 125, '25 %: 25.00 SEK'"
     })
     @DisplayName("Receipt Shows VAT Included In Price For Each Rate")
-    void toTextShowsVatIncludedInPrice(VATCategory vatCategory, double price, String expectedVat) {
+    void toTextShowsVatIncludedInPrice(VATCategory vatCategory, BigDecimal price, String expectedVat) {
         ProductCategory category = new ProductCategory("Test category", vatCategory);
         Product product = new Product("Test product", new Money(Sek.SEK, price), category);
         basket.addProduct(product);
@@ -362,16 +365,16 @@ class ReceiptTest{
         String text = receipt.toText();
 
         assertTrue(text.endsWith("VAT included:\n" + expectedVat + "\n"));
-        assertEquals(price, receipt.getTotalPrice().getAmount(), 0.000001);
+        assertEquals(0, price.compareTo(receipt.getTotalPrice().getAmount()));
     }
 
     @Test
     @DisplayName("Receipt Groups VAT By Rate In Ascending Order")
     void toTextGroupsVatByRate() {
         ProductCategory other = new ProductCategory("Other", VATCategory.TWENTY_FIVE_PERCENT);
-        basket.addProduct(new Product("Other product", new Money(Sek.SEK, 125), other));
-        basket.addItem(new BasketItem(new Product("Food", new Money(Sek.SEK, 53), food), 2));
-        basket.addProduct(new Product("Other food", new Money(Sek.SEK, 106), food));
+        basket.addProduct(new Product("Other product", new Money(Sek.SEK, new BigDecimal("125")), other));
+        basket.addItem(new BasketItem(new Product("Food", new Money(Sek.SEK, new BigDecimal("53")), food), 2));
+        basket.addProduct(new Product("Other food", new Money(Sek.SEK, new BigDecimal("106")), food));
         Receipt receipt = new Receipt(basket, fixedClock());
 
         String text = receipt.toText();
@@ -384,13 +387,13 @@ class ReceiptTest{
     @DisplayName("Receipt Applies Discounts Across VAT Rates")
     void toTextCalculatesVatAfterDiscount(boolean supplyFinalTotal) {
         ProductCategory other = new ProductCategory("Other", VATCategory.TWENTY_FIVE_PERCENT);
-        basket.addProduct(new Product("Food", new Money(Sek.SEK, 106), food));
-        basket.addProduct(new Product("Other product", new Money(Sek.SEK, 125), other));
+        basket.addProduct(new Product("Food", new Money(Sek.SEK, new BigDecimal("106")), food));
+        basket.addProduct(new Product("Other product", new Money(Sek.SEK, new BigDecimal("125")), other));
         Receipt receipt;
         if (supplyFinalTotal) {
-            receipt = new Receipt(basket, new Money(Sek.SEK, 184.80), fixedClock());
+            receipt = new Receipt(basket, new Money(Sek.SEK, new BigDecimal("184.80")), fixedClock());
         } else {
-            receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, 46.20), "Discount");
+            receipt = new Receipt(basket, fixedClock(), new Money(Sek.SEK, new BigDecimal("46.20")), "Discount");
         }
 
         String text = receipt.toText();
@@ -400,11 +403,11 @@ class ReceiptTest{
     }
 
     @ParameterizedTest
-    @ValueSource(doubles = { 0, 106 })
+    @ValueSource(strings = {"0", "106"})
     @DisplayName("Zero Total Shows Zero VAT")
-    void toTextShowsZeroVatWhenTotalIsZero(double price) {
+    void toTextShowsZeroVatWhenTotalIsZero(BigDecimal price) {
         basket.addProduct(new Product("Test product", new Money(Sek.SEK, price), food));
-        Receipt receipt = new Receipt(basket, new Money(Sek.SEK, 0), fixedClock());
+        Receipt receipt = new Receipt(basket, new Money(Sek.SEK, new BigDecimal("0")), fixedClock());
 
         String text = receipt.toText();
 
@@ -419,7 +422,7 @@ class ReceiptTest{
             private ProductCategory currentCategory = food;
 
             MutableProduct() {
-                super("Test product", new Money(Sek.SEK, 106), food);
+                super("Test product", new Money(Sek.SEK, new BigDecimal("106")), food);
             }
 
             @Override
@@ -441,12 +444,12 @@ class ReceiptTest{
     void toTextShowsAppliedDiscount() {
         Product product = new Product(
                 "Test product",
-                new Money(Sek.SEK, 100.0),
+                new Money(Sek.SEK, new BigDecimal("100.0")),
                 food
         );
         basket.addProduct(product);
 
-        Money discountedTotal = new Money(Sek.SEK, 80.0);
+        Money discountedTotal = new Money(Sek.SEK, new BigDecimal("80.0"));
         Receipt receipt = new Receipt(
                 basket,
                 discountedTotal,
@@ -537,9 +540,9 @@ class ReceiptTest{
     }
 
     @ParameterizedTest
-    @ValueSource(doubles = { -1, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY })
+    @ValueSource(strings = {"-1"})
     @DisplayName("Constructor Rejects Invalid Subtotal")
-    void constructorRejectsInvalidSubtotal(double amount) {
+    void constructorRejectsInvalidSubtotal(BigDecimal amount) {
         Basket invalidBasket = new Basket() {
             @Override
             public Money getTotalPrice() {
@@ -551,14 +554,14 @@ class ReceiptTest{
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> new Receipt(invalidBasket, clock));
 
-        assertEquals("Subtotal must be finite and non-negative", exception.getMessage());
+        assertEquals("Subtotal must be non-negative", exception.getMessage());
     }
 
     @Test
     @DisplayName("To Text Preserves Long Product Names")
     void toTextPreservesLongProductNames() {
         String longName = "Extra long product name that fits on the receipt";
-        basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food));
+        basket.addProduct(new Product(longName, new Money(Sek.SEK, new BigDecimal("12.50")), food));
         Receipt receipt = new Receipt(basket, fixedClock());
 
         String[] lines = receipt.toText().split("\n");
@@ -570,8 +573,8 @@ class ReceiptTest{
     @DisplayName("To Text Aligns Prices After Long Product Name")
     void toTextAlignsPricesAfterLongProductName() {
         String longName = "Extra long product name that fits on the receipt";
-        basket.addProduct(new Product(longName, new Money(Sek.SEK, 12.50), food));
-        basket.addProduct(new Product("Milk", new Money(Sek.SEK, 12.50), food));
+        basket.addProduct(new Product(longName, new Money(Sek.SEK, new BigDecimal("12.50")), food));
+        basket.addProduct(new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food));
         Receipt receipt = new Receipt(basket, fixedClock());
 
         String[] lines = receipt.toText().split("\n");
@@ -607,8 +610,10 @@ class ReceiptTest{
 
         assertEquals(2, items.size());
         assertAll("Receipt keeps the original rows",
-                () -> assertReceiptLine(items.get(0), "Milk", 2, 12.50, 25),
-                () -> assertReceiptLine(items.get(1), "Bread", 1, 20, 20)
+                () -> assertReceiptLine(items.get(0), "Milk", 2,
+                        new BigDecimal("12.50"), new BigDecimal("25")),
+                () -> assertReceiptLine(items.get(1), "Bread", 1,
+                        new BigDecimal("20"), new BigDecimal("20"))
         );
     }
 
@@ -625,8 +630,10 @@ class ReceiptTest{
 
         assertEquals(2, items.size());
         assertAll("Receipt keeps the original rows",
-                () -> assertReceiptLine(items.get(0), "Milk", 2, 12.50, 25),
-                () -> assertReceiptLine(items.get(1), "Bread", 1, 20, 20)
+                () -> assertReceiptLine(items.get(0), "Milk", 2,
+                        new BigDecimal("12.50"), new BigDecimal("25")),
+                () -> assertReceiptLine(items.get(1), "Bread", 1,
+                        new BigDecimal("20"), new BigDecimal("20"))
         );
     }
 
@@ -640,7 +647,8 @@ class ReceiptTest{
 
         assertThrows(UnsupportedOperationException.class, () -> items.clear());
         assertEquals(1, receipt.getItems().size());
-        assertReceiptLine(receipt.getItems().get(0), "Milk", 2, 12.50, 25);
+        assertReceiptLine(receipt.getItems().get(0), "Milk", 2,
+                new BigDecimal("12.50"), new BigDecimal("25"));
     }
 
     @Test
@@ -684,13 +692,13 @@ class ReceiptTest{
     }
 
     private void assertReceiptLine(ReceiptLine line, String expectedName, int expectedQuantity,
-            double expectedUnitPrice, double expectedTotal) {
+            BigDecimal expectedUnitPrice, BigDecimal expectedTotal) {
         assertAll("Receipt line for " + expectedName,
                 () -> assertEquals(expectedName, line.getProductName()),
                 () -> assertEquals(expectedQuantity, line.getQuantity()),
-                () -> assertEquals(expectedUnitPrice, line.getUnitPrice().getAmount(), 0.001),
+                () -> assertEquals(0, expectedUnitPrice.compareTo(line.getUnitPrice().getAmount())),
                 () -> assertSame(Sek.SEK, line.getUnitPrice().getCurrency()),
-                () -> assertEquals(expectedTotal, line.getTotalPrice().getAmount(), 0.001),
+                () -> assertEquals(0, expectedTotal.compareTo(line.getTotalPrice().getAmount())),
                 () -> assertSame(Sek.SEK, line.getTotalPrice().getCurrency())
         );
     }

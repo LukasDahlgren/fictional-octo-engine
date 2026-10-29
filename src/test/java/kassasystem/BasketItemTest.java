@@ -1,5 +1,7 @@
 package kassasystem;
 
+import java.math.BigDecimal;
+
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -23,7 +25,7 @@ class BasketItemTest {
 
     @BeforeEach
     void setUp() {
-        product = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        product = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
     }
 
     @Test
@@ -125,7 +127,7 @@ class BasketItemTest {
         Money total = item.getTotalPrice();
 
         assertAll("Row total multiplies unit price by quantity and keeps the currency",
-                () -> assertEquals(37.50, total.getAmount(), 0.001),
+                () -> assertEquals(0, new BigDecimal("37.50").compareTo(total.getAmount())),
                 () -> assertSame(Sek.SEK, total.getCurrency())
         );
     }
@@ -149,21 +151,21 @@ class BasketItemTest {
         assertAll("Overflow leaves the row unchanged",
                 () -> assertEquals(2, item.getQuantity()),
                 () -> assertSame(product, item.getProduct()),
-                () -> assertEquals(25, item.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("25").compareTo(item.getTotalPrice().getAmount()))
         );
     }
 
     @ParameterizedTest(name = "Unit price {0}, quantity {1}, total {2}")
     @CsvSource({"0, 3, 0", "0.10, 3, 0.30", "12.50, 1, 12.50"})
     @DisplayName("Get Total Price Handles Price And Quantity Classes")
-    void getTotalPriceHandlesPriceAndQuantityClasses(double price, int quantity, double expected) {
+    void getTotalPriceHandlesPriceAndQuantityClasses(BigDecimal price, int quantity, BigDecimal expected) {
         Product pricedProduct = new Product("Product", new Money(Sek.SEK, price), food);
         BasketItem item = new BasketItem(pricedProduct, quantity);
 
         Money total = item.getTotalPrice();
 
         assertAll("Row total has the expected amount and currency",
-                () -> assertEquals(expected, total.getAmount(), 0.000001),
+                () -> assertEquals(0, expected.compareTo(total.getAmount())),
                 () -> assertSame(Sek.SEK, total.getCurrency())
         );
     }
@@ -176,7 +178,7 @@ class BasketItemTest {
         item.increaseQuantity(2);
 
         Money total = item.getTotalPrice();
-        assertEquals(37.50, total.getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("37.50").compareTo(total.getAmount()));
     }
 
     @Test
@@ -187,6 +189,6 @@ class BasketItemTest {
         item.decreaseQuantity();
 
         Money total = item.getTotalPrice();
-        assertEquals(25, total.getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("25").compareTo(total.getAmount()));
     }
 }

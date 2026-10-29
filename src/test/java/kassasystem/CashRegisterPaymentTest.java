@@ -1,5 +1,7 @@
 package kassasystem;
 
+import java.math.BigDecimal;
+
 import kassasystem.payment.FakePayer;
 import kassasystem.payment.Payer;
 import kassasystem.customer.Customer;
@@ -55,11 +57,11 @@ class CashRegisterPaymentTest {
     @BeforeEach
     void setUp() {
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
-        product = new Product("Milk", new Money(Sek.SEK, 100.0), food);
+        product = new Product("Milk", new Money(Sek.SEK, new BigDecimal("100.0")), food);
         Membership membership = new Membership(
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
         customer = new Customer("C001", "Member", membership);
-        offer = new DiscountOffer(20,
+        offer = new DiscountOffer(new BigDecimal("20"),
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
     }
 
@@ -84,7 +86,7 @@ class CashRegisterPaymentTest {
     @ParameterizedTest(name = "{0}: {1} SEK")
     @CsvSource({"ANONYMOUS, 100.0", "CUSTOMER, 90.0", "OFFER, 80.0"})
     @DisplayName("Successful Payment Completes And Logs Each Checkout Variant With The Correct Final Amount")
-    void checkoutCompletesAtFinalPrice(CheckoutType checkoutType, double expectedAmount) throws IOException {
+    void checkoutCompletesAtFinalPrice(CheckoutType checkoutType, BigDecimal expectedAmount) throws IOException {
         Path logFile = tempDir.resolve("transactions.txt");
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {
@@ -175,7 +177,7 @@ class CashRegisterPaymentTest {
     @ParameterizedTest(name = "{0}: {1} SEK")
     @CsvSource({"ANONYMOUS, 100.0", "CUSTOMER, 90.0", "OFFER, 80.0"})
     @DisplayName("Logging Failure After Payment Leaves The Purchase Completed And Prevents Another Charge")
-    void loggingFailureCannotChargePurchaseAgain(CheckoutType checkoutType, double expectedAmount) {
+    void loggingFailureCannotChargePurchaseAgain(CheckoutType checkoutType, BigDecimal expectedAmount) {
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {
             paymentAttempts.add(amount);
@@ -210,7 +212,7 @@ class CashRegisterPaymentTest {
     @ParameterizedTest(name = "{0}: {1} SEK")
     @CsvSource({"ANONYMOUS, 100.0", "CUSTOMER, 90.0", "OFFER, 80.0"})
     @DisplayName("Rejected Payment Can Be Retried Without Duplicate Log Entries Or Purchase History")
-    void rejectedPaymentCanBeRetried(CheckoutType checkoutType, double expectedAmount) throws IOException {
+    void rejectedPaymentCanBeRetried(CheckoutType checkoutType, BigDecimal expectedAmount) throws IOException {
         List<Money> paymentAttempts = new ArrayList<>();
         Payer payer = amount -> {
             paymentAttempts.add(amount);
@@ -327,7 +329,7 @@ class CashRegisterPaymentTest {
         };
         CashRegister register = new CashRegister(clock, payer);
         Purchase purchase = register.startPurchase();
-        Product invalidProduct = new Product("Invalid", new Money(Sek.SEK, -1.0), product.getCategory());
+        Product invalidProduct = new Product("Invalid", new Money(Sek.SEK, new BigDecimal("-1.0")), product.getCategory());
         purchase.getBasket().addProduct(invalidProduct);
 
         assertThrows(IllegalArgumentException.class, () -> completePurchase(register, checkoutType));

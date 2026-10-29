@@ -1,5 +1,7 @@
 package kassasystem.discount;
 
+import java.math.BigDecimal;
+
 import kassasystem.customer.Customer;
 import kassasystem.customer.Membership;
 import kassasystem.money.Money;
@@ -26,7 +28,7 @@ class DiscountCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        originalPrice = new Money(Sek.SEK, 100.0);
+        originalPrice = new Money(Sek.SEK, new BigDecimal("100.0"));
         customerWithoutMembership =
                 new Customer("C001", "Test Customer");
 
@@ -44,7 +46,7 @@ class DiscountCalculatorTest {
         offerEndDate = LocalDate.of(2026, 10, 31);
 
         twentyPercentOffer = new DiscountOffer(
-                20.0,
+                new BigDecimal("20.0"),
                 offerStartDate,
                 offerEndDate
         );
@@ -59,7 +61,7 @@ class DiscountCalculatorTest {
                 purchaseDate
         );
 
-        assertEquals(100.0, finalPrice.getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("100.0").compareTo(finalPrice.getAmount()));
         assertSame(
                 originalPrice.getCurrency(),
                 finalPrice.getCurrency()
@@ -75,7 +77,7 @@ class DiscountCalculatorTest {
                 purchaseDate
         );
 
-        assertEquals(90.0, finalPrice.getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("90.0").compareTo(finalPrice.getAmount()));
         assertSame(
                 originalPrice.getCurrency(),
                 finalPrice.getCurrency()
@@ -92,7 +94,7 @@ class DiscountCalculatorTest {
                 twentyPercentOffer
         );
 
-        assertEquals(80.0, finalPrice.getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("80.0").compareTo(finalPrice.getAmount()));
         assertSame(
                 originalPrice.getCurrency(),
                 finalPrice.getCurrency()
@@ -103,7 +105,7 @@ class DiscountCalculatorTest {
     @DisplayName("Membership Discount Is Selected When It Is Greater")
     void membershipDiscountIsSelectedWhenItIsGreater() {
         DiscountOffer fivePercentOffer = new DiscountOffer(
-                5.0,
+                new BigDecimal("5.0"),
                 offerStartDate,
                 offerEndDate
         );
@@ -115,7 +117,7 @@ class DiscountCalculatorTest {
                 fivePercentOffer
         );
 
-        assertEquals(90.0, finalPrice.getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("90.0").compareTo(finalPrice.getAmount()));
     }
 
     @Test
@@ -128,7 +130,7 @@ class DiscountCalculatorTest {
                 twentyPercentOffer
         );
 
-        assertEquals(80.0, finalPrice.getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("80.0").compareTo(finalPrice.getAmount()));
     }
 
     @Test
@@ -143,7 +145,7 @@ class DiscountCalculatorTest {
                 twentyPercentOffer
         );
 
-        assertEquals(100.0, finalPrice.getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("100.0").compareTo(finalPrice.getAmount()));
         assertSame(
                 originalPrice.getCurrency(),
                 finalPrice.getCurrency()

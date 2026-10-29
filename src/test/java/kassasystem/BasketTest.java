@@ -1,5 +1,7 @@
 package kassasystem;
 
+import java.math.BigDecimal;
+
 import kassasystem.money.Currency;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
@@ -27,8 +29,8 @@ class BasketTest {
     @BeforeEach
     void setUp() {
         basket = new Basket();
-        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        bread = new Product("Bread", new Money(Sek.SEK, 20), food);
+        milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
+        bread = new Product("Bread", new Money(Sek.SEK, new BigDecimal("20")), food);
     }
 
     @Test
@@ -75,7 +77,7 @@ class BasketTest {
     @Test
     @DisplayName("Add Item Merges Products With Same EAN")
     void addItemMergesProductsWithSameEan() {
-        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food,
                 new EAN(milk.getEan().getCode()));
         basket.addItem(new BasketItem(milk, 2));
 
@@ -83,7 +85,7 @@ class BasketTest {
 
         assertEquals(1, basket.getItems().size());
         assertEquals(5, basket.getItems().get(0).getQuantity());
-        assertEquals(62.50, basket.getTotalPrice().getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("62.50").compareTo(basket.getTotalPrice().getAmount()));
     }
 
     @Test
@@ -95,7 +97,7 @@ class BasketTest {
         assertAll("Basket remains unchanged after a missing row",
                 () -> assertEquals(1, basket.getTotalQuantity()),
                 () -> assertSame(bread, basket.getItems().get(0).getProduct()),
-                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("20").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -103,7 +105,7 @@ class BasketTest {
     @DisplayName("Add Item Rejects Different Currency")
     void addItemRejectsDifferentCurrency() {
         Currency euro = new Currency("EUR", "€");
-        Product product = new Product("Milk", new Money(euro, 2), food);
+        Product product = new Product("Milk", new Money(euro, new BigDecimal("2")), food);
         BasketItem item = new BasketItem(product, 1);
         basket.addProduct(bread);
 
@@ -111,14 +113,14 @@ class BasketTest {
         assertAll("Basket remains unchanged after a different currency",
                 () -> assertEquals(1, basket.getTotalQuantity()),
                 () -> assertSame(bread, basket.getItems().get(0).getProduct()),
-                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("20").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
     @Test
     @DisplayName("Add Item Rejects Missing Currency")
     void addItemRejectsMissingCurrency() {
-        Product product = new Product("Milk", new Money(null, 2), food);
+        Product product = new Product("Milk", new Money(null, new BigDecimal("2")), food);
         BasketItem item = new BasketItem(product, 1);
         basket.addProduct(bread);
 
@@ -126,7 +128,7 @@ class BasketTest {
         assertAll("Basket remains unchanged after a missing currency",
                 () -> assertEquals(1, basket.getTotalQuantity()),
                 () -> assertSame(bread, basket.getItems().get(0).getProduct()),
-                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("20").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -153,7 +155,7 @@ class BasketTest {
         assertAll("Basket remains unchanged after a missing product",
                 () -> assertEquals(1, basket.getTotalQuantity()),
                 () -> assertSame(bread, basket.getItems().get(0).getProduct()),
-                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("20").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -199,7 +201,7 @@ class BasketTest {
         Money total = basket.getTotalPrice();
 
         assertAll("Total price sums rows and keeps the currency",
-                () -> assertEquals(85, total.getAmount(), 0.001),
+                () -> assertEquals(0, new BigDecimal("85").compareTo(total.getAmount())),
                 () -> assertSame(Sek.SEK, total.getCurrency())
         );
     }
@@ -244,7 +246,7 @@ class BasketTest {
     @Test
     @DisplayName("Remove Product With Same EAN Removes One Unit")
     void removeProductWithSameEanRemovesOneUnit() {
-        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food,
                 new EAN(milk.getEan().getCode()));
         basket.addItem(new BasketItem(milk, 3));
 
@@ -259,7 +261,7 @@ class BasketTest {
     @Test
     @DisplayName("Remove Product With Same EAN Removes Last Unit")
     void removeProductWithSameEanRemovesLastUnit() {
-        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food,
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food,
                 new EAN(milk.getEan().getCode()));
         basket.addProduct(milk);
 
@@ -290,7 +292,7 @@ class BasketTest {
     void removeAllRemovesSelectedRows() {
         BasketItem milkItem = new BasketItem(milk, 2);
         BasketItem breadItem = new BasketItem(bread, 3);
-        Product cheese = new Product("Cheese", new Money(Sek.SEK, 30), food);
+        Product cheese = new Product("Cheese", new Money(Sek.SEK, new BigDecimal("30")), food);
         BasketItem cheeseItem = new BasketItem(cheese, 1);
         basket.addItem(milkItem);
         basket.addItem(breadItem);
@@ -323,7 +325,7 @@ class BasketTest {
     void addProductRejectsMissingCurrency() {
         Basket expectedBasket = new Basket();
         expectedBasket.addItem(new BasketItem(bread, 1));
-        Product invalidProduct = new Product("Invalid", new Money(null, 2), food);
+        Product invalidProduct = new Product("Invalid", new Money(null, new BigDecimal("2")), food);
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addProduct(invalidProduct));
@@ -336,7 +338,7 @@ class BasketTest {
         Basket expectedBasket = new Basket();
         expectedBasket.addItem(new BasketItem(bread, 1));
         Currency euro = new Currency("EUR", "€");
-        Product invalidProduct = new Product("Invalid", new Money(euro, 2), food);
+        Product invalidProduct = new Product("Invalid", new Money(euro, new BigDecimal("2")), food);
         basket.addProduct(bread);
 
         assertThrows(IllegalArgumentException.class, () -> basket.addProduct(invalidProduct));
@@ -358,14 +360,14 @@ class BasketTest {
                 () -> assertEquals(1, breadItem.getQuantity()),
                 () -> assertEquals(5, milkItem.getQuantity()),
                 () -> assertEquals(6, basket.getTotalQuantity()),
-                () -> assertEquals(82.50, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("82.50").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
     @Test
     @DisplayName("Add Item Keeps Distinct Product Objects Separate")
     void addItemKeepsDistinctProductObjectsSeparate() {
-        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
         BasketItem first = new BasketItem(milk, 2);
         BasketItem second = new BasketItem(otherMilk, 3);
         basket.addItem(first);
@@ -406,7 +408,7 @@ class BasketTest {
                 () -> assertFalse(removed),
                 () -> assertEquals(List.of(storedItem), basket.getItems()),
                 () -> assertEquals(2, basket.getTotalQuantity()),
-                () -> assertEquals(25, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("25").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -422,7 +424,7 @@ class BasketTest {
                 () -> assertFalse(removed),
                 () -> assertEquals(List.of(item), basket.getItems()),
                 () -> assertEquals(2, basket.getTotalQuantity()),
-                () -> assertEquals(25, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("25").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -438,7 +440,7 @@ class BasketTest {
                 () -> assertFalse(removed),
                 () -> assertEquals(List.of(item), basket.getItems()),
                 () -> assertEquals(2, basket.getTotalQuantity()),
-                () -> assertEquals(25, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("25").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -457,7 +459,7 @@ class BasketTest {
                 () -> assertEquals(List.of(breadItem, milkItem), basket.getItems()),
                 () -> assertEquals(1, milkItem.getQuantity()),
                 () -> assertEquals(2, basket.getTotalQuantity()),
-                () -> assertEquals(32.50, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("32.50").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -474,7 +476,7 @@ class BasketTest {
                 () -> assertTrue(removed),
                 () -> assertEquals(List.of(breadItem), basket.getItems()),
                 () -> assertEquals(1, basket.getTotalQuantity()),
-                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("20").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -482,7 +484,7 @@ class BasketTest {
     @DisplayName("Remove Product Does Not Match By Name")
     void removeProductDoesNotMatchByName() {
         basket.addProduct(milk);
-        Product otherMilk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product otherMilk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
 
         boolean removed = basket.removeProduct(otherMilk);
 
@@ -508,7 +510,7 @@ class BasketTest {
                 () -> assertTrue(removed),
                 () -> assertEquals(List.of(breadItem), basket.getItems()),
                 () -> assertEquals(1, basket.getTotalQuantity()),
-                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("20").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -526,7 +528,7 @@ class BasketTest {
                 () -> assertTrue(removed),
                 () -> assertEquals(List.of(breadItem), basket.getItems()),
                 () -> assertEquals(1, basket.getTotalQuantity()),
-                () -> assertEquals(20, basket.getTotalPrice().getAmount(), 0.001)
+                () -> assertEquals(0, new BigDecimal("20").compareTo(basket.getTotalPrice().getAmount()))
         );
     }
 
@@ -700,7 +702,7 @@ class BasketTest {
                 () -> assertTrue(basket.isEmpty()),
                 () -> assertTrue(basket.getItems().isEmpty()),
                 () -> assertEquals(0, basket.getTotalQuantity()),
-                () -> assertEquals(0, basket.getTotalPrice().getAmount(), 0.001),
+                () -> assertEquals(0, new BigDecimal("0").compareTo(basket.getTotalPrice().getAmount())),
                 () -> assertSame(Sek.SEK, basket.getTotalPrice().getCurrency())
         );
     }
@@ -713,8 +715,8 @@ class BasketTest {
         assertAll("Basket totals",
                 () -> assertEquals(expected.isEmpty(), actual.isEmpty(), "Empty basket"),
                 () -> assertEquals(expected.getTotalQuantity(), actual.getTotalQuantity(), "Total quantity"),
-                () -> assertEquals(expected.getTotalPrice().getAmount(),
-                        actual.getTotalPrice().getAmount(), 0.001, "Total price"),
+                () -> assertEquals(0, expected.getTotalPrice().getAmount()
+                        .compareTo(actual.getTotalPrice().getAmount()), "Total price"),
                 () -> assertSame(expected.getTotalPrice().getCurrency(),
                         actual.getTotalPrice().getCurrency(), "Currency")
         );

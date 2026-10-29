@@ -1,5 +1,7 @@
 package kassasystem;
 
+import java.math.BigDecimal;
+
 import kassasystem.payment.FakePayer;
 import java.time.Clock;
 import java.time.Instant;
@@ -45,8 +47,8 @@ class CashRegisterTest {
     @BeforeEach
     void setUp() {
         register = new CashRegister(Clock.systemUTC(), new FakePayer(true));
-        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
-        bread = new Product("Bread", new Money(Sek.SEK, 20.00), food);
+        milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
+        bread = new Product("Bread", new Money(Sek.SEK, new BigDecimal("20.00")), food);
     }
 
     @Test
@@ -158,9 +160,9 @@ class CashRegisterTest {
 
         assertEquals(2, receipt.getItems().size());
         assertAll("Receipt contains the purchased rows and total",
-                () -> assertReceiptLine(receipt.getItems().get(0), "Milk", 2, 12.50),
-                () -> assertReceiptLine(receipt.getItems().get(1), "Bread", 1, 20.00),
-                () -> assertEquals(45.00, receipt.getTotalPrice().getAmount(), 0.001),
+                () -> assertReceiptLine(receipt.getItems().get(0), "Milk", 2, new BigDecimal("12.50")),
+                () -> assertReceiptLine(receipt.getItems().get(1), "Bread", 1, new BigDecimal("20.00")),
+                () -> assertEquals(0, new BigDecimal("45.00").compareTo(receipt.getTotalPrice().getAmount())),
                 () -> assertEquals(Sek.SEK, receipt.getTotalPrice().getCurrency())
         );
     }
@@ -177,8 +179,8 @@ class CashRegisterTest {
         assertEquals(1, receipt.getItems().size());
         assertAll("Returned receipt keeps the original purchase contents",
                 () -> assertEquals(1, purchase.getBasket().getTotalQuantity()),
-                () -> assertReceiptLine(receipt.getItems().get(0), "Milk", 1, 12.50),
-                () -> assertEquals(12.50, receipt.getTotalPrice().getAmount(), 0.001)
+                () -> assertReceiptLine(receipt.getItems().get(0), "Milk", 1, new BigDecimal("12.50")),
+                () -> assertEquals(0, new BigDecimal("12.50").compareTo(receipt.getTotalPrice().getAmount()))
         );
     }
 
@@ -186,7 +188,7 @@ class CashRegisterTest {
     @DisplayName("Receipt Creation Failure Keeps The Purchase Active In The Register")
     void completePurchaseKeepsPurchaseActiveWhenReceiptCreationFails() {
         Purchase purchase = register.startPurchase();
-        Product invalidProduct = new Product("Milk", new Money(Sek.SEK, -1.00), food);
+        Product invalidProduct = new Product("Milk", new Money(Sek.SEK, new BigDecimal("-1.00")), food);
         purchase.getBasket().addProduct(invalidProduct);
 
         assertThrows(IllegalArgumentException.class, () -> register.completePurchase());
@@ -234,7 +236,7 @@ class CashRegisterTest {
         previousPurchase.getBasket().addProduct(milk);
         register.completePurchase(customer);
         Purchase purchase = register.startPurchase();
-        DiscountOffer offer = new DiscountOffer(20,
+        DiscountOffer offer = new DiscountOffer(new BigDecimal("20"),
                 LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
 
         IllegalStateException exception;
@@ -286,7 +288,7 @@ class CashRegisterTest {
                 () -> assertEquals("Only active purchases can be completed", exception.getMessage()),
                 () -> assertSame(purchase, register.getCurrentPurchase()),
                 () -> assertEquals(status, purchase.getStatus()),
-                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice())
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("12.50")), purchase.getBasket().getTotalPrice())
         );
     }
 
@@ -361,7 +363,7 @@ class CashRegisterTest {
                 () -> assertEquals("Customer must not be null", exception.getMessage()),
                 () -> assertSame(purchase, register.getCurrentPurchase()),
                 () -> assertEquals(Purchase.Status.ACTIVE, purchase.getStatus()),
-                () -> assertEquals(new Money(Sek.SEK, 12.50), purchase.getBasket().getTotalPrice())
+                () -> assertEquals(new Money(Sek.SEK, new BigDecimal("12.50")), purchase.getBasket().getTotalPrice())
         );
     }
 
@@ -381,7 +383,7 @@ class CashRegisterTest {
         Customer customer = new Customer("C001", "Member", membership);
         Product product = new Product(
                 "Test product",
-                new Money(Sek.SEK, 100.0),
+                new Money(Sek.SEK, new BigDecimal("100.0")),
                 food
         );
 
@@ -390,7 +392,7 @@ class CashRegisterTest {
 
         Receipt receipt = register.completePurchase(customer);
 
-        assertEquals(90.0, receipt.getTotalPrice().getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("90.0").compareTo(receipt.getTotalPrice().getAmount()));
     }
 
     @Test
@@ -409,14 +411,14 @@ class CashRegisterTest {
         Customer customer = new Customer("C001", "Member", membership);
 
         DiscountOffer offer = new DiscountOffer(
-                20.0,
+                new BigDecimal("20.0"),
                 LocalDate.of(2026, 10, 1),
                 LocalDate.of(2026, 10, 31)
         );
 
         Product product = new Product(
                 "Test product",
-                new Money(Sek.SEK, 100.0),
+                new Money(Sek.SEK, new BigDecimal("100.0")),
                 food
         );
 
@@ -425,7 +427,7 @@ class CashRegisterTest {
 
         Receipt receipt = register.completePurchase(customer, offer);
 
-        assertEquals(80.0, receipt.getTotalPrice().getAmount(), 0.001);
+        assertEquals(0, new BigDecimal("80.0").compareTo(receipt.getTotalPrice().getAmount()));
     }
 
     @Test
@@ -461,11 +463,11 @@ class CashRegisterTest {
     }
 
     private void assertReceiptLine(ReceiptLine line, String expectedName,
-            int expectedQuantity, double expectedUnitPrice) {
+            int expectedQuantity, BigDecimal expectedUnitPrice) {
         assertAll("Receipt line for " + expectedName,
                 () -> assertEquals(expectedName, line.getProductName()),
                 () -> assertEquals(expectedQuantity, line.getQuantity()),
-                () -> assertEquals(expectedUnitPrice, line.getUnitPrice().getAmount(), 0.001)
+                () -> assertEquals(0, expectedUnitPrice.compareTo(line.getUnitPrice().getAmount()))
         );
     }
 

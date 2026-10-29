@@ -1,5 +1,7 @@
 package kassasystem.money;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,7 +19,7 @@ class CurrencyTest {
 
         Money result = currency.getZeroMoney();
 
-        assertEquals(0.0, result.getAmount());
+        assertEquals(0, new BigDecimal("0.0").compareTo(result.getAmount()));
         assertSame(currency, result.getCurrency());
     }
 

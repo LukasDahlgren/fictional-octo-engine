@@ -1,5 +1,7 @@
 package kassasystem.scanning;
 
+import java.math.BigDecimal;
+
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -101,7 +103,7 @@ class BarcodeScannerTest {
     @DisplayName("Scan Returns Found With Matching Product")
     void scanReturnsFoundWithMatchingProduct() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food, ean);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         FixedProductCatalog productCatalog = new FixedProductCatalog(milk);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);

@@ -1,5 +1,7 @@
 package kassasystem;
 
+import java.math.BigDecimal;
+
 import kassasystem.payment.FakePayer;
 
 import java.time.Clock;
@@ -29,7 +31,7 @@ class CashRegisterScanningIntegrationTest {
     @DisplayName("Two Scans Through The Real Product Catalog Create One Row With Quantity Two And The Correct Total")
     void scanProductTwiceWithRealCatalogGroupsProductInBasket() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food, ean);
         ProductCatalog productCatalog = new ProductCatalog();
         productCatalog.add(milk);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
@@ -51,7 +53,7 @@ class CashRegisterScanningIntegrationTest {
         assertAll("Repeated scans produce one row with two units and the correct total",
                 () -> assertSame(milk, basket.getItems().get(0).getProduct()),
                 () -> assertEquals(2, basket.getItems().get(0).getQuantity()),
-                () -> assertEquals(25.00, basket.getTotalPrice().getAmount(), 0.001),
+                () -> assertEquals(0, new BigDecimal("25.00").compareTo(basket.getTotalPrice().getAmount())),
                 () -> assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency())
         );
     }

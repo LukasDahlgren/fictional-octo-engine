@@ -1,5 +1,7 @@
 package kassasystem.scanning;
 
+import java.math.BigDecimal;
+
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -22,7 +24,7 @@ class ScanResultTest {
 
     @BeforeEach
     void setUp() {
-        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
     }
 
     @Test

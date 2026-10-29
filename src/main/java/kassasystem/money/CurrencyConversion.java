@@ -1,23 +1,21 @@
 package kassasystem.money;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 public class CurrencyConversion {
-    private final double sekPerEur;
-    private final double conversionFee;
-    private static final double FIXED_CONVERSION_FEE = 10.0;
+    private final BigDecimal sekPerEur;
+    private final BigDecimal conversionFee;
+    private static final BigDecimal FIXED_CONVERSION_FEE = new BigDecimal("10.00");
 
-    public CurrencyConversion(double sekPerEur, double conversionFee) {
-        if (!Double.isFinite(sekPerEur)) {
-            throw new IllegalArgumentException("Exchange rate must be finite");
-        }
-        if (sekPerEur <= 0) {
+    public CurrencyConversion(BigDecimal sekPerEur, BigDecimal conversionFee) {
+        Objects.requireNonNull(sekPerEur, "Exchange rate must not be null");
+        Objects.requireNonNull(conversionFee, "Conversion fee must not be null");
+        if (sekPerEur.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Exchange rate must be greater than zero");
         }
-        if (!Double.isFinite(conversionFee)) {
-            throw new IllegalArgumentException("Conversion fee must be finite");
-        }
-        if (conversionFee <= 0) {
+        if (conversionFee.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Conversion fee must be greater than zero");
         }
         this.sekPerEur = sekPerEur;
@@ -27,22 +25,17 @@ public class CurrencyConversion {
 
     public Money convertToSek(Money amount) {
         Objects.requireNonNull(amount, "Amount must not be null");
-        if (!Double.isFinite(amount.getAmount())) {
-            throw new IllegalArgumentException("Amount must be finite");
-        }
 
         if (amount.getCurrency() == Sek.SEK) {
             return amount;
         }
 
         if (amount.getCurrency() == Eur.EUR) {
-            double convertedAmount = amount.getAmount() * sekPerEur;
-            double percentageFee = convertedAmount * conversionFee;
-            double totalWithFees =
-                    convertedAmount + percentageFee + FIXED_CONVERSION_FEE;
-
-            double roundedAmount =
-                    Math.round(totalWithFees * 100.0) / 100.0;
+            BigDecimal convertedAmount = amount.getAmount().multiply(sekPerEur);
+            BigDecimal percentageFee = convertedAmount.multiply(conversionFee);
+            BigDecimal totalWithFees = convertedAmount.add(percentageFee)
+                    .add(FIXED_CONVERSION_FEE);
+            BigDecimal roundedAmount = totalWithFees.setScale(2, RoundingMode.HALF_UP);
 
             return new Money(Sek.SEK, roundedAmount);
         }

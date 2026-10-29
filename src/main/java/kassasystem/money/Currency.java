@@ -1,5 +1,7 @@
 package kassasystem.money;
 
+import java.math.BigDecimal;
+
 public class Currency implements Comparable<Currency>{
 
    private String name;
@@ -11,7 +13,7 @@ public class Currency implements Comparable<Currency>{
    }
 
    public Money getZeroMoney(){
-      return new Money(this, 0);
+      return new Money(this, BigDecimal.ZERO);
    }
 
    @Override

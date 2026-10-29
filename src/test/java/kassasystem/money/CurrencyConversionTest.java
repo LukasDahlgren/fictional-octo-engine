@@ -1,129 +1,106 @@
 package kassasystem.money;
 
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CurrencyConversionTest {
 
-     @Test
-     void euroToSekShouldBeCorrect() {
-         CurrencyConversion conversion = new CurrencyConversion(10.0, 0.02);
-         Money amount = new Money(Eur.EUR, 100.0);
+    @Test
+    void euroToSekShouldBeCorrect() {
+        CurrencyConversion conversion = conversion("10", "0.02");
+        Money amount = new Money(Eur.EUR, new BigDecimal("100.00"));
 
-         Money result = conversion.convertToSek(amount);
+        Money result = conversion.convertToSek(amount);
 
-         assertEquals(Sek.SEK, result.getCurrency());
-         assertEquals(1030.0, result.getAmount(), 0.001);
-     }
+        assertSame(Sek.SEK, result.getCurrency());
+        assertEquals(new BigDecimal("1030.00"), result.getAmount());
+    }
 
-     @Test
-    void conversionWithSameCurrency() {
-         CurrencyConversion conversion = new CurrencyConversion(10.0, 0.02);
-         Money amount = new Money(Sek.SEK, 100.0);
+    @Test
+    void conversionWithSameCurrencyReturnsSameMoney() {
+        CurrencyConversion conversion = conversion("10", "0.02");
+        Money amount = new Money(Sek.SEK, new BigDecimal("100.00"));
 
-         Money result = conversion.convertToSek(amount);
+        assertSame(amount, conversion.convertToSek(amount));
+    }
 
-         assertSame(amount, result);
-     }
-
-     @Test
+    @Test
     void rejectZeroExchangeRate() {
-         assertThrows(IllegalArgumentException.class, () -> new CurrencyConversion(0, 0.02));
-     }
+        assertThrows(IllegalArgumentException.class,
+                () -> conversion("0", "0.02"));
+    }
 
-     @Test
+    @Test
     void rejectNegativeExchangeRate() {
-         assertThrows(IllegalArgumentException.class, () -> new CurrencyConversion(-1, 0.02));
-     }
+        assertThrows(IllegalArgumentException.class,
+                () -> conversion("-1", "0.02"));
+    }
 
-     @Test
+    @Test
     void rejectNegativeConversionFee() {
-         assertThrows(IllegalArgumentException.class, () -> new CurrencyConversion(10.0, -0.02));
-     }
+        assertThrows(IllegalArgumentException.class,
+                () -> conversion("10", "-0.02"));
+    }
 
-     @Test
+    @Test
     void rejectZeroConversionFee() {
-         assertThrows(IllegalArgumentException.class, () -> new CurrencyConversion(10, 0));
-     }
+        assertThrows(IllegalArgumentException.class,
+                () -> conversion("10", "0"));
+    }
 
-     @Test
+    @Test
+    void rejectNullExchangeRateOrFee() {
+        assertThrows(NullPointerException.class,
+                () -> new CurrencyConversion(null, new BigDecimal("0.02")));
+        assertThrows(NullPointerException.class,
+                () -> new CurrencyConversion(new BigDecimal("10"), null));
+    }
+
+    @Test
     void rejectNullAsAmount() {
-         CurrencyConversion conversion = new CurrencyConversion(10.0, 0.02);
+        CurrencyConversion conversion = conversion("10", "0.02");
 
-         assertThrows(NullPointerException.class, () -> conversion.convertToSek(null));
+        assertThrows(NullPointerException.class, () -> conversion.convertToSek(null));
+    }
 
-     }
-
-     @Test
+    @Test
     void rejectUnknownCurrency() {
-         Currency unsupportedCurrency = new Currency("USD", "Usd") {};
+        Currency unsupportedCurrency = new Currency("USD", "Usd") {};
+        CurrencyConversion conversion = conversion("10", "0.02");
+        Money amount = new Money(unsupportedCurrency, new BigDecimal("100.00"));
 
-         CurrencyConversion conversion = new CurrencyConversion(10.0, 0.02);
-         Money amount = new Money(unsupportedCurrency, 100.0);
-
-         assertThrows(IllegalArgumentException.class,() -> conversion.convertToSek(amount));
-     }
+        assertThrows(IllegalArgumentException.class,
+                () -> conversion.convertToSek(amount));
+    }
 
     @Test
     @DisplayName("Conversion Rounds To Two Decimal Places")
     void conversionRoundsToTwoDecimalPlaces() {
-        CurrencyConversion conversion =
-                new CurrencyConversion(10.123, 0.02);
-        Money amount = new Money(Eur.EUR, 1.0);
+        CurrencyConversion conversion = conversion("10.123", "0.02");
+        Money amount = new Money(Eur.EUR, new BigDecimal("1.00"));
 
         Money result = conversion.convertToSek(amount);
 
-        assertEquals(new Money(Sek.SEK, 20.33), result);
+        assertEquals(new BigDecimal("20.33"), result.getAmount());
     }
 
-    @ParameterizedTest(name = "Exchange rate: {0}")
-    @ValueSource(doubles = {
-            Double.NaN,
-            Double.POSITIVE_INFINITY,
-            Double.NEGATIVE_INFINITY
-    })
-    @DisplayName("Constructor Rejects Non Finite Exchange Rate")
-    void constructorRejectsNonFiniteExchangeRate(double rate) {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> new CurrencyConversion(rate, 0.02)
-        );
+    @Test
+    @DisplayName("Conversion Handles Amounts Beyond Double Range")
+    void conversionHandlesLargeAmounts() {
+        CurrencyConversion conversion = conversion("10", "0.02");
+        Money amount = new Money(Eur.EUR, new BigDecimal("1E+400"));
+
+        Money result = conversion.convertToSek(amount);
+
+        assertEquals(new BigDecimal("1E+400").multiply(new BigDecimal("10.2"))
+                .add(new BigDecimal("10.00")).setScale(2), result.getAmount());
     }
 
-    @ParameterizedTest(name = "Conversion fee: {0}")
-    @ValueSource(doubles = {
-            Double.NaN,
-            Double.POSITIVE_INFINITY,
-            Double.NEGATIVE_INFINITY
-    })
-    @DisplayName("Constructor Rejects Non Finite Conversion Fee")
-    void constructorRejectsNonFiniteConversionFee(double fee) {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> new CurrencyConversion(10.0, fee)
-        );
+    private CurrencyConversion conversion(String rate, String fee) {
+        return new CurrencyConversion(new BigDecimal(rate), new BigDecimal(fee));
     }
-
-    @ParameterizedTest(name = "Amount: {0}")
-    @ValueSource(doubles = {
-            Double.NaN,
-            Double.POSITIVE_INFINITY,
-            Double.NEGATIVE_INFINITY
-    })
-    @DisplayName("Conversion Rejects Non Finite Amount")
-    void conversionRejectsNonFiniteAmount(double value) {
-        CurrencyConversion conversion =
-                new CurrencyConversion(10.0, 0.02);
-        Money amount = new Money(Eur.EUR, value);
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> conversion.convertToSek(amount)
-        );
-    }
-
 }

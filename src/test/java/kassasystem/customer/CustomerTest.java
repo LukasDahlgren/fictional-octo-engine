@@ -1,5 +1,7 @@
 package kassasystem.customer;
 
+import java.math.BigDecimal;
+
 import kassasystem.payment.FakePayer;
 import kassasystem.Purchase;
 import kassasystem.CashRegister;
@@ -35,7 +37,7 @@ class CustomerTest {
         CashRegister register = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         Purchase purchase = register.startPurchase();
         ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        Product milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
         purchase.getBasket().addProduct(milk);
         register.completePurchase();
 

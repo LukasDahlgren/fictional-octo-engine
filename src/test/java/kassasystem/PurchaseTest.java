@@ -1,5 +1,7 @@
 package kassasystem;
 
+import java.math.BigDecimal;
+
 import java.util.List;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
@@ -30,7 +32,7 @@ class PurchaseTest {
 
     @BeforeEach
     void setUp() {
-        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food);
+        milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food);
         basket = new Basket();
         basket.addProduct(milk);
         purchase = new Purchase(basket);

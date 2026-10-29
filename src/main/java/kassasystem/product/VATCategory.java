@@ -1,17 +1,19 @@
 package kassasystem.product;
 
+import java.math.BigDecimal;
+
 public enum VATCategory {
-    SIX_PERCENT(0.06),
-    TWELVE_PERCENT(0.12),
-    TWENTY_FIVE_PERCENT(0.25);
+    SIX_PERCENT("0.06"),
+    TWELVE_PERCENT("0.12"),
+    TWENTY_FIVE_PERCENT("0.25");
 
-    private final double rate;
+    private final BigDecimal rate;
 
-    VATCategory(double rate) {
-        this.rate = rate;
+    VATCategory(String rate) {
+        this.rate = new BigDecimal(rate);
     }
 
-    public double getRate() {
+    public BigDecimal getRate() {
         return rate;
     }
 }

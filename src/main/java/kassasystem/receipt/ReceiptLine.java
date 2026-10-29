@@ -4,17 +4,19 @@ import kassasystem.money.Currency;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 
+import java.math.BigDecimal;
+
 public final class ReceiptLine {
    private final String productName;
    private final int quantity;
    private final Money unitPrice;
-   private final double vatRate;
+   private final BigDecimal vatRate;
 
    public ReceiptLine(String productName, int quantity, Money unitPrice) {
-      this(productName, quantity, unitPrice, 0);
+      this(productName, quantity, unitPrice, BigDecimal.ZERO);
    }
 
-   public ReceiptLine(String productName, int quantity, Money unitPrice, double vatRate) {
+   public ReceiptLine(String productName, int quantity, Money unitPrice, BigDecimal vatRate) {
       if (productName == null || productName.isBlank()) {
          throw new IllegalArgumentException("Product name must not be blank");
       }
@@ -28,19 +30,17 @@ public final class ReceiptLine {
       if (currency == null || currency.compareTo(Sek.SEK) != 0) {
          throw new IllegalArgumentException("Unit price must use SEK");
       }
-      double amount = unitPrice.getAmount();
-      if (!Double.isFinite(amount)) {
-         throw new IllegalArgumentException("Unit price must be finite");
-      }
-      if (amount < 0) {
+      BigDecimal amount = unitPrice.getAmount();
+      if (amount.compareTo(BigDecimal.ZERO) < 0) {
          throw new IllegalArgumentException("Unit price must not be negative");
       }
-      if (!Double.isFinite(vatRate) || vatRate < 0 || vatRate > 1) {
+      if (vatRate == null || vatRate.compareTo(BigDecimal.ZERO) < 0
+              || vatRate.compareTo(BigDecimal.ONE) > 0) {
          throw new IllegalArgumentException("VAT rate must be between zero and one");
       }
       this.productName = productName;
       this.quantity = quantity;
-      this.unitPrice = new Money(currency, amount);
+      this.unitPrice = unitPrice;
       this.vatRate = vatRate;
    }
 
@@ -56,15 +56,12 @@ public final class ReceiptLine {
       return unitPrice;
    }
 
-   public double getVatRate() {
+   public BigDecimal getVatRate() {
       return vatRate;
    }
 
    public Money getTotalPrice() {
       Money total = unitPrice.multiply(quantity);
-      if (!Double.isFinite(total.getAmount())) {
-         throw new ArithmeticException("Total price overflow");
-      }
       return total;
    }
 }

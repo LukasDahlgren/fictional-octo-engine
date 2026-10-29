@@ -1,5 +1,7 @@
 package kassasystem;
 
+import java.math.BigDecimal;
+
 import kassasystem.payment.FakePayer;
 
 import java.time.Clock;
@@ -38,7 +40,7 @@ class CashRegisterScanningTest {
     void setUp() {
         register = new CashRegister(Clock.systemUTC(), new FakePayer(true));
         EAN ean = new EAN("0123456789012");
-        milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
+        milk = new Product("Milk", new Money(Sek.SEK, new BigDecimal("12.50")), food, ean);
         productCatalog = new FixedProductCatalog(milk);
     }
 
@@ -248,7 +250,7 @@ class CashRegisterScanningTest {
         assertAll("Basket contains one milk",
                 () -> assertSame(milk, basket.getItems().get(0).getProduct()),
                 () -> assertEquals(1, basket.getItems().get(0).getQuantity()),
-                () -> assertEquals(12.50, basket.getTotalPrice().getAmount(), 0.001),
+                () -> assertEquals(0, new BigDecimal("12.50").compareTo(basket.getTotalPrice().getAmount())),
                 () -> assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency())
         );
     }
