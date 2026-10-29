@@ -1,4 +1,4 @@
-package kassasystem.basket;
+package kassasystem;
 
 import kassasystem.money.Currency;
 import kassasystem.money.Money;
@@ -103,7 +103,7 @@ public class Basket{
    }
 
    // Closing a purchase also locks rows held by callers before checkout.
-   public void freeze(){
+   void freeze(){
       for (BasketItem item : items) {
          item.freeze();
       }

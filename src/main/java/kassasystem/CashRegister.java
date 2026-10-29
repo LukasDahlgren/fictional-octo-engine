@@ -3,7 +3,6 @@ package kassasystem;
 import java.time.Clock;
 import java.time.LocalDate;
 
-import kassasystem.basket.Basket;
 import kassasystem.payment.FakePayer;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.ScanResult;

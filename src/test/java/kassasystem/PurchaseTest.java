@@ -1,7 +1,5 @@
 package kassasystem;
 
-import kassasystem.basket.Basket;
-import kassasystem.basket.BasketItem;
 import java.util.List;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;

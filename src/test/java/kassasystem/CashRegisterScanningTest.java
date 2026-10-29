@@ -1,6 +1,5 @@
 package kassasystem;
 
-import kassasystem.basket.Basket;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;

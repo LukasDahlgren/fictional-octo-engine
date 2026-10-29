@@ -1,4 +1,4 @@
-package kassasystem.basket;
+package kassasystem;
 
 import kassasystem.money.Currency;
 import kassasystem.money.Money;

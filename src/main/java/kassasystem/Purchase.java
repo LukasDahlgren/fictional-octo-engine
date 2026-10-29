@@ -1,7 +1,5 @@
 package kassasystem;
 
-import kassasystem.basket.Basket;
-
 public class Purchase {
 
     public enum Status {

@@ -1,7 +1,7 @@
 package kassasystem.receipt;
 
-import kassasystem.basket.Basket;
-import kassasystem.basket.BasketItem;
+import kassasystem.Basket;
+import kassasystem.BasketItem;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;

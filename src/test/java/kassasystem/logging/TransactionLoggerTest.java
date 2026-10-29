@@ -1,6 +1,6 @@
 package kassasystem.logging;
 
-import kassasystem.basket.Basket;
+import kassasystem.Basket;
 import kassasystem.receipt.Receipt;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
