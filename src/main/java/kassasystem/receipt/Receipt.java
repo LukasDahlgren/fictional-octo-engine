@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Receipt {
    private final Money subtotal;
@@ -78,7 +80,9 @@ public class Receipt {
       this.items = new ArrayList<>();
       for (BasketItem item : basket.getItems()) {
          Product product = item.getProduct();
-         ReceiptLine line = new ReceiptLine(product.getName(), item.getQuantity(), product.getPrice());
+         double vatRate = product.getCategory().getVat();
+         ReceiptLine line = new ReceiptLine(product.getName(), item.getQuantity(),
+                 product.getPrice(), vatRate);
          items.add(line);
       }
    }
@@ -126,6 +130,24 @@ public class Receipt {
       return timestamp;
    }
 
+   private Map<Double, Double> calculateVatByRate() {
+      Map<Double, Double> vatByRate = new TreeMap<>();
+      double discountMultiplier = 0;
+      if (subtotal.getAmount() > 0) {
+         discountMultiplier = totalPrice.getAmount() / subtotal.getAmount();
+      }
+
+      for (ReceiptLine item : items) {
+         double vatRate = item.getVatRate();
+         double discountedLineTotal = item.getTotalPrice().getAmount() * discountMultiplier;
+         // Product prices include VAT. Apply the purchase discount before extracting VAT.
+         double vatAmount = discountedLineTotal * vatRate / (1 + vatRate);
+         double previousAmount = vatByRate.getOrDefault(vatRate, 0.0);
+         vatByRate.put(vatRate, previousAmount + vatAmount);
+      }
+      return vatByRate;
+   }
+
    public String toText() {
       int nameWidth = 20;
       for (ReceiptLine item : items) {
@@ -157,6 +179,15 @@ public class Receipt {
       }
       String total = String.format(Locale.ROOT, "Totalt: %.2f SEK\n", totalPrice.getAmount());
       text.append(total);
+      Map<Double, Double> vatByRate = calculateVatByRate();
+      if (!vatByRate.isEmpty()) {
+         text.append("Varav moms:\n");
+         for (Map.Entry<Double, Double> entry : vatByRate.entrySet()) {
+            double vatPercent = entry.getKey() * 100;
+            text.append(String.format(Locale.ROOT, "%.0f %%: %.2f SEK\n",
+                    vatPercent, entry.getValue()));
+         }
+      }
       return text.toString();
    }
 }

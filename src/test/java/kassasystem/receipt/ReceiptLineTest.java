@@ -18,6 +18,28 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ReceiptLineTest {
 
+    @ParameterizedTest
+    @ValueSource(doubles = { 0, 0.06, 0.12, 0.25, 1 })
+    @DisplayName("Konstruktorn sparar momssatsen")
+    void constructorStoresVatRate(double vatRate) {
+        Money unitPrice = new Money(Sek.SEK, 125);
+
+        ReceiptLine line = new ReceiptLine("Product", 1, unitPrice, vatRate);
+
+        assertEquals(vatRate, line.getVatRate());
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = { -0.01, 1.01, Double.NaN, Double.POSITIVE_INFINITY,
+            Double.NEGATIVE_INFINITY })
+    @DisplayName("Konstruktorn avvisar ogiltiga momssatser")
+    void constructorRejectsInvalidVatRate(double vatRate) {
+        Money unitPrice = new Money(Sek.SEK, 125);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new ReceiptLine("Product", 1, unitPrice, vatRate));
+    }
+
     @ParameterizedTest(name = "{0} enheter")
     @ValueSource(ints = {1, 2, 3, 4})
     @DisplayName("Konstruktorn sparar antalet")
