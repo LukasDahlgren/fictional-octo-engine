@@ -122,7 +122,7 @@ class MoneyTest {
     }
 
     @Test
-    @DisplayName("Pengar i olika valutor kan inte adderas")
+    @DisplayName("Add Rejects Different Currencies")
     void addRejectsDifferentCurrencies() {
         Money first = new Money(Sek.SEK, 100.0);
         Money second = new Money(Eur.EUR, 50.0);
@@ -139,7 +139,7 @@ class MoneyTest {
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {"100 SEK"})
-    @DisplayName("Pengar är inte lika med null eller ett annat objektslag")
+    @DisplayName("Equals Returns False For Null Or Other Type")
     void equalsReturnsFalseForNullOrOtherType(String other) {
         Money money = new Money(Sek.SEK, 100.0);
 
@@ -147,7 +147,7 @@ class MoneyTest {
     }
 
     @Test
-    @DisplayName("Lika pengabelopp har samma hashkod")
+    @DisplayName("Equal Money Objects Have Same Hash Code")
     void equalMoneyObjectsHaveSameHashCode() {
         Money first = new Money(Sek.SEK, 100.0);
         Money second = new Money(Sek.SEK, 100.0);

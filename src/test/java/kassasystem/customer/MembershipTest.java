@@ -23,7 +23,7 @@ class MembershipTest {
     }
 
     @Test
-    @DisplayName("Medlemskapet är aktivt på startdatumet")
+    @DisplayName("Membership Is Active On Start Date")
     void membershipIsActiveOnStartDate(){
         boolean active = membership.isActiveOn(startDate);
 
@@ -31,14 +31,14 @@ class MembershipTest {
     }
 
     @Test
-    @DisplayName("Medlemskapet är aktivt på slutdatumet")
+    @DisplayName("Membership Is Active On End Date")
     void membershipIsActiveOnEndDate(){
         boolean active = membership.isActiveOn(endDate);
 
         assertTrue(active);
     }
     @Test
-    @DisplayName("Medlemskapet är inaktivt före startdatumet")
+    @DisplayName("Membership Is Inactive Before Start Date")
     void membershipIsInActiveBeforeStartDate(){
         LocalDate dayBeforeStart = LocalDate.of(2025,12,31);
         boolean active = membership.isActiveOn(dayBeforeStart);
@@ -46,7 +46,7 @@ class MembershipTest {
         assertFalse(active);
     }
     @Test
-    @DisplayName("Medlemskapet är inaktivt efter slutdatumet")
+    @DisplayName("Membership Is Inactive After End Date")
     void membershipIsInActiveAfterEndDate(){
         LocalDate dayAfterEnd = LocalDate.of(2027,1,1);
         boolean active = membership.isActiveOn(dayAfterEnd);

@@ -18,7 +18,7 @@ public class Money{
       return currency;
    }
 
-   // Adderar två pengabelopp och returnerar ett nytt Money-objekt.
+   // Adds two monetary amounts and returns a new Money object.
    public Money add(Money other) {
       requireSameCurrency(other);
       return new Money(currency, amount + other.amount);
@@ -44,11 +44,11 @@ public class Money{
    }
 
    private void requireSameCurrency(Money other) {
-      Objects.requireNonNull(other, "Money får inte vara null.");
+      Objects.requireNonNull(other, "Money must not be null.");
 
       if (!currency.equals(other.currency)) {
          throw new IllegalArgumentException(
-                 "Valutorna måste vara samma."
+                 "Currencies must match."
          );
       }
    }

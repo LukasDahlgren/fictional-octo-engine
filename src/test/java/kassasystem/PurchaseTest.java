@@ -39,7 +39,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett nytt köp börjar aktivt med en tom korg")
+    @DisplayName("New Purchase Starts Active With Empty Basket")
     void newPurchaseStartsActiveWithEmptyBasket() {
         Purchase newPurchase = new Purchase();
 
@@ -50,7 +50,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Nya köp har oberoende korgar")
+    @DisplayName("New Purchases Have Independent Baskets")
     void newPurchasesHaveIndependentBaskets() {
         Purchase firstPurchase = new Purchase();
         Purchase secondPurchase = new Purchase();
@@ -65,7 +65,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett köp med angiven korg börjar aktivt")
+    @DisplayName("Constructor With Supplied Basket Starts Active")
     void constructorWithSuppliedBasketStartsActive() {
         Basket suppliedBasket = new Basket();
 
@@ -75,7 +75,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett köp behåller den angivna korgen och dess varor")
+    @DisplayName("Constructor Keeps Supplied Basket And Its Items")
     void constructorKeepsSuppliedBasketAndItsItems() {
         Basket suppliedBasket = new Basket();
         suppliedBasket.addProduct(milk);
@@ -86,13 +86,13 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett köp kan inte skapas utan en korg")
+    @DisplayName("Constructor Rejects Missing Basket")
     void constructorRejectsMissingBasket() {
         assertThrows(IllegalArgumentException.class, () -> new Purchase(null));
     }
 
     @Test
-    @DisplayName("Ett aktivt köp slutförs med samma korg och varor")
+    @DisplayName("Complete Changes Status And Keeps Basket Items")
     void completeChangesStatusAndKeepsBasketItems() {
         purchase.complete();
 
@@ -103,7 +103,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett slutfört köp kan inte slutföras igen")
+    @DisplayName("Complete Rejects Completed Purchase")
     void completeRejectsCompletedPurchase() {
         purchase.complete();
 
@@ -118,7 +118,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett avbrutet köp kan inte slutföras")
+    @DisplayName("Complete Rejects Cancelled Purchase")
     void completeRejectsCancelledPurchase() {
         purchase.cancel();
 
@@ -133,7 +133,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett aktivt köp avbryts med samma korg och varor")
+    @DisplayName("Cancel Changes Status And Keeps Basket Items")
     void cancelChangesStatusAndKeepsBasketItems() {
         purchase.cancel();
 
@@ -144,7 +144,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett slutfört köp kan inte avbrytas")
+    @DisplayName("Cancel Rejects Completed Purchase")
     void cancelRejectsCompletedPurchase() {
         purchase.complete();
 
@@ -159,7 +159,7 @@ class PurchaseTest {
     }
 
     @Test
-    @DisplayName("Ett avbrutet köp kan inte avbrytas igen")
+    @DisplayName("Cancel Rejects Cancelled Purchase")
     void cancelRejectsCancelledPurchase() {
         purchase.cancel();
 
@@ -175,7 +175,7 @@ class PurchaseTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(value = Purchase.Status.class, names = {"COMPLETED", "CANCELLED"})
-    @DisplayName("Avslutade köp skyddar både korgen och tidigare hämtade korgrader")
+    @DisplayName("Closed Purchase Rejects Changes Through Retained References")
     void closedPurchaseRejectsChangesThroughRetainedReferences(Purchase.Status status) {
         BasketItem row = basket.getItems().get(0);
         row.increaseQuantity();

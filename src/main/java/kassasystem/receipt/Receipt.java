@@ -33,7 +33,7 @@ public class Receipt {
 
    // Supports checkout flows that already calculated the final amount.
    public Receipt(Basket basket, Money totalPrice, Clock clock) {
-      this(basket, clock, calculateDiscount(basket, totalPrice), "Rabatt", totalPrice);
+      this(basket, clock, calculateDiscount(basket, totalPrice), "Discount", totalPrice);
    }
 
    private Receipt(Basket basket, Clock clock, Money discountAmount,
@@ -136,11 +136,11 @@ public class Receipt {
 
       StringBuilder text = new StringBuilder();
       DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.ROOT);
-      text.append("Kvitto\n");
-      text.append("Datum: ").append(timestamp.format(dateFormat)).append("\n");
+      text.append("Receipt\n");
+      text.append("Date: ").append(timestamp.format(dateFormat)).append("\n");
 
       String headingFormat = "%-" + nameWidth + "s %5s %10s %10s\n";
-      text.append(String.format(Locale.ROOT, headingFormat, "Vara", "Antal", "Styckpris", "Summa"));
+      text.append(String.format(Locale.ROOT, headingFormat, "Product", "Quantity", "Unit price", "Line total"));
 
       String itemFormat = "%-" + nameWidth + "s %5d %10.2f %10.2f\n";
       for (ReceiptLine item : items) {
@@ -151,11 +151,11 @@ public class Receipt {
       }
 
       if (discountAmount.getAmount() > 0) {
-         text.append(String.format(Locale.ROOT, "Delsumma: %.2f SEK\n", subtotal.getAmount()));
+         text.append(String.format(Locale.ROOT, "Subtotal: %.2f SEK\n", subtotal.getAmount()));
          text.append(String.format(Locale.ROOT, "%s: -%.2f SEK\n",
                  discountLabel, discountAmount.getAmount()));
       }
-      String total = String.format(Locale.ROOT, "Totalt: %.2f SEK\n", totalPrice.getAmount());
+      String total = String.format(Locale.ROOT, "Total: %.2f SEK\n", totalPrice.getAmount());
       text.append(total);
       return text.toString();
    }

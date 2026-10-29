@@ -69,11 +69,11 @@ public class CashRegister {
 
     public ScanResult scanProduct(BarcodeScanner scanner) {
         if(currentPurchase == null){
-            throw new IllegalStateException("Utan ett pågående köp kan en vara inte scannas");
+            throw new IllegalStateException("A product cannot be scanned without an active purchase");
         }
 
         if(currentPurchase.getStatus() != Purchase.Status.ACTIVE){
-            throw new IllegalStateException("Varor kan endast scannas till ett aktivt köp");
+            throw new IllegalStateException("Products can only be scanned into an active purchase");
         }
 
         ScanResult result = scanner.scan();
