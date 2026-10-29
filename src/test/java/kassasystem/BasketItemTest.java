@@ -108,11 +108,11 @@ class BasketItemTest {
     }
 
     @Test
-    @DisplayName("Antalet minskas inte under ett")
-    void decreaseQuantityKeepsLastUnit() {
+    @DisplayName("Minskning vid antal ett avvisas utan att ändra antalet")
+    void decreaseQuantityRejectsLastUnit() {
         BasketItem item = new BasketItem(product, 1);
 
-        item.decreaseQuantity();
+        assertThrows(IllegalStateException.class, () -> item.decreaseQuantity());
 
         assertEquals(1, item.getQuantity());
     }

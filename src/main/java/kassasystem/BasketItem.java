@@ -43,7 +43,7 @@ public class BasketItem{
    public void decreaseQuantity(){
       ensureMutable();
       if (quantity == 1) {
-         return;
+         throw new IllegalStateException("Cannot decrease quantity below 1");
       }
       quantity--;
    }
