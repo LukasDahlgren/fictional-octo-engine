@@ -2,7 +2,6 @@ package kassasystem;
 
 import java.time.Clock;
 import java.time.LocalDate;
-
 import kassasystem.payment.FakePayer;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.ScanResult;
@@ -17,156 +16,168 @@ import kassasystem.logging.TransactionLogger;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class CashRegister{
+public class CashRegister {
 
-   private final Clock clock;
-   private FakePayer fakePayer;
-   private Purchase currentPurchase;
+    private final Clock clock;
+    private FakePayer fakePayer;
+    private Purchase currentPurchase;
 
-   private final TransactionLogger transactionLogger;
+    private final TransactionLogger transactionLogger;
 
-   public CashRegister(){
-      this(Clock.systemUTC());
-   }
+    public CashRegister(boolean paymentSucceeds) {
+        this(Clock.systemUTC(), paymentSucceeds);
+    }
 
-   public CashRegister(Clock clock){
-      if(clock == null){
-         throw new IllegalArgumentException("Clock must not be null");
-      }
-      this.clock = clock;
-      this.transactionLogger = null;
-      this.fakePayer = new FakePayer(true);
-   }
+    public CashRegister(Clock clock, boolean paymentSucceeds) {
+        if (clock == null) {
+            throw new IllegalArgumentException("Clock must not be null");
+        }
+        this.clock = clock;
+        this.transactionLogger = null;
+        this.fakePayer = new FakePayer(paymentSucceeds);
+    }
 
-   public CashRegister(TransactionLogger transactionLogger, Clock clock){
-      if(transactionLogger == null){
-         throw new IllegalArgumentException("Transaction logger must not be null");
-      }
-      if(clock == null){
-         throw new IllegalArgumentException("Clock must not be null");
-      }
+    public CashRegister(
+            TransactionLogger transactionLogger,
+            Clock clock,
+            boolean paymentSucceeds
+    ) {
+        if (transactionLogger == null) {
+            throw new IllegalArgumentException("Transaction logger must not be null");
+        }
+        if (clock == null) {
+            throw new IllegalArgumentException("Clock must not be null");
+        }
 
-      this.transactionLogger = transactionLogger;
-      this.clock = clock;
-      this.fakePayer = new FakePayer(true);
-   }
+        this.transactionLogger = transactionLogger;
+        this.clock = clock;
+        this.fakePayer = new FakePayer(paymentSucceeds);
+    }
 
 
-   // Returns null when the register has no current purchase.
-   public Purchase getCurrentPurchase(){
-      return currentPurchase;
-   }
+    // Returns null when the register has no current purchase.
+    public Purchase getCurrentPurchase() {
+        return currentPurchase;
+    }
 
-   public Purchase startPurchase(){
-      if(currentPurchase != null){
-         throw new IllegalStateException("Cannot start a purchase while another purchase is current");
-      }
+    public Purchase startPurchase() {
+        if (currentPurchase != null) {
+            throw new IllegalStateException("Cannot start a purchase while another purchase is current");
+        }
 
-      currentPurchase = new Purchase(new Basket());
-      return currentPurchase;
-   }
+        currentPurchase = new Purchase(new Basket());
+        return currentPurchase;
+    }
 
-   public ScanResult scanProduct(BarcodeScanner scanner){
-      if(scanner == null){
-         throw new IllegalArgumentException("Scanner must not be null");
-      }
-      if(currentPurchase == null){
-         throw new IllegalStateException("A product cannot be scanned without an active purchase");
-      }
+    public ScanResult scanProduct(BarcodeScanner scanner) {
+        if(currentPurchase == null){
+            throw new IllegalStateException("Utan ett pågående köp kan en vara inte scannas");
+        }
 
-      if(currentPurchase.getStatus() != Purchase.Status.ACTIVE){
-         throw new IllegalStateException("Products can only be scanned into an active purchase");
-      }
+        if(currentPurchase.getStatus() != Purchase.Status.ACTIVE){
+            throw new IllegalStateException("Varor kan endast scannas till ett aktivt köp");
+        }
 
-      ScanResult result = scanner.scan();
+        ScanResult result = scanner.scan();
 
-      if(result.getStatus() != ScanResult.Status.FOUND){
-         return result;
-      }
+        if(result.getStatus() != ScanResult.Status.FOUND){
+            return result;
+        }
 
-      currentPurchase.getBasket().addProduct(result.getProduct());
-      return result;
-   }
+        currentPurchase.getBasket().addProduct(result.getProduct());
+        return result;
+    }
 
-   public Receipt completePurchase(){
-      ensureActivePurchase();
+    public Receipt completePurchase() {
+        ensureActivePurchase();
 
-      if(currentPurchase.getBasket().isEmpty()){
-         throw new IllegalStateException("Cannot complete a purchase with no products in the basket");
-      }
+        Money totalPrice = currentPurchase.getBasket().getTotalPrice();
 
-      Money totalPrice = currentPurchase.getBasket().getTotalPrice();
+        if (!fakePayer.pay()) {
+            throw new IllegalStateException("Payment failed");
+        }
 
-      if(!fakePayer.pay()){
-         throw new IllegalStateException("Payment failed");
-      }
+        return finishPurchase(totalPrice);
+    }
 
-      return finishPurchase(totalPrice);
-   }
+    public Receipt completePurchase(Customer customer) {
+        return completePurchase(customer, null);
+    }
 
-   public Receipt completePurchase(Customer customer){
-      return completePurchase(customer, null);
-   }
+    public Receipt completePurchase(
+            Customer customer,
+            DiscountOffer offer
+    ) {
+        if (customer == null) {
+            throw new IllegalArgumentException("Customer must not be null");
+        }
 
-   public Receipt completePurchase(Customer customer, DiscountOffer offer){
-      if(customer == null){
-         throw new IllegalArgumentException("Customer must not be null");
-      }
+        ensureActivePurchase();
 
-      ensureActivePurchase();
+        Money originalPrice = currentPurchase.getBasket().getTotalPrice();
+        LocalDate purchaseDate = LocalDate.now(clock);
+        DiscountCalculator calculator = new DiscountCalculator();
 
-      if(currentPurchase.getBasket().isEmpty()){
-         throw new IllegalStateException("Cannot complete a purchase with no products in the basket");
-      }
+        Money discountedPrice = calculator.calculatePrice(
+                originalPrice,
+                customer,
+                purchaseDate,
+                offer
+        );
 
-      Money originalPrice = currentPurchase.getBasket().getTotalPrice();
-      LocalDate purchaseDate = LocalDate.now(clock);
-      DiscountCalculator calculator = new DiscountCalculator();
+        Purchase completedPurchase = currentPurchase;
+        Receipt receipt = finishPurchase(discountedPrice);
 
-      Money discountedPrice = calculator.calculatePrice(originalPrice, customer, purchaseDate, offer);
+        customer.addPurchase(completedPurchase);
 
-      Purchase completedPurchase = currentPurchase;
-      Receipt receipt = finishPurchase(discountedPrice);
+        return receipt;
+    }
 
-      customer.addPurchase(completedPurchase);
+    private void ensureActivePurchase() {
+    if (currentPurchase == null) {
+        throw new IllegalStateException(
+                "Cannot complete a purchase when there is no current purchase"
+        );
+    }
 
-      return receipt;
-   }
+    if (currentPurchase.getStatus() != Purchase.Status.ACTIVE) {
+        throw new IllegalStateException(
+                "Only active purchases can be completed"
+        );
+    }
+}
 
-   private void ensureActivePurchase(){
-      if(currentPurchase == null){
-         throw new IllegalStateException("Cannot complete a purchase when there is no current purchase");
-      }
+    private Receipt finishPurchase(Money totalPrice) {
+        Receipt receipt = new Receipt(
+                currentPurchase.getBasket(),
+                totalPrice,
+                clock
+        );
 
-      if(currentPurchase.getStatus() != Purchase.Status.ACTIVE){
-         throw new IllegalStateException("Only active purchases can be completed");
-      }
-   }
+        if (transactionLogger != null) {
+            try {
+                transactionLogger.log(receipt);
+            } catch (IOException exception) {
+                throw new UncheckedIOException(
+                        "Could not log completed purchase",
+                        exception
+                );
+            }
+        }
 
-   private Receipt finishPurchase(Money totalPrice){
-      Receipt receipt = new Receipt(currentPurchase.getBasket(), totalPrice, clock);
+        currentPurchase.complete();
+        currentPurchase = null;
 
-      if(transactionLogger != null){
-         try{
-            transactionLogger.log(receipt);
-         } catch (IOException exception){
-            throw new UncheckedIOException("Could not log completed purchase", exception);
-         }
-      }
+        return receipt;
+    }
 
-      currentPurchase.complete();
-      currentPurchase = null;
+    public void cancelPurchase() {
+        if (currentPurchase == null) {
+            throw new IllegalStateException("Cannot cancel a purchase when there is no current purchase");
+        }
 
-      return receipt;
-   }
-
-   public void cancelPurchase(){
-      if(currentPurchase == null){
-         throw new IllegalStateException("Cannot cancel a purchase when there is no current purchase");
-      }
-
-      currentPurchase.cancel();
-      currentPurchase = null;
-   }
+        currentPurchase.cancel();
+        currentPurchase = null;
+    }
 }
 

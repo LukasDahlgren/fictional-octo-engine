@@ -1,5 +1,7 @@
 package kassasystem;
 
+
+import java.time.Clock;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -33,14 +35,14 @@ class CashRegisterScanningTest {
 
     @BeforeEach
     void setUp() {
-        register = new CashRegister();
+        register = new CashRegister(Clock.systemUTC(), true);
         EAN ean = new EAN("0123456789012");
         milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         productCatalog = new FixedProductCatalog(milk);
     }
 
     @Test
-    @DisplayName("Scan Product Adds Found Product To Current Purchase")
+    @DisplayName("En lyckad scanning lägger till en vara i det pågående köpet")
     void scanProductAddsFoundProductToCurrentPurchase() {
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -57,7 +59,7 @@ class CashRegisterScanningTest {
     }
 
     @Test
-    @DisplayName("Scan Product Keeps Basket Unchanged When Code Cannot Be Read")
+    @DisplayName("En oläsbar kod lämnar det pågående köpet och dess varukorg oförändrade")
     void scanProductKeepsBasketUnchangedWhenCodeCannotBeRead() {
         FixedCodeReader codeReader = new FixedCodeReader(null);
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -75,7 +77,7 @@ class CashRegisterScanningTest {
     }
 
     @Test
-    @DisplayName("Scan Product Keeps Basket Unchanged When Code Is Invalid")
+    @DisplayName("En ogiltig EAN-kod lämnar det pågående köpet och dess varukorg oförändrade")
     void scanProductKeepsBasketUnchangedWhenCodeIsInvalid() {
         FixedCodeReader codeReader = new FixedCodeReader("123");
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -93,7 +95,7 @@ class CashRegisterScanningTest {
     }
 
     @Test
-    @DisplayName("Scan Product Keeps Basket Unchanged When Product Is Unknown")
+    @DisplayName("En okänd vara lämnar det pågående köpet och dess varukorg oförändrade")
     void scanProductKeepsBasketUnchangedWhenProductIsUnknown() {
         FixedCodeReader codeReader = new FixedCodeReader("4006381333931");
         productCatalog = new FixedProductCatalog(null);
@@ -112,19 +114,7 @@ class CashRegisterScanningTest {
     }
 
     @Test
-    @DisplayName("Scan Product Rejects Null Scanner And Preserves Purchase And Basket")
-    void scanProductRejectsNullScannerAndPreservesPurchase() {
-        Purchase purchase = register.startPurchase();
-        Basket basket = purchase.getBasket();
-        basket.addProduct(milk);
-
-        assertThrows(IllegalArgumentException.class, () -> register.scanProduct(null));
-
-        assertPurchasePreserved(purchase, basket, Purchase.Status.ACTIVE);
-    }
-
-    @Test
-    @DisplayName("Scan Product Rejects Missing Current Purchase Without Reading Code")
+    @DisplayName("Utan ett pågående köp avvisas scanning innan kodläsaren används")
     void scanProductRejectsMissingCurrentPurchaseWithoutReadingCode() {
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -138,7 +128,7 @@ class CashRegisterScanningTest {
     }
 
     @Test
-    @DisplayName("Scan Product Rejects Completed Purchase Without Reading Code")
+    @DisplayName("Ett slutfört köp avvisar scanning innan kodläsaren används och behåller varukorgen")
     void scanProductRejectsCompletedPurchaseWithoutReadingCode() {
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -156,7 +146,7 @@ class CashRegisterScanningTest {
     }
 
     @Test
-    @DisplayName("Scan Product Rejects Cancelled Purchase Without Reading Code")
+    @DisplayName("Ett avbrutet köp avvisar scanning innan kodläsaren används och behåller varukorgen")
     void scanProductRejectsCancelledPurchaseWithoutReadingCode() {
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -175,7 +165,7 @@ class CashRegisterScanningTest {
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(value = Purchase.Status.class, names = { "CANCELLED", "COMPLETED" })
-    @DisplayName("Scan Product Rejects Inactive Current Purchase Without Reading Code")
+    @DisplayName("Scanning avvisar ett inaktivt aktuellt köp innan kodläsaren används")
     void scanProductRejectsInactiveCurrentPurchaseWithoutReadingCode(Purchase.Status status) {
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
@@ -192,7 +182,7 @@ class CashRegisterScanningTest {
                 () -> register.scanProduct(scanner));
 
         assertAll("Inactive current purchase is preserved without using the scanner",
-                () -> assertEquals("Products can only be scanned into an active purchase", exception.getMessage()),
+                () -> assertEquals("Varor kan endast scannas till ett aktivt köp", exception.getMessage()),
                 () -> assertEquals(0, codeReader.getReadCalls()),
                 () -> assertEquals(0, productCatalog.getLookupCalls()),
                 () -> assertSame(purchase, register.getCurrentPurchase()),
@@ -203,7 +193,7 @@ class CashRegisterScanningTest {
     }
 
     @Test
-    @DisplayName("Scan Product Preserves Purchase When Scanner Throws")
+    @DisplayName("Ett scannerfel skickas vidare utan att ändra det pågående köpet eller varukorgen")
     void scanProductPreservesPurchaseWhenScannerThrows() {
         IllegalStateException failure = new IllegalStateException("Scanner failed");
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");

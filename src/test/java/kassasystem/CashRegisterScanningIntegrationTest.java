@@ -1,5 +1,7 @@
 package kassasystem;
 
+
+import java.time.Clock;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
@@ -23,7 +25,7 @@ class CashRegisterScanningIntegrationTest {
     private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
 
     @Test
-    @DisplayName("Scan Product Twice With Real Catalog Groups Product In Basket")
+    @DisplayName("Två scanningar via den riktiga produktkatalogen ger en varurad med antal två och rätt totalpris")
     void scanProductTwiceWithRealCatalogGroupsProductInBasket() {
         EAN ean = new EAN("0123456789012");
         Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
@@ -31,7 +33,7 @@ class CashRegisterScanningIntegrationTest {
         productCatalog.add(milk);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
         BarcodeScanner scanner = new BarcodeScanner(codeReader, productCatalog);
-        CashRegister register = new CashRegister();
+        CashRegister register = new CashRegister(Clock.systemUTC(), true);
         Purchase purchase = register.startPurchase();
 
         ScanResult firstResult = register.scanProduct(scanner);
