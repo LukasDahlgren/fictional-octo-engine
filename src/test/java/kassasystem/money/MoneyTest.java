@@ -1,6 +1,11 @@
 package kassasystem.money;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class MoneyTest {
@@ -114,6 +119,41 @@ class MoneyTest {
 
         assertFalse(first.isGreaterThan(second));
         assertFalse(first.isLessThan(second));
+    }
+
+    @Test
+    @DisplayName("Pengar i olika valutor kan inte adderas")
+    void addRejectsDifferentCurrencies() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Eur.EUR, 50.0);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> first.add(second)
+        );
+
+        assertEquals(new Money(Sek.SEK, 100.0), first);
+        assertEquals(new Money(Eur.EUR, 50.0), second);
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"100 SEK"})
+    @DisplayName("Pengar är inte lika med null eller ett annat objektslag")
+    void equalsReturnsFalseForNullOrOtherType(String other) {
+        Money money = new Money(Sek.SEK, 100.0);
+
+        assertFalse(money.equals(other));
+    }
+
+    @Test
+    @DisplayName("Lika pengabelopp har samma hashkod")
+    void equalMoneyObjectsHaveSameHashCode() {
+        Money first = new Money(Sek.SEK, 100.0);
+        Money second = new Money(Sek.SEK, 100.0);
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
     }
 
 }

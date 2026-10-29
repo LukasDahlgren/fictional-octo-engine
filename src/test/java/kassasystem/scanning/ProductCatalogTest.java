@@ -3,10 +3,8 @@ package kassasystem.scanning;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
-import kassasystem.product.ProductCatalog;
 import kassasystem.product.ProductCategory;
 import kassasystem.product.VATCategory;
-import kassasystem.scanning.EAN;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -73,5 +71,22 @@ public class ProductCatalogTest {
         assertThrows(IllegalArgumentException.class, () -> catalog.findByEAn(null));
     }
 
+    @Test
+    @DisplayName("Allows adding the same product more than once")
+    void allowsAddingSameProductAgain() {
+        EAN ean = new EAN("4006381333931");
+        Product product = new Product(
+                "Milk",
+                new Money(Sek.SEK, 12.50),
+                new ProductCategory("Food", VATCategory.SIX_PERCENT),
+                ean
+        );
+        ProductCatalog catalog = new ProductCatalog();
+
+        catalog.add(product);
+        catalog.add(product);
+
+        assertSame(product, catalog.findByEAn(ean));
+    }
 
 }

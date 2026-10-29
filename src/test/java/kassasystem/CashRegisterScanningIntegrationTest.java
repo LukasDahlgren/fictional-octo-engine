@@ -4,7 +4,9 @@ import kassasystem.basket.Basket;
 import kassasystem.money.Money;
 import kassasystem.money.Sek;
 import kassasystem.product.Product;
-import kassasystem.product.ProductCatalog;
+import kassasystem.product.ProductCategory;
+import kassasystem.product.VATCategory;
+import kassasystem.scanning.ProductCatalog;
 import kassasystem.scanning.BarcodeScanner;
 import kassasystem.scanning.EAN;
 import kassasystem.scanning.ScanResult;
@@ -13,16 +15,19 @@ import kassasystem.testdoubles.FixedCodeReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 class CashRegisterScanningIntegrationTest {
 
+    private final ProductCategory food = new ProductCategory("Food", VATCategory.SIX_PERCENT);
+
     @Test
     @DisplayName("Två scanningar via den riktiga produktkatalogen ger en varurad med antal två och rätt totalpris")
     void scanProductTwiceWithRealCatalogGroupsProductInBasket() {
         EAN ean = new EAN("0123456789012");
-        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), null, ean);
+        Product milk = new Product("Milk", new Money(Sek.SEK, 12.50), food, ean);
         ProductCatalog productCatalog = new ProductCatalog();
         productCatalog.add(milk);
         FixedCodeReader codeReader = new FixedCodeReader("0123456789012");
@@ -34,14 +39,18 @@ class CashRegisterScanningIntegrationTest {
         ScanResult secondResult = register.scanProduct(scanner);
 
         Basket basket = purchase.getBasket();
-        assertEquals(ScanResult.Status.FOUND, firstResult.getStatus());
-        assertEquals(ScanResult.Status.FOUND, secondResult.getStatus());
-        assertSame(milk, firstResult.getProduct());
-        assertSame(milk, secondResult.getProduct());
+        assertAll("Both scans find the catalog product",
+                () -> assertEquals(ScanResult.Status.FOUND, firstResult.getStatus()),
+                () -> assertEquals(ScanResult.Status.FOUND, secondResult.getStatus()),
+                () -> assertSame(milk, firstResult.getProduct()),
+                () -> assertSame(milk, secondResult.getProduct())
+        );
         assertEquals(1, basket.getItems().size());
-        assertSame(milk, basket.getItems().get(0).getProduct());
-        assertEquals(2, basket.getItems().get(0).getQuantity());
-        assertEquals(25.00, basket.getTotalPrice().getAmount(), 0.001);
-        assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency());
+        assertAll("Repeated scans produce one row with two units and the correct total",
+                () -> assertSame(milk, basket.getItems().get(0).getProduct()),
+                () -> assertEquals(2, basket.getItems().get(0).getQuantity()),
+                () -> assertEquals(25.00, basket.getTotalPrice().getAmount(), 0.001),
+                () -> assertEquals(Sek.SEK, basket.getTotalPrice().getCurrency())
+        );
     }
 }
